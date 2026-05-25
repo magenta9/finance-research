@@ -1,0 +1,327 @@
+package provider
+
+import "strings"
+
+func filterTushareAssets(rows []tushareRow, query string, market string, assetClass string) []Asset {
+	assets := []Asset{}
+	queryLower := strings.ToLower(strings.TrimSpace(query))
+	for _, row := range rows {
+		tsCode := row.string("ts_code")
+		name := row.string("name")
+		if queryLower != "" && !matchesTushareAssetQuery(tsCode, name, queryLower) {
+			continue
+		}
+		assetMarket := marketFromTushareCode(tsCode)
+		if !marketMatches(assetMarket, market) {
+			continue
+		}
+		exchange := row.string("exchange")
+		if exchange == "" {
+			exchange = exchangeFromTushareCode(tsCode)
+		}
+		assets = append(assets, Asset{Symbol: publicSymbolFromTushareCode(tsCode), Name: name, Market: assetMarket, AssetClass: assetClass, Currency: currencyForMarket(assetMarket), Exchange: exchange, Source: tushareSource, Metadata: map[string]any{"provider": tushareSource, "tsCode": tsCode, "tsCodeAsset": inferTushareAssetType(tsCode)}})
+	}
+	return assets
+}
+
+func matchesTushareAssetQuery(tsCode string, name string, queryLower string) bool {
+	if queryLower == "" {
+		return true
+	}
+	for _, candidate := range tushareSearchAliases(tsCode) {
+		if strings.Contains(candidate, queryLower) {
+			return true
+		}
+	}
+	return strings.Contains(strings.ToLower(name), queryLower)
+}
+
+func tushareSearchAliases(tsCode string) []string {
+	aliases := []string{}
+	pushAlias := func(value string) {
+		value = strings.ToLower(strings.TrimSpace(value))
+		if value == "" {
+			return
+		}
+		for _, existing := range aliases {
+			if existing == value {
+				return
+			}
+		}
+		aliases = append(aliases, value)
+	}
+	publicSymbol := publicSymbolFromTushareCode(tsCode)
+	pushAlias(tsCode)
+	pushAlias(publicSymbol)
+	if publicSymbol != "" {
+		pushAlias(publicSymbol + ".SH")
+		pushAlias(publicSymbol + ".SZ")
+		pushAlias(publicSymbol + ".CSI")
+	}
+	return aliases
+}
+
+func inferTushareAsset(query string) (Asset, bool) {
+	tsCode := normalizeTushareCode(query)
+	if tsCode == "" {
+		return Asset{}, false
+	}
+	assetMarket := marketFromTushareCode(tsCode)
+	assetClass := "equity"
+	if inferTushareAssetType(tsCode) == "FD" {
+		assetClass = "fund"
+	} else if inferTushareAssetType(tsCode) == "I" {
+		assetClass = "index"
+	}
+	name := tsCode
+	if strings.HasPrefix(tsCode, "510300") {
+		name = "沪深300ETF"
+	}
+	return Asset{Symbol: publicSymbolFromTushareCode(tsCode), Name: name, Market: assetMarket, AssetClass: assetClass, Currency: currencyForMarket(assetMarket), Exchange: exchangeFromTushareCode(tsCode), Source: tushareSource, Metadata: map[string]any{"provider": tushareSource, "tsCode": tsCode, "tsCodeAsset": inferTushareAssetType(tsCode)}}, true
+}
+
+func inferTushareGlobalIndex(query string) (Asset, bool) {
+	tsCode := normalizeTushareGlobalIndexCode(query)
+	if tsCode == "" {
+		return Asset{}, false
+	}
+	name := tsCode
+	symbol := tsCode
+	if tsCode == "HSI" {
+		name = "Hang Seng Index"
+		symbol = "^HSI"
+	}
+	if tsCode == "HKTECH" {
+		name = "Hang Seng TECH Index"
+		symbol = "^HSTECH"
+	}
+	return Asset{Symbol: symbol, Name: name, Market: "HK", AssetClass: "index", Currency: "HKD", Exchange: "HKEX", Source: tushareSource, Metadata: map[string]any{"provider": tushareSource, "tsCode": tsCode, "tsCodeAsset": "I"}}, true
+}
+
+func inferTushareOpenFund(query string, market string) (Asset, bool) {
+	tsCode := normalizeOpenFundCode(query, market)
+	if tsCode == "" {
+		return Asset{}, false
+	}
+	return Asset{Symbol: strings.TrimSuffix(tsCode, ".OF"), Name: tsCode, Market: normalizeMarket(market), AssetClass: "fixed_income", Currency: "CNY", Exchange: "OF", Source: tushareSource, Metadata: map[string]any{"provider": tushareSource, "tsCode": tsCode, "tsCodeAsset": "FD"}}, true
+}
+
+func normalizeTushareCode(symbol string) string {
+	symbol = strings.ToUpper(strings.TrimSpace(symbol))
+	symbol = strings.TrimPrefix(symbol, "SH")
+	symbol = strings.TrimPrefix(symbol, "SZ")
+	symbol = strings.ReplaceAll(symbol, ".SS", ".SH")
+	if code := normalizeSixDigit(symbol); strings.HasPrefix(code, "93") {
+		return code + ".CSI"
+	}
+	if strings.HasSuffix(symbol, ".SH") || strings.HasSuffix(symbol, ".SZ") || strings.HasSuffix(symbol, ".CSI") {
+		return symbol
+	}
+	code := normalizeSixDigit(symbol)
+	if code == "" {
+		return ""
+	}
+	if strings.HasPrefix(code, "93") {
+		return code + ".CSI"
+	}
+	if strings.HasPrefix(code, "5") || strings.HasPrefix(code, "6") || strings.HasPrefix(code, "9") {
+		return code + ".SH"
+	}
+	return code + ".SZ"
+}
+
+func normalizeTushareGlobalIndexCode(symbol string) string {
+	upper := strings.ToUpper(strings.TrimSpace(symbol))
+	upper = strings.TrimPrefix(upper, "^")
+	switch upper {
+	case "HSI":
+		return "HSI"
+	case "HSTECH", "HKTECH":
+		return "HKTECH"
+	}
+	return ""
+}
+
+func normalizeOpenFundCode(symbol string, market string) string {
+	upper := strings.ToUpper(strings.TrimSpace(symbol))
+	if strings.HasSuffix(upper, ".OF") {
+		code := strings.TrimSuffix(upper, ".OF")
+		if normalizeSixDigit(code) != "" {
+			return code + ".OF"
+		}
+		return ""
+	}
+	if normalizeMarket(market) != "BOND" {
+		return ""
+	}
+	code := normalizeSixDigit(upper)
+	if code == "" {
+		return ""
+	}
+	return code + ".OF"
+}
+
+func isFuturesMainSymbol(symbol string) bool {
+	return normalizeFuturesMappingCode(symbol) != ""
+}
+
+func normalizeFuturesMappingCode(symbol string) string {
+	upper := strings.ToUpper(strings.TrimSpace(symbol))
+	if strings.Contains(upper, ".") {
+		parts := strings.SplitN(upper, ".", 2)
+		if parts[0] != "" && futuresExchangeFor(parts[0]) != "" {
+			return upper
+		}
+	}
+	underlying := strings.TrimRight(upper, "0123456789")
+	if underlying == "" || underlying == upper {
+		return ""
+	}
+	exchange := futuresExchangeFor(underlying)
+	if exchange == "" {
+		return ""
+	}
+	return underlying + "." + exchange
+}
+
+func futuresExchangeFor(underlying string) string {
+	switch strings.ToUpper(strings.TrimSpace(underlying)) {
+	case "AD", "AG", "AL", "AO", "AU", "BR", "BU", "CU", "FU", "HC", "NI", "OP", "PB", "RB", "RU", "SN", "SP", "SS", "WR", "ZN":
+		return "SHF"
+	case "BC", "EC", "LU", "NR", "SC":
+		return "INE"
+	case "AP", "CF", "CJ", "CY", "FG", "MA", "OI", "PF", "PK", "PL", "PR", "PX", "RM", "RS", "SA", "SF", "SH", "SM", "SR", "TA", "UR":
+		return "ZCE"
+	case "A", "B", "BB", "BZ", "C", "CS", "EB", "EG", "FB", "I", "J", "JD", "JM", "L", "LG", "LH", "M", "P", "PG", "PP", "RR", "V", "Y":
+		return "DCE"
+	case "IC", "IF", "IH", "IM", "T", "TF", "TL", "TS":
+		return "CFX"
+	case "LC", "PD", "PS", "PT", "SI":
+		return "GFE"
+	}
+	return ""
+}
+
+func normalizeSixDigit(symbol string) string {
+	symbol = strings.ToUpper(strings.TrimSpace(symbol))
+	if strings.Contains(symbol, ".") {
+		symbol = strings.Split(symbol, ".")[0]
+	}
+	if len(symbol) == 6 && isDigits(symbol) {
+		return symbol
+	}
+	return ""
+}
+
+func inferTushareAssetType(tsCode string) string {
+	code := normalizeSixDigit(tsCode)
+	if code == "" {
+		return "E"
+	}
+	for _, prefix := range []string{"15", "16", "50", "51", "52", "56", "58"} {
+		if strings.HasPrefix(code, prefix) {
+			return "FD"
+		}
+	}
+	if strings.HasPrefix(tsCode, "93") && strings.HasSuffix(tsCode, ".CSI") {
+		return "I"
+	}
+	if strings.HasPrefix(tsCode, "000") && strings.HasSuffix(tsCode, ".SH") {
+		return "I"
+	}
+	if strings.HasPrefix(tsCode, "399") && strings.HasSuffix(tsCode, ".SZ") {
+		return "I"
+	}
+	return "E"
+}
+
+func isSixDigitSymbol(symbol string) bool {
+	return normalizeSixDigit(symbol) != ""
+}
+
+func isDigits(value string) bool {
+	for _, char := range value {
+		if char < '0' || char > '9' {
+			return false
+		}
+	}
+	return value != ""
+}
+
+func marketFromTushareCode(tsCode string) string {
+	upper := strings.ToUpper(tsCode)
+	if strings.HasSuffix(upper, ".SH") || strings.HasSuffix(upper, ".SZ") || strings.HasSuffix(upper, ".CSI") {
+		return "A"
+	}
+	return "US"
+}
+
+func exchangeFromTushareCode(tsCode string) string {
+	upper := strings.ToUpper(tsCode)
+	if strings.HasSuffix(upper, ".CSI") {
+		return "CSI"
+	}
+	if strings.HasSuffix(upper, ".SH") {
+		return "SSE"
+	}
+	if strings.HasSuffix(upper, ".SZ") {
+		return "SZSE"
+	}
+	return ""
+}
+
+func publicSymbolFromTushareCode(tsCode string) string {
+	return strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(tsCode, ".CSI"), ".SH"), ".SZ")
+}
+
+func marketFromYahooSymbol(symbol string) string {
+	symbol = strings.ToUpper(symbol)
+	if strings.HasSuffix(symbol, ".HK") {
+		return "HK"
+	}
+	if strings.HasSuffix(symbol, ".SS") || strings.HasSuffix(symbol, ".SZ") {
+		return "A"
+	}
+	return "US"
+}
+
+func marketMatches(actual string, requested string) bool {
+	requested = strings.ToUpper(strings.TrimSpace(requested))
+	return requested == "" || requested == "ALL" || strings.ToUpper(actual) == requested
+}
+
+func currencyForMarket(market string) string {
+	switch strings.ToUpper(market) {
+	case "A":
+		return "CNY"
+	case "HK":
+		return "HKD"
+	default:
+		return "USD"
+	}
+}
+
+func eastmoneySecID(code string, symbol string) string {
+	upper := strings.ToUpper(symbol)
+	if strings.Contains(upper, ".SH") || strings.HasPrefix(code, "5") || strings.HasPrefix(code, "6") || strings.HasPrefix(code, "9") {
+		return "1." + code
+	}
+	return "0." + code
+}
+
+func normalizeYahooSymbol(symbol string, market string) string {
+	symbol = strings.ToUpper(strings.TrimSpace(symbol))
+	if strings.Contains(symbol, "=X") || strings.Contains(symbol, ".") {
+		return symbol
+	}
+	if normalizeMarket(market) == "HK" && isDigits(symbol) {
+		return strings.TrimLeft(symbol, "0") + ".HK"
+	}
+	if normalizeMarket(market) == "A" && isSixDigitSymbol(symbol) {
+		if strings.HasPrefix(symbol, "5") || strings.HasPrefix(symbol, "6") || strings.HasPrefix(symbol, "9") {
+			return symbol + ".SS"
+		}
+		return symbol + ".SZ"
+	}
+	return symbol
+}

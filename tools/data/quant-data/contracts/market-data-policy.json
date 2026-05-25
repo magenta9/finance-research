@@ -1,0 +1,102 @@
+{
+  "searchProviderOrder": {
+    "default": [
+      "tushare",
+      "akshare",
+      "yfinance"
+    ],
+    "US": [
+      "yfinance"
+    ],
+    "HK": [
+      "tushare",
+      "yfinance"
+    ],
+    "A": [
+      "tushare",
+      "akshare"
+    ],
+    "BOND": [
+      "tushare",
+      "akshare"
+    ],
+    "COMMODITY": [
+      "tushare",
+      "akshare"
+    ]
+  },
+  "priceProviderOrder": {
+    "default": [
+      "tushare",
+      "yfinance"
+    ],
+    "digitSymbolFallback": [
+      "tushare"
+    ],
+    "US": [
+      "yfinance"
+    ],
+    "HK": [
+      "tushare",
+      "yfinance"
+    ],
+    "A": [
+      "tushare",
+      "akshare"
+    ],
+    "BOND": [
+      "tushare",
+      "akshare",
+      "yfinance"
+    ],
+    "COMMODITY": [
+      "tushare",
+      "akshare"
+    ]
+  },
+  "fxProviderOrder": [
+    "akshare",
+    "yfinance",
+    "frankfurter"
+  ],
+  "sourcePriorityWeights": {
+    "price": {
+      "default": {
+        "akshare": 10,
+        "tushare": 30,
+        "yfinance": 20
+      },
+      "US": {
+        "akshare": 10,
+        "tushare": 20,
+        "yfinance": 30
+      },
+      "HK": {
+        "akshare": 30,
+        "tushare": 30,
+        "yfinance": 20
+      },
+      "A": {
+        "akshare": 10,
+        "tushare": 30,
+        "yfinance": 20
+      },
+      "BOND": {
+        "akshare": 20,
+        "tushare": 30,
+        "yfinance": 10
+      },
+      "COMMODITY": {
+        "akshare": 20,
+        "tushare": 30,
+        "yfinance": 10
+      }
+    },
+    "fx": {
+      "akshare": 30,
+      "yfinance": 20,
+      "frankfurter": 10
+    }
+  },
+  "derivedSourcePenalty": 5
+}

@@ -1,0 +1,82 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "ok"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "ok": {
+            "type": "boolean"
+        },
+        "data": {},
+        "providerStatus": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "maintenanceStatus": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "maintenanceError": {
+            "type": "object",
+            "required": [
+                "code",
+                "message"
+            ],
+            "additionalProperties": true,
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "enum": [
+                        "CONFIG_REQUIRED",
+                        "CONFIG_INSECURE",
+                        "PROVIDER_LIMITED",
+                        "PROVIDER_UNAVAILABLE",
+                        "NETWORK_UNAVAILABLE",
+                        "INSTRUMENT_NOT_FOUND",
+                        "INSUFFICIENT_CALCULATION_COVERAGE",
+                        "TIMEOUT",
+                        "STORE_REPAIR_REQUIRED"
+                    ]
+                },
+                "message": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "details": {}
+            }
+        },
+        "resultProvenance": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "dataQualityStatus": {
+            "type": "string",
+            "enum": [
+                "available",
+                "degraded",
+                "unavailable"
+            ]
+        }
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "ok": {
+                        "const": false
+                    }
+                },
+                "required": [
+                    "ok"
+                ]
+            },
+            "then": {
+                "required": [
+                    "maintenanceError"
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "ok": false,
+    "maintenanceError": {
+        "code": "PROVIDER_LIMITED",
+        "message": "Provider rate limit is active."
+    },
+    "providerStatus": {
+        "attemptedProviders": [
+            "tushare"
+        ],
+        "limitedProviders": [
+            "tushare"
+        ]
+    },
+    "maintenanceStatus": {
+        "running": false,
+        "queuedTasks": 1,
+        "nextRunAt": "2026-05-16T00:05:00.000Z"
+    }
+}

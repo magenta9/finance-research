@@ -1,0 +1,51 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "cliVersion",
+        "contractVersion",
+        "methods",
+        "storeVersion"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "cliVersion": {
+            "type": "string",
+            "minLength": 1
+        },
+        "contractVersion": {
+            "type": "string",
+            "minLength": 1
+        },
+        "storeVersion": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "methods": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "requestSchema": {
+                        "type": "object"
+                    },
+                    "responseSchema": {
+                        "type": "object"
+                    }
+                }
+            }
+        }
+    }
+}

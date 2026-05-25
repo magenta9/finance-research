@@ -1,0 +1,43 @@
+{
+    "cliVersion": "0.1.0",
+    "contractVersion": "quant-data-cli.v1",
+    "storeVersion": 1,
+    "methods": [
+        {
+            "name": "search-assets"
+        },
+        {
+            "name": "get-price-series"
+        },
+        {
+            "name": "get-fx-rates"
+        },
+        {
+            "name": "delete-prices"
+        },
+        {
+            "name": "get-fundamentals"
+        },
+        {
+            "name": "get-flow-sentiment"
+        },
+        {
+            "name": "search-news-catalysts"
+        },
+        {
+            "name": "search-announcements"
+        },
+        {
+            "name": "fetch-market-source"
+        },
+        {
+            "name": "status"
+        },
+        {
+            "name": "rebuild"
+        },
+        {
+            "name": "repair"
+        }
+    ]
+}

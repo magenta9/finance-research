@@ -1,0 +1,52 @@
+[
+    {
+        "symbol": "LH",
+        "name": "生猪",
+        "exchange": "DCE"
+    },
+    {
+        "symbol": "M",
+        "name": "豆粕",
+        "exchange": "DCE"
+    },
+    {
+        "symbol": "CF",
+        "name": "棉花",
+        "exchange": "ZCE"
+    },
+    {
+        "symbol": "FG",
+        "name": "玻璃",
+        "exchange": "ZCE"
+    },
+    {
+        "symbol": "SA",
+        "name": "纯碱",
+        "exchange": "ZCE"
+    },
+    {
+        "symbol": "AG",
+        "name": "白银",
+        "exchange": "SHF"
+    },
+    {
+        "symbol": "AU",
+        "name": "黄金",
+        "exchange": "SHF"
+    },
+    {
+        "symbol": "RB",
+        "name": "螺纹钢",
+        "exchange": "SHF"
+    },
+    {
+        "symbol": "RU",
+        "name": "天然橡胶",
+        "exchange": "SHF"
+    },
+    {
+        "symbol": "SP",
+        "name": "纸浆",
+        "exchange": "SHF"
+    }
+]

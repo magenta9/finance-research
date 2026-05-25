@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from datetime import date, datetime, timedelta, timezone
+from typing import Any
+
+from trend_observation_engine import analyze_rows, normalize_rows, unavailable_result
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Analyze futures Trend Observation Setup from quant-data prices."
+    )
+    parser.add_argument("--symbol", required=True)
+    parser.add_argument("--market", required=True)
+    parser.add_argument("--asset-id", default="")
+    parser.add_argument("--start", default="")
+    parser.add_argument("--end", default="")
+    parser.add_argument("--lookback-days", type=int, default=3650)
+    parser.add_argument(
+        "--quant-data", default=os.environ.get("QUANT_DATA_CLI", "quant-data")
+    )
+    parser.add_argument("--quant-data-arg", action="append", default=[])
+    parser.add_argument("--quant-data-cwd", default=os.getcwd())
+    parser.add_argument("--fixture-provider", action="store_true")
+    return parser.parse_args()
+
+
+def utc_today() -> str:
+    return datetime.now(timezone.utc).date().isoformat()
+
+
+def shift_days(date_text: str, days: int) -> str:
+    return (date.fromisoformat(date_text) + timedelta(days=days)).isoformat()
+
+
+def run_quant_data(
+    args: argparse.Namespace, input_payload: dict[str, Any]
+) -> dict[str, Any]:
+    command = [args.quant_data, *args.quant_data_arg, "get-price-series"]
+    env = os.environ.copy()
+    if args.fixture_provider:
+        env["QUANT_DATA_FIXTURE_PROVIDER"] = "1"
+    process = subprocess.run(
+        command,
+        input=json.dumps(input_payload) + "\n",
+        text=True,
+        cwd=args.quant_data_cwd,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if process.returncode != 0:
+        detail = process.stderr.strip() or process.stdout.strip() or "no output"
+        raise RuntimeError(f"quant-data exited with {process.returncode}: {detail}")
+    try:
+        return json.loads(process.stdout)
+    except json.JSONDecodeError as error:
+        raise RuntimeError(f"quant-data returned invalid JSON: {error}") from error
+
+
+def analyze(args: argparse.Namespace) -> dict[str, Any]:
+    end = args.end or utc_today()
+    start = args.start or shift_days(end, -args.lookback_days)
+    input_payload = {
+        "symbol": args.symbol,
+        "market": args.market,
+        "start": start,
+        "end": end,
+    }
+    if args.asset_id:
+        input_payload["assetId"] = args.asset_id
+
+    try:
+        envelope = run_quant_data(args, input_payload)
+    except RuntimeError as error:
+        return unavailable_result(
+            asset_id=args.asset_id,
+            data_gaps=[f"quant-data invocation failed: {error}"],
+            end=end,
+            market=args.market,
+            start=start,
+            symbol=args.symbol,
+        )
+
+    if not envelope.get("ok"):
+        maintenance_error = envelope.get("maintenanceError") or {}
+        code = maintenance_error.get("code") or "QUANT_DATA_UNAVAILABLE"
+        message = (
+            maintenance_error.get("message")
+            or "quant-data returned an unavailable envelope"
+        )
+        return unavailable_result(
+            asset_id=args.asset_id,
+            data_gaps=[f"{code}: {message}"],
+            end=end,
+            market=args.market,
+            start=start,
+            symbol=args.symbol,
+        )
+
+    rows = normalize_rows((envelope.get("data") or {}).get("prices") or [])
+    if not rows:
+        return unavailable_result(
+            asset_id=args.asset_id,
+            data_gaps=["quant-data returned no usable daily OHLC rows"],
+            end=end,
+            market=args.market,
+            start=start,
+            symbol=args.symbol,
+        )
+
+    return analyze_rows(
+        asset_id=args.asset_id,
+        end=end,
+        envelope=envelope,
+        market=args.market,
+        rows=rows,
+        start=start,
+        symbol=args.symbol,
+    )
+
+
+def main() -> int:
+    args = parse_args()
+    result = analyze(args)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

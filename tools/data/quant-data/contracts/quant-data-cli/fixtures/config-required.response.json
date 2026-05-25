@@ -1,0 +1,11 @@
+{
+    "ok": false,
+    "maintenanceError": {
+        "code": "CONFIG_REQUIRED",
+        "message": "Configure provider credentials under ~/.quant_data/config."
+    },
+    "maintenanceStatus": {
+        "running": false,
+        "queuedTasks": 0
+    }
+}

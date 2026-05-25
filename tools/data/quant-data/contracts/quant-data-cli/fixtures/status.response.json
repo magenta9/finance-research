@@ -1,0 +1,17 @@
+{
+    "ok": true,
+    "dataQualityStatus": "available",
+    "data": {
+        "storeVersion": 1,
+        "storePath": "/tmp/quant-data/quant-data.sqlite3",
+        "stats": {
+            "priceRowCount": 12,
+            "fxRateRowCount": 4,
+            "latestPriceFetchAt": "2026-05-17T00:00:00Z"
+        }
+    },
+    "maintenanceStatus": {
+        "running": false,
+        "queuedTasks": 0
+    }
+}

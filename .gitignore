@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Go
+tools/data/quant-data/quant-data
+
+# Local agent/tool state
+.opencode
+.finance-research/
+
+# Generic build/test output
+dist/
+build/
+coverage/
