@@ -67,14 +67,18 @@ func (LiveProvider) Mode() string {
 	return "live"
 }
 
-func (provider LiveProvider) SearchAssets(query string, market string, assetClass string, exactMatch bool) []Asset {
+func (provider LiveProvider) SearchAssets(query string, market string, assetClass string, exactMatch bool) AssetSearchResult {
 	assetsByKey := map[string]Asset{}
+	attempted := []string{}
+	warnings := []string{}
 	for _, providerID := range provider.policy.SearchOrder(market) {
 		backend := provider.backends[providerID]
 		if backend == nil {
 			continue
 		}
-		assets, _ := backend.SearchAssets(query, market, assetClass, exactMatch)
+		attempted = append(attempted, providerID)
+		assets, providerWarnings := backend.SearchAssets(query, market, assetClass, exactMatch)
+		warnings = append(warnings, providerWarnings...)
 		for _, asset := range assets {
 			key := strings.ToUpper(asset.Symbol + "|" + asset.Market)
 			if _, exists := assetsByKey[key]; !exists {
@@ -93,7 +97,7 @@ func (provider LiveProvider) SearchAssets(query string, market string, assetClas
 		}
 		return assets[i].Market < assets[j].Market
 	})
-	return assets
+	return AssetSearchResult{Assets: assets, AttemptedSources: attempted, Warnings: dedupeStrings(warnings)}
 }
 
 func (provider LiveProvider) GetPriceSeries(symbol string, market string, start string, end string) PriceSeriesResult {

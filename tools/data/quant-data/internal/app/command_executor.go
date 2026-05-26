@@ -69,12 +69,13 @@ func (executor commandExecutor) Run() int {
 func (executor commandExecutor) invoke() commandResult {
 	switch executor.method {
 	case "search-assets":
-		return commandResult{data: executor.dataProvider.SearchAssets(
+		result := executor.dataProvider.SearchAssets(
 			readString(executor.input, "query"),
 			readString(executor.input, "market"),
 			readString(executor.input, "assetClass"),
 			readBool(executor.input, "exactMatch"),
-		), qualityStatus: "available", implemented: true}
+		)
+		return commandResult{data: result.Assets, qualityStatus: "available", implemented: true, provenance: assetSearchProvenance(result)}
 	case "get-price-series":
 		result := executor.dataProvider.GetPriceSeries(readString(executor.input, "symbol"), readString(executor.input, "market"), readString(executor.input, "start"), readString(executor.input, "end"))
 		if assetID := readString(executor.input, "assetId"); assetID != "" {
@@ -102,6 +103,17 @@ func (executor commandExecutor) invoke() commandResult {
 	default:
 		return commandResult{}
 	}
+}
+
+func assetSearchProvenance(result provider.AssetSearchResult) map[string]any {
+	provenance := map[string]any{
+		"attemptedProviders": result.AttemptedSources,
+		"warnings":           result.Warnings,
+	}
+	if len(result.Assets) > 0 {
+		provenance["selectedSource"] = result.Assets[0].Source
+	}
+	return provenance
 }
 
 func resultProvenance(sourceID string, extra map[string]any) map[string]any {

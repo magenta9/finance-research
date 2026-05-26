@@ -11,6 +11,12 @@ type Asset struct {
 	Metadata   map[string]any `json:"metadata"`
 }
 
+type AssetSearchResult struct {
+	Assets           []Asset  `json:"assets"`
+	AttemptedSources []string `json:"attemptedSources"`
+	Warnings         []string `json:"warnings"`
+}
+
 type PriceRow struct {
 	AdjustedClose    *float64 `json:"adjustedClose"`
 	CalculationClose *float64 `json:"calculationClose,omitempty"`

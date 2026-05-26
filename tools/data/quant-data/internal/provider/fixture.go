@@ -37,10 +37,10 @@ var fixtureAssets = []Asset{
 }
 
 func SearchAssets(query string, market string, assetClass string, exactMatch bool) []Asset {
-	return NewFixtureProvider().SearchAssets(query, market, assetClass, exactMatch)
+	return NewFixtureProvider().SearchAssets(query, market, assetClass, exactMatch).Assets
 }
 
-func (FixtureProvider) SearchAssets(query string, market string, assetClass string, exactMatch bool) []Asset {
+func (FixtureProvider) SearchAssets(query string, market string, assetClass string, exactMatch bool) AssetSearchResult {
 	query = strings.ToLower(strings.TrimSpace(query))
 	market = strings.ToUpper(strings.TrimSpace(market))
 	matches := make([]Asset, 0, len(fixtureAssets))
@@ -71,7 +71,7 @@ func (FixtureProvider) SearchAssets(query string, market string, assetClass stri
 		}
 		return matches[i].Market < matches[j].Market
 	})
-	return matches
+	return AssetSearchResult{Assets: matches, AttemptedSources: []string{FixtureSource}, Warnings: []string{}}
 }
 
 func GetPriceSeries(symbol string, market string, start string, end string) PriceSeriesResult {
