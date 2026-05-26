@@ -78,6 +78,10 @@ func normalizeCommandField(value any, kind commandFieldKind) (any, error) {
 		if text, ok := value.(string); ok {
 			return strings.TrimSpace(text), nil
 		}
+		switch value.(type) {
+		case bool, []any, map[string]any:
+			return nil, fmt.Errorf("must be a string")
+		}
 		return strings.TrimSpace(fmt.Sprint(value)), nil
 	case commandBoolField:
 		if value, ok := value.(bool); ok {

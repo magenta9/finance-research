@@ -29,6 +29,33 @@ func TestHelpJSON(t *testing.T) {
 	}
 }
 
+func TestEnvelopeSchemaIncludesEmittedMaintenanceCodes(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "contracts", "quant-data-cli", "envelope.schema.json"))
+	if err != nil {
+		t.Fatalf("read envelope schema: %v", err)
+	}
+	var schema map[string]any
+	if err := json.Unmarshal(content, &schema); err != nil {
+		t.Fatalf("parse envelope schema: %v", err)
+	}
+
+	properties := schema["properties"].(map[string]any)
+	maintenanceError := properties["maintenanceError"].(map[string]any)
+	errorProperties := maintenanceError["properties"].(map[string]any)
+	codeProperty := errorProperties["code"].(map[string]any)
+	enumValues := codeProperty["enum"].([]any)
+	codes := map[string]bool{}
+	for _, value := range enumValues {
+		codes[value.(string)] = true
+	}
+
+	for _, code := range []string{"CONFIG_REQUIRED", "CONFIG_INSECURE", "INVALID_COMMAND_INPUT", "PROVIDER_UNAVAILABLE", "STORE_REPAIR_REQUIRED"} {
+		if !codes[code] {
+			t.Fatalf("envelope schema missing maintenanceError code %s", code)
+		}
+	}
+}
+
 func TestDataMethodReturnsConfigRequiredEnvelope(t *testing.T) {
 	t.Setenv("QUANT_DATA_HOME", t.TempDir())
 
@@ -122,6 +149,7 @@ func TestCommandValidationRejectsInvalidInput(t *testing.T) {
 		field  string
 	}{
 		{name: "search missing query", method: "search-assets", input: `{}`, field: "query"},
+		{name: "search malformed query", method: "search-assets", input: `{"query":true}`, field: "query"},
 		{name: "search malformed exact match", method: "search-assets", input: `{"query":"SPY","exactMatch":"true"}`, field: "exactMatch"},
 		{name: "price missing symbol", method: "get-price-series", input: `{"start":"2025-01-01","end":"2025-01-31"}`, field: "symbol"},
 		{name: "price invalid start", method: "get-price-series", input: `{"symbol":"510300","start":"20250101","end":"2025-01-31"}`, field: "start"},

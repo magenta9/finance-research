@@ -50,3 +50,16 @@ func TestNormalizeCommandInputRejectsInvalidBool(t *testing.T) {
 		t.Fatalf("unexpected error: %#v", err)
 	}
 }
+
+func TestNormalizeCommandInputRejectsCompoundStringField(t *testing.T) {
+	_, err := normalizeCommandInput("search-assets", map[string]any{"query": map[string]any{"symbol": "SPY"}})
+	if err == nil {
+		t.Fatalf("expected normalization error")
+	}
+	if err.Code != "INVALID_COMMAND_INPUT" || err.Details.(map[string]any)["field"] != "query" {
+		t.Fatalf("unexpected error: %#v", err)
+	}
+	if err.Message != "must be a string" {
+		t.Fatalf("message = %q, want must be a string", err.Message)
+	}
+}
