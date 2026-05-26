@@ -685,11 +685,20 @@ def resolve_asset(
                 "message": str(error.get("message") or "标的解析失败。"),
             }
         ]
-    assets = envelope.get("data") or []
+    assets = envelope.get("data")
+    if assets is None:
+        assets = []
+    if not isinstance(assets, list) or any(not isinstance(asset, dict) for asset in assets):
+        return None, [
+            {
+                "code": "asset_search_invalid_response",
+                "message": "quant-data search-assets 返回的 data 必须是标的数组。",
+            }
+        ]
     if not assets:
         return None, [{"code": "asset_not_found", "message": f"未解析到标的：{query}"}]
 
-    if len(assets) == 1 and isinstance(assets[0], dict):
+    if len(assets) == 1:
         return assets[0], []
 
     return None, [
@@ -718,7 +727,27 @@ def fetch_prices(
                 "message": str(error.get("message") or "价格序列获取失败。"),
             }
         ]
-    rows = normalize_price_rows((envelope.get("data") or {}).get("prices") or [])
+    data = envelope.get("data")
+    if data is None:
+        data = {}
+    if not isinstance(data, dict):
+        return [], [
+            {
+                "code": "price_fetch_invalid_response",
+                "message": "quant-data get-price-series 返回的 data 必须是对象。",
+            }
+        ]
+    price_rows = data.get("prices") or []
+    if not isinstance(price_rows, list) or any(
+        not isinstance(row, dict) for row in price_rows
+    ):
+        return [], [
+            {
+                "code": "price_fetch_invalid_response",
+                "message": "quant-data get-price-series 返回的 prices 必须是数组。",
+            }
+        ]
+    rows = normalize_price_rows(price_rows)
     if not rows:
         return [], [
             {
