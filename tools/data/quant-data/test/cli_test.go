@@ -29,6 +29,29 @@ func TestHelpJSON(t *testing.T) {
 	}
 }
 
+func TestHelpFixtureMatchesRuntimeMethods(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "contracts", "quant-data-cli", "fixtures", "help.json"))
+	if err != nil {
+		t.Fatalf("read help fixture: %v", err)
+	}
+	var help app.HelpDocument
+	if err := json.Unmarshal(content, &help); err != nil {
+		t.Fatalf("invalid help fixture JSON: %v", err)
+	}
+
+	if help.ContractVersion != app.ContractVersion {
+		t.Fatalf("fixture contract version = %q, want %q", help.ContractVersion, app.ContractVersion)
+	}
+	if len(help.Methods) != len(app.RequiredMethods) {
+		t.Fatalf("fixture method count = %d, want %d", len(help.Methods), len(app.RequiredMethods))
+	}
+	for index, method := range app.RequiredMethods {
+		if help.Methods[index].Name != method {
+			t.Fatalf("fixture method[%d] = %q, want %q", index, help.Methods[index].Name, method)
+		}
+	}
+}
+
 func TestEnvelopeSchemaIncludesEmittedMaintenanceCodes(t *testing.T) {
 	content, err := os.ReadFile(filepath.Join("..", "contracts", "quant-data-cli", "envelope.schema.json"))
 	if err != nil {
