@@ -14,12 +14,13 @@ description: 分析两个指数、ETF 或基金之间的轮动三棱镜相对强
 - 最终回答只输出分析报告本身;不要输出调用过程、工具日志、脚本原始 JSON、验证通过话术或"是否继续分析"的追问。
 - 数据只能通过外部 `quant-data` CLI 获取,不直接读取数据库,不复制行情源实现。
 - 分析前必须先验证 `quant-data` CLI 可启动且 contract 兼容;如果未安装,明确告诉用户先运行 `make quant-data-install` 或提供 `--quant-data` 路径。
-- 用户可输入名称或代码;必须先通过 quant-data 解析并确认标的,歧义时先追问。
+- 用户可输入名称或代码;必须先通过 quant-data 解析并确认无歧义。
+- 标的解析失败（未找到或歧义）时，**直接返回失败报告**，不追问用户、不猜测、不使用代理标的。
 - 比值方向严格使用用户输入顺序:`ratio = asset_a / asset_b`。
 - Agent 最终报告使用中文 Markdown,不输出 JSON。
 - 最终报告必须逐字使用 `docs/output-format.md` 中的七个 `##` 二级标题,不要改名、不要编号、不要额外添加顶层标题、不要把章节降级为 `###`。
 - 报告中的所有结论必须能追溯到 `scripts/analyze.py` 返回的脚本 JSON 字段。
-- 除非标的解析存在歧义且无法运行脚本,否则最终回答不要向用户提问。同一标的也是合法输入,运行脚本并输出中性/无法评级报告。
+- 解析成功后，直接运行脚本输出报告，不需要向用户确认。
 
 ## Quick Start
 
@@ -37,12 +38,49 @@ uv run python scripts/analyze.py --asset-a 510300 --asset-b 512100 --quant-data 
 
 ## Workflow
 
-1. 明确输入:`asset_a`、`asset_b`,可选 `start`、`end`、参数覆盖项。
-2. 先验证 `quant-data` CLI;缺失时停止市场判断,只报告安装要求。
-3. 使用 quant-data 解析两个标的并确认无歧义。
-4. 运行 `scripts/analyze.py` 获取脚本 JSON 证据。
-5. 如果脚本结果不可用,只报告数据缺口,不做市场判断。
-6. 按七段式输出中文 Markdown 报告。格式契约见 `docs/output-format.md`。
+### 第一步：验证 quant-data CLI
+先确认 `quant-data` CLI 可用：
+```bash
+quant-data help --json
+```
+如果失败，明确告知用户先运行 `make quant-data-install` 或提供 `--quant-data` 路径，然后**直接返回失败**，不做市场判断。
+
+### 第二步：解析标的
+分别调用 quant-data 解析两个标的。使用 `assetClass` 过滤和 `exactMatch` 参数来缩小结果范围。
+
+**解析策略（按顺序尝试）：**
+
+1. **先用名称搜索 + assetClass=index**（排除股票干扰）：
+   ```bash
+   quant-data search-assets --json '{"query": "<标的>", "assetClass": "index"}'
+   ```
+2. **若返回恰好 1 个结果**：直接使用。
+3. **若返回多个结果**：按优先级消歧：
+   a. **名称精确匹配**：选名称完全等于查询词的结果。
+   b. **排除细分类**：排除名称含红利、低贝塔、高贝塔、成长、价值、动态、稳定、信息、通信、全收益、净收益的结果。
+   c. **排除汇率变体**：排除名称含 USD/HKD/GBP/SGD 等货币代码的结果。
+   d. **仍有多个**：取最短名称（最通用/基准）。
+4. **若返回 0 个结果**：
+   a. 若查询词是已知指数的 tsCode 格式（如 `000922.CSI`、`399006.SZ`），直接用 `quant-data get-price-series` 验证数据可用性，验证通过则直接使用。
+   b. 若查询词是常见指数简称，quant-data 的 `knownIndexAliases` 已内置映射（如 "中证消费" → `399932.SZ`，"沪深300" → `000300.CSI`）。直接用验证步骤确认数据可用后使用。
+   c. 若以上均失败，返回失败报告。
+5. **若解析结果 assetClass 为 equity**：说明查询词同时匹配了股票代码，改用 tsCode 直接查询：`{"query": "<symbol>.CSI", "assetClass": "index"}`，确保命中指数而非股票。
+
+### 第三步：运行分析脚本
+使用解析得到的精确代码调用脚本：
+```bash
+uv run python .agents/skills/rotation-prism/scripts/analyze.py \
+  --asset-a <解析得到的 asset_a 代码> \
+  --market-a <解析得到的 asset_a market> \
+  --asset-b <解析得到的 asset_b 代码> \
+  --market-b <解析得到的 asset_b market> \
+  --end <YYYY-MM-DD>
+```
+
+### 第四步：输出报告
+如果脚本返回 `status: unavailable`，只报告数据缺口，不做市场判断。
+
+如果脚本返回 `status: available`，按七段式输出中文 Markdown 报告。格式契约见 `docs/output-format.md`。
 
 推荐从仓库根目录调用脚本,避免工作目录不确定:
 
