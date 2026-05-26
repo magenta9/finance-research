@@ -16,26 +16,30 @@
 - 这几条不是建议，而是阻塞规则。即使当前任务只是解释原因、同步状态、道歉、确认完成，也同样适用。
 
 ## Tool Repository
-- This repository is now organized around reusable finance tools, not the old desktop app stack.
-- Do not reintroduce Electron, React, pnpm workspace, TypeScript monorepo, or `packages/*` infrastructure unless the user explicitly approves a new plan.
-- Register reusable tools in `tools/catalog.yaml`. Each entry must declare `id`, `category`, `stage`, `runtime`, `entrypoints`, `inputs`, `outputs`, `dependsOn`, and `verification`.
-- Valid categories are `data`, `strategy`, and `job`. Valid stages are `development`, `production`, `mature`, and `deprecated`.
+- 当前仓库围绕生产级 Agent Skill 和保留的金融工具组织，不再回到旧桌面应用栈。
+- 除非用户明确批准新方案，不要重新引入 Electron、React、pnpm workspace、TypeScript monorepo 或 `packages/*` 基础设施。
+- 生产级 Agent Skill 可以在 `.agents/skills/<skill-id>/` 下自包含，包含迁移所需的脚本、fixture、验证驱动和支撑文档。
+- 自包含 Agent Skill 不需要登记到仓库级工具目录。
+- `tools/` 仍可用于保留在仓库中的工具和共享基础设施，但不再是 skill-owned 实现的强制位置。
+- 当 Skill 拥有可执行行为时，它的 `SKILL.md` 必须声明入口、数据依赖、输出契约和验证流程。
 
 ## Go
-- `tools/data/quant-data/` is the canonical Go data acquisition CLI.
-- Run `make quant-data-test` or `cd tools/data/quant-data && go test ./...` after changing Go code, contracts used by Go, or provider policy behavior.
-- Keep provider policy discovery compatible with `tools/data/quant-data/contracts/market-data-policy.json` unless a separate migration is approved.
+- `tools/data/quant-data/` 是保留在本仓库中的 Go 行情数据 CLI。
+- 修改 Go 代码、Go 使用的契约或 provider policy 行为后，运行 `make quant-data-test` 或 `cd tools/data/quant-data && go test ./...`。
+- 除非另行批准迁移，保持 provider policy discovery 兼容 `tools/data/quant-data/contracts/market-data-policy.json`。
 
 ## Python
-- Put reusable strategy implementation under `tools/strategy/<tool-id>/`.
-- Put scheduled or batch wrappers under `tools/jobs/`.
-- Keep `.agents/skills/**` as Agent-facing adapters. Do not put reusable strategy logic there when it can live under `tools/strategy/`.
-- Prefer Python standard library for lightweight validation and wrappers unless a dependency is clearly justified.
+- 保留在仓库中的策略实现放在 `tools/strategy/<tool-id>/`。
+- 当可迁移性是主要目标时，skill-owned 策略实现放在 `.agents/skills/<skill-id>/scripts/`。
+- 定时或批处理包装仍放在 `tools/jobs/`。
+- 如果 Skill 需要独立于本仓库迁移，Agent Skill 可以包含生产级脚本。
+- 轻量验证和包装优先使用 Python 标准库，除非有明确理由引入依赖。
 
 ## Verification
-- Use `make tool-catalog-check` after editing `tools/catalog.yaml` or moving tool entrypoints.
-- Use `make strategy-test` after changing futures trend observation Python code.
-- Use `make test` for retained-stack verification before reporting cleanup work as complete.
+- 修改 skill-owned 脚本、fixture 或输出契约后，按对应生产级 Skill 的 `SKILL.md` 声明的验证流程执行。
+- 当 Skill 需要验证 Agent runtime 能发现并调用它时，验证名称统一使用 `agent smoke`，不要绑定到具体 SDK 或供应商名称。
+- 修改期货趋势观察 Python 代码后，运行 `make strategy-test`。
+- 报告保留栈清理工作完成前，运行 `make test`。
 
 ## Agent skills
 
