@@ -21,11 +21,16 @@ refresh_index_aliases.py
     - 依赖已知标准名称表（手动维护，覆盖常用指数）
     - make refresh-index-aliases 调用此脚本，输出 Go 代码供替换
 """
+
 import subprocess
 import json
 import sys
 import re
 from datetime import date
+from pathlib import Path
+
+
+QUANT_DATA_DIR = Path(__file__).resolve().parents[1]
 
 
 def run_quant_data(query: str, asset_class: str = "") -> list[dict]:
@@ -34,9 +39,12 @@ def run_quant_data(query: str, asset_class: str = "") -> list[dict]:
     if asset_class:
         input_data["assetClass"] = asset_class
     result = subprocess.run(
-        ["quant-data", "search-assets", "--json", json.dumps(input_data)],
-        capture_output=True, text=True, timeout=30,
-        cwd="/Users/zhang/code/ai/finance-research/tools/data/quant-data",
+        ["quant-data", "search-assets"],
+        input=json.dumps(input_data, ensure_ascii=False) + "\n",
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=QUANT_DATA_DIR,
     )
     if result.returncode != 0:
         return []
@@ -52,104 +60,93 @@ def run_quant_data(query: str, asset_class: str = "") -> list[dict]:
 # tsCode 格式: .SZ (深交所), .SH (上交所), .CSI (中证指数公司)
 INDEX_ALIASES: dict[str, str] = {
     # === 宽基 ===
-    "沪深300":        "000300.SZ",
-    "中证500":        "000905.CSI",
-    "中证1000":       "000852.CSI",
-    "创业板指":       "399006.SZ",
-    "创业板50":       "399673.SZ",
-    "科创50":         "000688.SH",
-    "科创100":        "000689.CSI",
-    "科创200":        "000689.CSI",  # 待确认
-    "上证50":         "000016.SH",
-    "上证指数":       "000001.SH",
-    "深证成指":       "399001.SZ",
-    "国证A指":        "399001.SZ",  # 深证成指≈国证A
-    "国证2000":       "399303.SZ",
-    "北证50":         "899050.BJ",
-
+    "沪深300": "000300.SZ",
+    "中证500": "000905.CSI",
+    "中证1000": "000852.CSI",
+    "创业板指": "399006.SZ",
+    "创业板50": "399673.SZ",
+    "科创50": "000688.SH",
+    "科创100": "000689.CSI",
+    "科创200": "000689.CSI",  # 待确认
+    "上证50": "000016.SH",
+    "上证指数": "000001.SH",
+    "深证成指": "399001.SZ",
+    "国证A指": "399001.SZ",  # 深证成指≈国证A
+    "国证2000": "399303.SZ",
+    "北证50": "899050.BJ",
     # === 红利/低波 ===
-    "中证红利":       "000922.CSI",
-    "红利低波":       "000822.CSI",
-    "300红利":        "000821.CSI",
-    "500红利":        "000822.CSI",  # 待确认
-    "中证红利质量":   "932315.CSI",
-
+    "中证红利": "000922.CSI",
+    "红利低波": "h30269.CSI",
+    "300红利": "000821.CSI",
+    "500红利": "000822.CSI",  # 待确认
+    "中证红利质量": "932315.CSI",
     # === 消费 ===
-    "中证消费":       "399932.SZ",
-    "全指消费":       "000990.CSI",
-    "主要消费":       "000932.CSI",
-    "可选消费":       "000989.CSI",
-    "消费服务":       "000806.CSI",
-
+    "中证消费": "399932.SZ",
+    "全指消费": "000990.CSI",
+    "主要消费": "000932.CSI",
+    "可选消费": "000989.CSI",
+    "消费服务": "000806.CSI",
     # === 医药 ===
-    "中证医药":       "000933.SZ",
-    "全指医药":       "000991.CSI",
-    "300医药":        "000913.CSI",
-    "中证医疗":       "399395.SZ",
-
+    "中证医药": "000933.SZ",
+    "全指医药": "000991.CSI",
+    "300医药": "000913.CSI",
+    "中证医疗": "399395.SZ",
     # === 金融 ===
-    "中证银行":       "399986.SZ",
-    "300银行":        "000951.CSI",
-    "中证证券":       "399975.SZ",
-    "中证保险":       "399809.SZ",
-
+    "中证银行": "399986.SZ",
+    "300银行": "000951.CSI",
+    "中证证券": "399975.SZ",
+    "中证保险": "399809.SZ",
     # === 科技/制造 ===
-    "中证军工":       "399967.SZ",
-    "中证电子":       "000987.CSI",
-    "中证半导体":     "931087.CSI",
-    "中证计算机":     "000986.CSI",
-    "中证通信":       "000993.CSI",
-    "中证汽车":       "000927.CSI",
-
+    "中证军工": "399967.SZ",
+    "中证电子": "000987.CSI",
+    "中证半导体": "931087.CSI",
+    "中证计算机": "000986.CSI",
+    "中证通信": "000993.CSI",
+    "中证汽车": "000927.CSI",
     # === 能源/原材料 ===
-    "中证煤炭":       "399998.SZ",
-    "中证有色金属":   "000819.CSI",
-    "中证钢铁":       "000932.CSI",  # 实际是材料，待确认
-    "中证能源":       "000928.CSI",
-    "中证化工":       "000932.CSI",  # 待确认
-
+    "中证煤炭": "399998.SZ",
+    "中证有色金属": "000819.CSI",
+    "中证钢铁": "000932.CSI",  # 实际是材料，待确认
+    "中证能源": "000928.CSI",
+    "中证化工": "000932.CSI",  # 待确认
     # === 消费细分 ===
-    "中证白酒":       "399997.SZ",
-    "中证食品饮料":   "000396.CSI",
-
+    "中证白酒": "399997.SZ",
+    "中证食品饮料": "000396.CSI",
     # === 房地产/基建 ===
-    "中证房地产":     "399393.SZ",
-    "中证基建":       "399965.SZ",
-    "中证建筑材料":   "399995.SZ",
-
+    "中证房地产": "399393.SZ",
+    "中证基建": "399965.SZ",
+    "中证建筑材料": "399995.SZ",
     # === 风格 ===
-    "中证价值":       "000920.CSI",
-    "中证成长":       "000921.CSI",
-    "300价值":        "000919.CSI",
-    "300成长":        "000918.CSI",
-    "500价值":        "000515.CSI",
-    "500成长":        "000516.CSI",
-    "1000价值":       "000062.CSI",
-    "1000成长":       "000063.CSI",
-
+    "中证价值": "000920.CSI",
+    "中证成长": "000921.CSI",
+    "300价值": "000919.CSI",
+    "300成长": "000918.CSI",
+    "500价值": "000515.CSI",
+    "500成长": "000516.CSI",
+    "1000价值": "000062.CSI",
+    "1000成长": "000063.CSI",
     # === 债券 ===
-    "中证国债":       "H11001.CSI",
-    "中证信用债":     "H11007.CSI",
-
+    "中证国债": "H11001.CSI",
+    "中证信用债": "H11007.CSI",
     # === 其他常用 ===
-    "茅指数":         "8841161.WI",  # Wind 茅指数
-    "宁组合":         "8841675.WI",  # Wind 宁组合
-    "中证新能源":     "000941.CSI",
-    "中证家电":       "000903.CSI",
-    "中证传媒":       "000971.CSI",
-    "中证轻工制造":   "000926.CSI",
-    "中证商贸零售":   "000987.CSI",  # 待确认
-    "中证农林牧渔":   "000949.CSI",
-    "中证电力设备":   "000927.CSI",  # 待确认
-    "中证机械设备":   "000928.CSI",  # 待确认
-    "中证交通运输":   "000928.CSI",  # 待确认
+    "茅指数": "8841161.WI",  # Wind 茅指数
+    "宁组合": "8841675.WI",  # Wind 宁组合
+    "中证新能源": "000941.CSI",
+    "中证家电": "000903.CSI",
+    "中证传媒": "000971.CSI",
+    "中证轻工制造": "000926.CSI",
+    "中证商贸零售": "000987.CSI",  # 待确认
+    "中证农林牧渔": "000949.CSI",
+    "中证电力设备": "000927.CSI",  # 待确认
+    "中证机械设备": "000928.CSI",  # 待确认
+    "中证交通运输": "000928.CSI",  # 待确认
     "中证电力及公用事业": "000923.CSI",  # 待确认
-    "中证资源":       "000928.CSI",  # 待确认
-    "中证制造":       "000927.CSI",  # 待确认
-    "中证工业":       "000927.CSI",  # 待确认
-    "中证信息技术":   "000986.CSI",
-    "中证原材料":     "000928.CSI",
-    "中证金融":       "000934.CSI",
+    "中证资源": "000928.CSI",  # 待确认
+    "中证制造": "000927.CSI",  # 待确认
+    "中证工业": "000927.CSI",  # 待确认
+    "中证信息技术": "000986.CSI",
+    "中证原材料": "000928.CSI",
+    "中证金融": "000934.CSI",
 }
 
 
@@ -168,7 +165,7 @@ def resolve_tscode(query: str, asset_class: str = "index") -> tuple[str, str]:
 
 def verify_alias(display_name: str, ts_code: str) -> tuple[bool, str, str]:
     """Verify an alias mapping."""
-    if re.match(r"^\d{6}\.(CSI|SZ|SH|BJ)$", ts_code, re.IGNORECASE):
+    if re.match(r"^[A-Z]?\d{5,6}\.(CSI|SZ|SH|BJ)$", ts_code, re.IGNORECASE):
         # tsCode-like value: try direct lookup
         resolved_ts, resolved_name = resolve_tscode(ts_code)
         if resolved_ts:
@@ -179,19 +176,25 @@ def verify_alias(display_name: str, ts_code: str) -> tuple[bool, str, str]:
 
 def main():
     today = date.today().isoformat()
-    print(f"# // Generated by scripts/refresh_index_aliases.py on {today}", file=sys.stderr)
-    print(f"# // Do not edit manually; run `make refresh-index-aliases` to regenerate.", file=sys.stderr)
+    print(
+        f"# // Generated by scripts/refresh_index_aliases.py on {today}",
+        file=sys.stderr,
+    )
+    print(
+        f"# // Do not edit manually; run `make refresh-index-aliases` to regenerate.",
+        file=sys.stderr,
+    )
     print(f"# // Found {len(INDEX_ALIASES)} aliases to verify...", file=sys.stderr)
 
     lines = [
         "// knownIndexAliases maps colloquial or partial index names to their canonical names",
         "// or tsCodes that exist in the tushare index_basic table.",
         "//",
-        "// This handles cases where the user's query (e.g. \"中证消费\") does not match",
+        '// This handles cases where the user\'s query (e.g. "中证消费") does not match',
         "// any index name exactly but corresponds to a known broad-market index.",
         "//",
-        "// SZ/SH indices store the tsCode itself as the name in index_basic (e.g. \"000300.SZ\"),",
-        "// so there is no programmatic way to map \"沪深300\" → \"000300.SZ\" without this table.",
+        '// SZ/SH indices store the tsCode itself as the name in index_basic (e.g. "000300.SZ"),',
+        '// so there is no programmatic way to map "沪深300" → "000300.SZ" without this table.',
         "//",
         f"// Generated by scripts/refresh_index_aliases.py on {today}",
         "// Generated by: make refresh-index-aliases",
@@ -208,12 +211,14 @@ def main():
         ts_code = INDEX_ALIASES[display_name]
         ok, resolved_ts, resolved_name = verify_alias(display_name, ts_code)
         if ok:
-            lines.append(f'\t\"{display_name}\": \"{resolved_ts}\", // → {resolved_name}')
+            lines.append(f'\t"{display_name}": "{resolved_ts}", // → {resolved_name}')
             verified += 1
-            print(f"  ✓ {display_name} → {resolved_ts} ({resolved_name})", file=sys.stderr)
+            print(
+                f"  ✓ {display_name} → {resolved_ts} ({resolved_name})", file=sys.stderr
+            )
         else:
             # Keep original mapping, mark as unverified
-            lines.append(f'\t\"{display_name}\": \"{ts_code}\", // [UNVERIFIED]')
+            lines.append(f'\t"{display_name}": "{ts_code}", // [UNVERIFIED]')
             skipped += 1
             print(f"  ? {display_name} → {ts_code} [UNVERIFIED]", file=sys.stderr)
 
