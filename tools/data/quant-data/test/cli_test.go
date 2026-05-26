@@ -173,6 +173,20 @@ func TestProviderMethodRejectsInvalidInputBeforeStoreOpen(t *testing.T) {
 	assertMaintenanceField(t, envelope, app.MaintenanceCodeInvalidCommandInput, "start")
 }
 
+func TestStoreOnlyMethodRejectsInvalidInputBeforeStoreOpen(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+	t.Setenv("QUANT_DATA_HOME", path)
+
+	envelope := runJSONCommand(t, "read-prices", `{"assetId":"asset-1","start":"2026-01-01"}`)
+	if envelope.OK {
+		t.Fatalf("expected ok=false envelope")
+	}
+	assertMaintenanceField(t, envelope, app.MaintenanceCodeInvalidCommandInput, "end")
+}
+
 func TestDataMethodHardensInsecureConfig(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("QUANT_DATA_HOME", home)

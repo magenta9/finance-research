@@ -229,7 +229,11 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 	}
 	input = normalizedInput
 
-	if !isStoreOnlyMethod(method) {
+	if isStoreOnlyMethod(method) {
+		if validationError := validateStoreOnlyCommandInput(method, input); validationError != nil {
+			return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: emptyMaintenanceStatus()})
+		}
+	} else {
 		if validationError := validateCommandInput(method, input); validationError != nil {
 			return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: emptyMaintenanceStatus()})
 		}
@@ -352,6 +356,13 @@ func runStoreOnlyMethod(method string, input map[string]any, dataStore *store.St
 			MaintenanceStatus: maintenanceStatus,
 		})
 	}
+}
+
+func validateStoreOnlyCommandInput(method string, input map[string]any) *MaintenanceError {
+	if method == "delete-prices" {
+		return validateDeletePricesInput(input)
+	}
+	return validateReadCommandInput(method, input)
 }
 
 func runDeletePrices(input map[string]any, dataStore *store.Store, maintenanceStatus map[string]any, stdout io.Writer) int {
