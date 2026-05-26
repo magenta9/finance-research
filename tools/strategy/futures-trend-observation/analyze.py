@@ -12,6 +12,9 @@ from typing import Any
 from trend_observation_engine import analyze_rows, normalize_rows, unavailable_result
 
 
+DEFAULT_QUANT_DATA_TIMEOUT_SECONDS = 30
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Analyze futures Trend Observation Setup from quant-data prices."
@@ -27,6 +30,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--quant-data-arg", action="append", default=[])
     parser.add_argument("--quant-data-cwd", default=os.getcwd())
+    parser.add_argument(
+        "--quant-data-timeout-seconds",
+        type=int,
+        default=DEFAULT_QUANT_DATA_TIMEOUT_SECONDS,
+    )
     parser.add_argument("--fixture-provider", action="store_true")
     return parser.parse_args()
 
@@ -43,19 +51,26 @@ def run_quant_data(
     args: argparse.Namespace, input_payload: dict[str, Any]
 ) -> dict[str, Any]:
     command = [args.quant_data, *args.quant_data_arg, "get-price-series"]
+    timeout_seconds = quant_data_timeout_seconds(args)
     env = os.environ.copy()
     if args.fixture_provider:
         env["QUANT_DATA_FIXTURE_PROVIDER"] = "1"
-    process = subprocess.run(
-        command,
-        input=json.dumps(input_payload) + "\n",
-        text=True,
-        cwd=args.quant_data_cwd,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
+    try:
+        process = subprocess.run(
+            command,
+            input=json.dumps(input_payload) + "\n",
+            text=True,
+            cwd=args.quant_data_cwd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=timeout_seconds,
+        )
+    except OSError as error:
+        raise RuntimeError(f"quant-data could not start: {error}") from error
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError(f"quant-data timed out after {timeout_seconds}s") from error
     if process.returncode != 0:
         detail = process.stderr.strip() or process.stdout.strip() or "no output"
         raise RuntimeError(f"quant-data exited with {process.returncode}: {detail}")
@@ -66,6 +81,13 @@ def run_quant_data(
     if not isinstance(envelope, dict):
         raise RuntimeError("quant-data returned non-object JSON envelope")
     return envelope
+
+
+def quant_data_timeout_seconds(args: argparse.Namespace) -> int:
+    value = getattr(
+        args, "quant_data_timeout_seconds", DEFAULT_QUANT_DATA_TIMEOUT_SECONDS
+    )
+    return value if isinstance(value, int) else DEFAULT_QUANT_DATA_TIMEOUT_SECONDS
 
 
 def malformed_quant_data_result(
@@ -84,6 +106,15 @@ def malformed_quant_data_result(
 def analyze(args: argparse.Namespace) -> dict[str, Any]:
     end = args.end or utc_today()
     start = args.start or shift_days(end, -args.lookback_days)
+    if quant_data_timeout_seconds(args) <= 0:
+        return unavailable_result(
+            asset_id=args.asset_id,
+            data_gaps=["quant-data-timeout-seconds must be greater than 0"],
+            end=end,
+            market=args.market,
+            start=start,
+            symbol=args.symbol,
+        )
     input_payload = {
         "symbol": args.symbol,
         "market": args.market,

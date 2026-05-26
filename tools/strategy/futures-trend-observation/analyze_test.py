@@ -30,12 +30,40 @@ def args() -> Namespace:
         quant_data="quant-data",
         quant_data_arg=[],
         quant_data_cwd=str(SCRIPT_DIR),
+        quant_data_timeout_seconds=30,
         start="2026-01-01",
         symbol="LH9999",
     )
 
 
 class AnalyzeQuantDataBoundaryTest(unittest.TestCase):
+    def test_invalid_quant_data_timeout_returns_unavailable(self) -> None:
+        test_args = args()
+        test_args.quant_data_timeout_seconds = 0
+
+        result = analyze_module.analyze(test_args)
+
+        self.assertEqual(result["overall"]["status"], "unavailable")
+        self.assertIn("quant-data-timeout-seconds", result["dataGaps"][0])
+
+    def test_run_quant_data_reports_timeout(self) -> None:
+        original = analyze_module.subprocess.run
+
+        def fake_run(*_args: object, **kwargs: object) -> object:
+            self.assertEqual(kwargs.get("timeout"), 9)
+            raise analyze_module.subprocess.TimeoutExpired(
+                cmd="quant-data", timeout=9
+            )
+
+        test_args = args()
+        test_args.quant_data_timeout_seconds = 9
+        try:
+            analyze_module.subprocess.run = fake_run
+            with self.assertRaisesRegex(RuntimeError, "timed out after 9s"):
+                analyze_module.run_quant_data(test_args, {"symbol": "LH9999"})
+        finally:
+            analyze_module.subprocess.run = original
+
     def test_malformed_maintenance_error_does_not_crash(self) -> None:
         original = analyze_module.run_quant_data
 
