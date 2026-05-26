@@ -52,7 +52,7 @@ func TestHelpFixtureMatchesRuntimeMethods(t *testing.T) {
 	}
 }
 
-func TestEnvelopeSchemaIncludesEmittedMaintenanceCodes(t *testing.T) {
+func TestEnvelopeSchemaMatchesKnownMaintenanceCodes(t *testing.T) {
 	content, err := os.ReadFile(filepath.Join("..", "contracts", "quant-data-cli", "envelope.schema.json"))
 	if err != nil {
 		t.Fatalf("read envelope schema: %v", err)
@@ -72,9 +72,39 @@ func TestEnvelopeSchemaIncludesEmittedMaintenanceCodes(t *testing.T) {
 		codes[value.(string)] = true
 	}
 
-	for _, code := range []string{app.MaintenanceCodeConfigRequired, app.MaintenanceCodeConfigInsecure, app.MaintenanceCodeInvalidCommandInput, app.MaintenanceCodeProviderUnavailable, app.MaintenanceCodeStoreRepairRequired} {
+	if len(codes) != len(app.MaintenanceErrorCodes) {
+		t.Fatalf("schema maintenance code count = %d, want %d", len(codes), len(app.MaintenanceErrorCodes))
+	}
+	for _, code := range app.MaintenanceErrorCodes {
 		if !codes[code] {
 			t.Fatalf("envelope schema missing maintenanceError code %s", code)
+		}
+	}
+}
+
+func TestEnvelopeFixturesUseKnownMaintenanceCodes(t *testing.T) {
+	knownCodes := map[string]bool{}
+	for _, code := range app.MaintenanceErrorCodes {
+		knownCodes[code] = true
+	}
+	paths, err := filepath.Glob(filepath.Join("..", "contracts", "quant-data-cli", "fixtures", "*.response.json"))
+	if err != nil {
+		t.Fatalf("glob response fixtures: %v", err)
+	}
+	for _, path := range paths {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read fixture %s: %v", path, err)
+		}
+		var envelope app.Envelope
+		if err := json.Unmarshal(content, &envelope); err != nil {
+			t.Fatalf("invalid fixture JSON %s: %v", path, err)
+		}
+		if envelope.MaintenanceError == nil {
+			continue
+		}
+		if !knownCodes[envelope.MaintenanceError.Code] {
+			t.Fatalf("fixture %s uses unknown maintenance code %s", path, envelope.MaintenanceError.Code)
 		}
 	}
 }
