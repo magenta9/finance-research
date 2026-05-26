@@ -60,9 +60,25 @@ def run_quant_data(
         detail = process.stderr.strip() or process.stdout.strip() or "no output"
         raise RuntimeError(f"quant-data exited with {process.returncode}: {detail}")
     try:
-        return json.loads(process.stdout)
+        envelope = json.loads(process.stdout)
     except json.JSONDecodeError as error:
         raise RuntimeError(f"quant-data returned invalid JSON: {error}") from error
+    if not isinstance(envelope, dict):
+        raise RuntimeError("quant-data returned non-object JSON envelope")
+    return envelope
+
+
+def malformed_quant_data_result(
+    args: argparse.Namespace, start: str, end: str, message: str
+) -> dict[str, Any]:
+    return unavailable_result(
+        asset_id=args.asset_id,
+        data_gaps=[message],
+        end=end,
+        market=args.market,
+        start=start,
+        symbol=args.symbol,
+    )
 
 
 def analyze(args: argparse.Namespace) -> dict[str, Any]:
@@ -90,9 +106,11 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         )
 
     if not envelope.get("ok"):
-        maintenance_error = envelope.get("maintenanceError") or {}
-        code = maintenance_error.get("code") or "QUANT_DATA_UNAVAILABLE"
-        message = (
+        maintenance_error = envelope.get("maintenanceError")
+        if not isinstance(maintenance_error, dict):
+            maintenance_error = {}
+        code = str(maintenance_error.get("code") or "QUANT_DATA_UNAVAILABLE")
+        message = str(
             maintenance_error.get("message")
             or "quant-data returned an unavailable envelope"
         )
@@ -105,7 +123,18 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
             symbol=args.symbol,
         )
 
-    rows = normalize_rows((envelope.get("data") or {}).get("prices") or [])
+    data = envelope.get("data")
+    if not isinstance(data, dict):
+        return malformed_quant_data_result(
+            args, start, end, "quant-data returned malformed price payload"
+        )
+    prices = data.get("prices")
+    if not isinstance(prices, list):
+        return malformed_quant_data_result(
+            args, start, end, "quant-data returned malformed price rows"
+        )
+
+    rows = normalize_rows(prices)
     if not rows:
         return unavailable_result(
             asset_id=args.asset_id,
