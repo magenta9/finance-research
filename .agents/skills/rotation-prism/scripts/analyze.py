@@ -20,6 +20,7 @@ DEFAULT_BOLLINGER_STD = 2.0
 DEFAULT_RETURN_DIFF_WINDOW = 40
 DEFAULT_RSI_PERIOD = 14
 EXPECTED_CONTRACT_VERSION = "quant-data-cli.v1"
+QUANT_DATA_TIMEOUT_SECONDS = 30
 
 
 @dataclass(frozen=True)
@@ -578,9 +579,14 @@ def run_quant_data(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,
+            timeout=QUANT_DATA_TIMEOUT_SECONDS,
         )
     except OSError as error:
         raise RuntimeError(f"quant-data {method} could not start: {error}") from error
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError(
+            f"quant-data {method} timed out after {QUANT_DATA_TIMEOUT_SECONDS}s"
+        ) from error
     if process.returncode != 0:
         detail = process.stderr.strip() or process.stdout.strip() or "no output"
         raise RuntimeError(
@@ -623,12 +629,20 @@ def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,
+            timeout=QUANT_DATA_TIMEOUT_SECONDS,
         )
     except OSError as error:
         return [
             {
                 "code": "quant_data_cli_missing",
                 "message": f"quant-data CLI 无法启动：{error}。请先运行 make quant-data-install，或通过 --quant-data 指定可执行文件路径。",
+            }
+        ]
+    except subprocess.TimeoutExpired:
+        return [
+            {
+                "code": "quant_data_cli_timeout",
+                "message": f"quant-data CLI 检查超过 {QUANT_DATA_TIMEOUT_SECONDS}s，已停止等待。",
             }
         ]
     if process.returncode != 0:
@@ -696,7 +710,9 @@ def resolve_asset(
     assets = envelope.get("data")
     if assets is None:
         assets = []
-    if not isinstance(assets, list) or any(not isinstance(asset, dict) for asset in assets):
+    if not isinstance(assets, list) or any(
+        not isinstance(asset, dict) for asset in assets
+    ):
         return None, [
             {
                 "code": "asset_search_invalid_response",

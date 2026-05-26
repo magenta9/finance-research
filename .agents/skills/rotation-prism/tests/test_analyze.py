@@ -129,11 +129,36 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertEqual(gaps[0]["code"], "quant_data_cli_incompatible")
         self.assertIn("contractVersion", gaps[0]["message"])
 
-    def test_run_quant_data_rejects_non_object_json_envelope(self) -> None:
+    def test_check_quant_data_reports_timeout(self) -> None:
         original = analyze_module.subprocess.run
 
         def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
-            return subprocess.CompletedProcess(args=[], returncode=0, stdout="[]", stderr="")
+            raise subprocess.TimeoutExpired(cmd="quant-data", timeout=30)
+
+        try:
+            analyze_module.subprocess.run = fake_run
+            gaps = analyze_module.check_quant_data(
+                Namespace(
+                    quant_data="quant-data",
+                    quant_data_arg=[],
+                    quant_data_cwd=str(SKILL_DIR),
+                    fixture_provider=False,
+                )
+            )
+        finally:
+            analyze_module.subprocess.run = original
+
+        self.assertEqual(gaps[0]["code"], "quant_data_cli_timeout")
+
+    def test_run_quant_data_rejects_non_object_json_envelope(self) -> None:
+        original = analyze_module.subprocess.run
+
+        def fake_run(
+            *args: object, **kwargs: object
+        ) -> subprocess.CompletedProcess[str]:
+            return subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="[]", stderr=""
+            )
 
         try:
             analyze_module.subprocess.run = fake_run
