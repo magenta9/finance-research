@@ -124,7 +124,14 @@ Supported read and maintenance methods:
 
 - `search-assets`
 - `get-price-series`
+- `read-prices`
+- `read-price-bounds`
+- `read-price-freshness`
 - `get-fx-rates`
+- `read-fx-rates`
+- `read-fx-latest`
+- `read-fx-bounds`
+- `delete-prices`
 - `get-fundamentals`
 - `get-flow-sentiment`
 - `search-news-catalysts`
@@ -133,10 +140,6 @@ Supported read and maintenance methods:
 - `status`
 - `rebuild`
 - `repair`
-
-Additional maintenance methods:
-
-- `delete-prices`
 
 ## Envelope Semantics
 

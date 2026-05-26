@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"quant-data/internal/app"
@@ -48,6 +49,19 @@ func TestHelpFixtureMatchesRuntimeMethods(t *testing.T) {
 	for index, method := range app.RequiredMethods {
 		if help.Methods[index].Name != method {
 			t.Fatalf("fixture method[%d] = %q, want %q", index, help.Methods[index].Name, method)
+		}
+	}
+}
+
+func TestDocsListRequiredMethods(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "docs", "quant-data-cli.md"))
+	if err != nil {
+		t.Fatalf("read quant-data docs: %v", err)
+	}
+	docs := string(content)
+	for _, method := range app.RequiredMethods {
+		if !strings.Contains(docs, "- `"+method+"`") {
+			t.Fatalf("docs missing required method %q", method)
 		}
 	}
 }
