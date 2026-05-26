@@ -187,6 +187,25 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertEqual(rows, [])
         self.assertEqual(gaps[0]["code"], "price_fetch_invalid_response")
 
+    def test_fetch_prices_rejects_non_array_prices(self) -> None:
+        original = analyze_module.run_quant_data
+
+        def fake_run_quant_data(
+            args: object, method: str, payload: dict[str, object]
+        ) -> dict[str, object]:
+            return {"ok": True, "data": {"prices": {}}}
+
+        try:
+            analyze_module.run_quant_data = fake_run_quant_data
+            rows, gaps = analyze_module.fetch_prices(
+                object(), {"symbol": "SPY", "market": "US"}, "2026-05-01", "2026-05-02"
+            )
+        finally:
+            analyze_module.run_quant_data = original
+
+        self.assertEqual(rows, [])
+        self.assertEqual(gaps[0]["code"], "price_fetch_invalid_response")
+
     def test_shift_days_requires_strict_iso_date(self) -> None:
         with self.assertRaises(ValueError):
             analyze_module.shift_days("20260526", -1)

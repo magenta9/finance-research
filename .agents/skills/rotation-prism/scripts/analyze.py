@@ -737,7 +737,9 @@ def fetch_prices(
                 "message": "quant-data get-price-series 返回的 data 必须是对象。",
             }
         ]
-    price_rows = data.get("prices") or []
+    price_rows = data.get("prices")
+    if price_rows is None:
+        price_rows = []
     if not isinstance(price_rows, list) or any(
         not isinstance(row, dict) for row in price_rows
     ):
