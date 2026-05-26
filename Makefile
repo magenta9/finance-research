@@ -3,10 +3,13 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: quant-data-build quant-data-test strategy-test job-smoke test clean help
+.PHONY: quant-data-build quant-data-install quant-data-test strategy-test job-smoke test clean help
 
 quant-data-build: ## Build the Go quant-data CLI
 	cd tools/data/quant-data && go build -o quant-data ./cmd/quant-data
+
+quant-data-install: ## Install the Go quant-data CLI into GOPATH/bin
+	cd tools/data/quant-data && go install ./cmd/quant-data
 
 quant-data-test: ## Run Go quant-data tests
 	cd tools/data/quant-data && go test ./...

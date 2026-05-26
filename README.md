@@ -13,6 +13,12 @@
 
 ## 验证
 
+安装本仓库保留的 `quant-data` CLI：
+
+```bash
+make quant-data-install
+```
+
 ```bash
 make quant-data-test
 make strategy-test
