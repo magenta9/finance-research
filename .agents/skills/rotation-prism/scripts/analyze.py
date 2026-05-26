@@ -90,7 +90,7 @@ def rounded(value: float | None, digits: int = 6) -> float | None:
 
 
 def shift_days(date_text: str, days: int) -> str:
-    return (date.fromisoformat(date_text) + timedelta(days=days)).isoformat()
+    return (strict_iso_date(date_text) + timedelta(days=days)).isoformat()
 
 
 def strict_iso_date(date_text: str) -> date:

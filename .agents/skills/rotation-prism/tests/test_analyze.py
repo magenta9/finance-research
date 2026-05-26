@@ -129,6 +129,10 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertEqual(gaps[0]["code"], "quant_data_cli_incompatible")
         self.assertIn("contractVersion", gaps[0]["message"])
 
+    def test_shift_days_requires_strict_iso_date(self) -> None:
+        with self.assertRaises(ValueError):
+            analyze_module.shift_days("20260526", -1)
+
     def test_analyze_price_points_produces_available_grade(self) -> None:
         params = analyze_module.Params(ma_period=20, return_diff_window=5, rsi_period=5)
         rows_a = synthetic_rows(80, start=100, daily_step=1.0)
