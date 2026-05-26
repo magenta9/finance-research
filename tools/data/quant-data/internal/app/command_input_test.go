@@ -42,6 +42,19 @@ func TestNormalizeCommandInputCanonicalizesFxPair(t *testing.T) {
 	}
 }
 
+func TestNormalizeCommandInputCanonicalizesMarketAndAssetClass(t *testing.T) {
+	input, err := normalizeCommandInput("search-assets", map[string]any{"query": "SPY", "market": " us ", "assetClass": " EQUITY "})
+	if err != nil {
+		t.Fatalf("normalizeCommandInput returned error: %#v", err)
+	}
+	if input["market"] != "US" {
+		t.Fatalf("market = %#v, want US", input["market"])
+	}
+	if input["assetClass"] != "equity" {
+		t.Fatalf("assetClass = %#v, want equity", input["assetClass"])
+	}
+}
+
 func TestNormalizeCommandInputRejectsInvalidNumber(t *testing.T) {
 	_, err := normalizeCommandInput("read-price-freshness", map[string]any{"assetId": "asset-1", "maxAgeHours": "abc"})
 	if err == nil {

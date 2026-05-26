@@ -15,6 +15,8 @@ const (
 	commandBoolField
 	commandNumberField
 	commandFxPairField
+	commandUpperStringField
+	commandLowerStringField
 )
 
 type commandFieldSpec struct {
@@ -25,19 +27,31 @@ type commandFieldSpec struct {
 var commandInputSpecs = map[string][]commandFieldSpec{
 	"delete-prices":         stringFields("assetId", "start", "end"),
 	"fetch-market-source":   stringFields("sourceId", "url"),
-	"get-flow-sentiment":    stringFields("symbol", "market"),
-	"get-fundamentals":      stringFields("symbol", "market"),
-	"get-fx-rates":          append(fxPairFields("pair"), stringFields("start", "end")...),
-	"get-price-series":      stringFields("symbol", "market", "start", "end", "assetId"),
+	"get-flow-sentiment":    commandFields(stringFields("symbol"), upperStringFields("market")),
+	"get-fundamentals":      commandFields(stringFields("symbol"), upperStringFields("market")),
+	"get-fx-rates":          commandFields(fxPairFields("pair"), stringFields("start", "end")),
+	"get-price-series":      commandFields(stringFields("symbol", "start", "end", "assetId"), upperStringFields("market")),
 	"read-fx-bounds":        fxPairFields("pair"),
-	"read-fx-latest":        append(fxPairFields("pair"), stringFields("onOrBeforeDate")...),
-	"read-fx-rates":         append(fxPairFields("pair"), stringFields("start", "end")...),
+	"read-fx-latest":        commandFields(fxPairFields("pair"), stringFields("onOrBeforeDate")),
+	"read-fx-rates":         commandFields(fxPairFields("pair"), stringFields("start", "end")),
 	"read-price-bounds":     stringFields("assetId"),
 	"read-price-freshness":  append(stringFields("assetId", "now"), commandFieldSpec{name: "maxAgeHours", kind: commandNumberField}),
 	"read-prices":           stringFields("assetId", "start", "end"),
-	"search-announcements":  stringFields("symbol", "market"),
-	"search-assets":         append(stringFields("query", "market", "assetClass"), commandFieldSpec{name: "exactMatch", kind: commandBoolField}),
-	"search-news-catalysts": stringFields("symbol", "market"),
+	"search-announcements":  commandFields(stringFields("symbol"), upperStringFields("market")),
+	"search-assets":         commandFields(stringFields("query"), upperStringFields("market"), lowerStringFields("assetClass"), []commandFieldSpec{{name: "exactMatch", kind: commandBoolField}}),
+	"search-news-catalysts": commandFields(stringFields("symbol"), upperStringFields("market")),
+}
+
+func commandFields(groups ...[]commandFieldSpec) []commandFieldSpec {
+	total := 0
+	for _, group := range groups {
+		total += len(group)
+	}
+	fields := make([]commandFieldSpec, 0, total)
+	for _, group := range groups {
+		fields = append(fields, group...)
+	}
+	return fields
 }
 
 func stringFields(names ...string) []commandFieldSpec {
@@ -52,6 +66,22 @@ func fxPairFields(names ...string) []commandFieldSpec {
 	fields := make([]commandFieldSpec, 0, len(names))
 	for _, name := range names {
 		fields = append(fields, commandFieldSpec{name: name, kind: commandFxPairField})
+	}
+	return fields
+}
+
+func upperStringFields(names ...string) []commandFieldSpec {
+	fields := make([]commandFieldSpec, 0, len(names))
+	for _, name := range names {
+		fields = append(fields, commandFieldSpec{name: name, kind: commandUpperStringField})
+	}
+	return fields
+}
+
+func lowerStringFields(names ...string) []commandFieldSpec {
+	fields := make([]commandFieldSpec, 0, len(names))
+	for _, name := range names {
+		fields = append(fields, commandFieldSpec{name: name, kind: commandLowerStringField})
 	}
 	return fields
 }
@@ -101,6 +131,18 @@ func normalizeCommandField(value any, kind commandFieldKind) (any, error) {
 			return text, nil
 		}
 		return strings.ToUpper(strings.TrimSpace(parts[0])) + "/" + strings.ToUpper(strings.TrimSpace(parts[1])), nil
+	case commandUpperStringField:
+		text, err := normalizeCommandString(value)
+		if err != nil {
+			return nil, err
+		}
+		return strings.ToUpper(text), nil
+	case commandLowerStringField:
+		text, err := normalizeCommandString(value)
+		if err != nil {
+			return nil, err
+		}
+		return strings.ToLower(text), nil
 	case commandNumberField:
 		switch value := value.(type) {
 		case float64:
