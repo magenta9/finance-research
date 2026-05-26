@@ -32,6 +32,16 @@ func TestNormalizeCommandInputAcceptsStringifiedNumber(t *testing.T) {
 	}
 }
 
+func TestNormalizeCommandInputCanonicalizesFxPair(t *testing.T) {
+	input, err := normalizeCommandInput("read-fx-latest", map[string]any{"pair": " usd / cny ", "onOrBeforeDate": "2026-05-14"})
+	if err != nil {
+		t.Fatalf("normalizeCommandInput returned error: %#v", err)
+	}
+	if input["pair"] != "USD/CNY" {
+		t.Fatalf("pair = %#v, want USD/CNY", input["pair"])
+	}
+}
+
 func TestNormalizeCommandInputRejectsInvalidNumber(t *testing.T) {
 	_, err := normalizeCommandInput("read-price-freshness", map[string]any{"assetId": "asset-1", "maxAgeHours": "abc"})
 	if err == nil {

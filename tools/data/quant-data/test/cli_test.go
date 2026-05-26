@@ -329,7 +329,7 @@ func TestReadCommandsReturnPersistedRowsWithoutProviderConfig(t *testing.T) {
 		t.Fatalf("expected persisted fx rates, got %#v", fxData)
 	}
 
-	latestFxEnvelope := runJSONCommand(t, "read-fx-latest", `{"pair":"USD/CNY","onOrBeforeDate":"2026-05-14"}`)
+	latestFxEnvelope := runJSONCommand(t, "read-fx-latest", `{"pair":" usd / cny ","onOrBeforeDate":"2026-05-14"}`)
 	latestFxData := latestFxEnvelope.Data.(map[string]any)
 	if latestFxData["rate"] == nil {
 		t.Fatalf("expected latest fx rate, got %#v", latestFxData)

@@ -14,6 +14,7 @@ const (
 	commandStringField commandFieldKind = iota
 	commandBoolField
 	commandNumberField
+	commandFxPairField
 )
 
 type commandFieldSpec struct {
@@ -26,11 +27,11 @@ var commandInputSpecs = map[string][]commandFieldSpec{
 	"fetch-market-source":   stringFields("sourceId", "url"),
 	"get-flow-sentiment":    stringFields("symbol", "market"),
 	"get-fundamentals":      stringFields("symbol", "market"),
-	"get-fx-rates":          stringFields("pair", "start", "end"),
+	"get-fx-rates":          append(fxPairFields("pair"), stringFields("start", "end")...),
 	"get-price-series":      stringFields("symbol", "market", "start", "end", "assetId"),
-	"read-fx-bounds":        stringFields("pair"),
-	"read-fx-latest":        stringFields("pair", "onOrBeforeDate"),
-	"read-fx-rates":         stringFields("pair", "start", "end"),
+	"read-fx-bounds":        fxPairFields("pair"),
+	"read-fx-latest":        append(fxPairFields("pair"), stringFields("onOrBeforeDate")...),
+	"read-fx-rates":         append(fxPairFields("pair"), stringFields("start", "end")...),
 	"read-price-bounds":     stringFields("assetId"),
 	"read-price-freshness":  append(stringFields("assetId", "now"), commandFieldSpec{name: "maxAgeHours", kind: commandNumberField}),
 	"read-prices":           stringFields("assetId", "start", "end"),
@@ -43,6 +44,14 @@ func stringFields(names ...string) []commandFieldSpec {
 	fields := make([]commandFieldSpec, 0, len(names))
 	for _, name := range names {
 		fields = append(fields, commandFieldSpec{name: name, kind: commandStringField})
+	}
+	return fields
+}
+
+func fxPairFields(names ...string) []commandFieldSpec {
+	fields := make([]commandFieldSpec, 0, len(names))
+	for _, name := range names {
+		fields = append(fields, commandFieldSpec{name: name, kind: commandFxPairField})
 	}
 	return fields
 }
@@ -76,19 +85,22 @@ func normalizeCommandInput(method string, input map[string]any) (map[string]any,
 func normalizeCommandField(value any, kind commandFieldKind) (any, error) {
 	switch kind {
 	case commandStringField:
-		if text, ok := value.(string); ok {
-			return strings.TrimSpace(text), nil
-		}
-		switch value.(type) {
-		case bool, []any, map[string]any:
-			return nil, fmt.Errorf("must be a string")
-		}
-		return strings.TrimSpace(fmt.Sprint(value)), nil
+		return normalizeCommandString(value)
 	case commandBoolField:
 		if value, ok := value.(bool); ok {
 			return value, nil
 		}
 		return nil, fmt.Errorf("must be a boolean")
+	case commandFxPairField:
+		text, err := normalizeCommandString(value)
+		if err != nil {
+			return nil, err
+		}
+		parts := strings.Split(text, "/")
+		if len(parts) != 2 {
+			return text, nil
+		}
+		return strings.ToUpper(strings.TrimSpace(parts[0])) + "/" + strings.ToUpper(strings.TrimSpace(parts[1])), nil
 	case commandNumberField:
 		switch value := value.(type) {
 		case float64:
@@ -117,6 +129,17 @@ func normalizeCommandField(value any, kind commandFieldKind) (any, error) {
 	default:
 		return value, nil
 	}
+}
+
+func normalizeCommandString(value any) (string, error) {
+	if text, ok := value.(string); ok {
+		return strings.TrimSpace(text), nil
+	}
+	switch value.(type) {
+	case bool, []any, map[string]any:
+		return "", fmt.Errorf("must be a string")
+	}
+	return strings.TrimSpace(fmt.Sprint(value)), nil
 }
 
 func finiteCommandNumber(value float64) (float64, error) {
