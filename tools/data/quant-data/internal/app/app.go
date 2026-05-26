@@ -330,8 +330,9 @@ func runStoreOnlyMethod(method string, input map[string]any, dataStore *store.St
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    MaintenanceCodeStoreRepairRequired,
+				Code:    MaintenanceCodeInvalidCommandInput,
 				Message: fmt.Sprintf("Unknown store-only method: %s", method),
+				Details: map[string]any{"method": method},
 			},
 			MaintenanceStatus: maintenanceStatus,
 		})

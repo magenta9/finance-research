@@ -1,6 +1,10 @@
 package app
 
-import "testing"
+import (
+	"bytes"
+	"encoding/json"
+	"testing"
+)
 
 func TestNormalizeCommandInputHasSpecsForDataMethods(t *testing.T) {
 	commandMethods := map[string]bool{
@@ -61,5 +65,18 @@ func TestNormalizeCommandInputRejectsCompoundStringField(t *testing.T) {
 	}
 	if err.Message != "must be a string" {
 		t.Fatalf("message = %q, want must be a string", err.Message)
+	}
+}
+
+func TestUnknownStoreOnlyMethodIsInvalidCommandInput(t *testing.T) {
+	var stdout bytes.Buffer
+	runStoreOnlyMethod("unexpected-store-method", map[string]any{}, nil, emptyMaintenanceStatus(), &stdout)
+
+	var envelope Envelope
+	if err := json.Unmarshal(stdout.Bytes(), &envelope); err != nil {
+		t.Fatalf("invalid envelope JSON: %v", err)
+	}
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != MaintenanceCodeInvalidCommandInput {
+		t.Fatalf("expected INVALID_COMMAND_INPUT, got %#v", envelope.MaintenanceError)
 	}
 }
