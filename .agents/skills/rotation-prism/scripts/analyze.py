@@ -63,6 +63,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--quant-data-arg", action="append", default=[])
     parser.add_argument("--quant-data-cwd", default=os.getcwd())
+    parser.add_argument(
+        "--quant-data-timeout-seconds", type=int, default=QUANT_DATA_TIMEOUT_SECONDS
+    )
     parser.add_argument("--fixture-provider", action="store_true")
     parser.add_argument("--lookback-days", type=int, default=DEFAULT_LOOKBACK_DAYS)
     parser.add_argument("--ma-period", type=int, default=DEFAULT_MA_PERIOD)
@@ -82,6 +85,11 @@ def finite_number(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
     return number_value if math.isfinite(number_value) else None
+
+
+def quant_data_timeout_seconds(args: argparse.Namespace) -> int:
+    value = getattr(args, "quant_data_timeout_seconds", QUANT_DATA_TIMEOUT_SECONDS)
+    return value if isinstance(value, int) else QUANT_DATA_TIMEOUT_SECONDS
 
 
 def rounded(value: float | None, digits: int = 6) -> float | None:
@@ -286,6 +294,13 @@ def validate_analysis_inputs(
         )
     if params.rsi_period <= 1:
         gaps.append({"code": "invalid_input", "message": "rsi-period 必须大于 1。"})
+    if quant_data_timeout_seconds(args) <= 0:
+        gaps.append(
+            {
+                "code": "invalid_input",
+                "message": "quant-data-timeout-seconds 必须大于 0。",
+            }
+        )
     return gaps
 
 
@@ -566,6 +581,7 @@ def run_quant_data(
     args: argparse.Namespace, method: str, payload: dict[str, Any]
 ) -> dict[str, Any]:
     command = [args.quant_data, *args.quant_data_arg, method]
+    timeout_seconds = quant_data_timeout_seconds(args)
     env = os.environ.copy()
     if args.fixture_provider:
         env["QUANT_DATA_FIXTURE_PROVIDER"] = "1"
@@ -579,13 +595,13 @@ def run_quant_data(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,
-            timeout=QUANT_DATA_TIMEOUT_SECONDS,
+            timeout=timeout_seconds,
         )
     except OSError as error:
         raise RuntimeError(f"quant-data {method} could not start: {error}") from error
     except subprocess.TimeoutExpired as error:
         raise RuntimeError(
-            f"quant-data {method} timed out after {QUANT_DATA_TIMEOUT_SECONDS}s"
+            f"quant-data {method} timed out after {timeout_seconds}s"
         ) from error
     if process.returncode != 0:
         detail = process.stderr.strip() or process.stdout.strip() or "no output"
@@ -617,6 +633,7 @@ def envelope_error_gap(
 
 def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
     command = [args.quant_data, *args.quant_data_arg, "help", "--json"]
+    timeout_seconds = quant_data_timeout_seconds(args)
     env = os.environ.copy()
     if args.fixture_provider:
         env["QUANT_DATA_FIXTURE_PROVIDER"] = "1"
@@ -629,7 +646,7 @@ def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,
-            timeout=QUANT_DATA_TIMEOUT_SECONDS,
+            timeout=timeout_seconds,
         )
     except OSError as error:
         return [
@@ -642,7 +659,7 @@ def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
         return [
             {
                 "code": "quant_data_cli_timeout",
-                "message": f"quant-data CLI 检查超过 {QUANT_DATA_TIMEOUT_SECONDS}s，已停止等待。",
+                "message": f"quant-data CLI 检查超过 {timeout_seconds}s，已停止等待。",
             }
         ]
     if process.returncode != 0:

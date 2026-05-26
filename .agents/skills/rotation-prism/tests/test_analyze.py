@@ -92,6 +92,33 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertEqual(payload["status"], "unavailable")
         self.assertEqual(payload["dataGaps"][0]["code"], "invalid_input")
 
+    def test_cli_reports_unavailable_for_invalid_quant_data_timeout(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(ANALYZE_SCRIPT),
+                "--asset-a",
+                "SPY",
+                "--asset-b",
+                "QQQ",
+                "--end",
+                "2026-05-26",
+                "--quant-data-timeout-seconds",
+                "0",
+                "--quant-data",
+                "/path/to/missing/quant-data",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        payload = json.loads(completed.stdout)
+
+        self.assertEqual(payload["status"], "unavailable")
+        self.assertEqual(payload["dataGaps"][0]["code"], "invalid_input")
+        self.assertIn("quant-data-timeout-seconds", payload["dataGaps"][0]["message"])
+
     def test_check_quant_data_rejects_incompatible_contract_version(self) -> None:
         original = analyze_module.subprocess.run
 
@@ -149,6 +176,30 @@ class AnalyzeScriptTest(unittest.TestCase):
             analyze_module.subprocess.run = original
 
         self.assertEqual(gaps[0]["code"], "quant_data_cli_timeout")
+
+    def test_check_quant_data_uses_configured_timeout(self) -> None:
+        original = analyze_module.subprocess.run
+
+        def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+            self.assertEqual(kwargs.get("timeout"), 7)
+            raise subprocess.TimeoutExpired(cmd="quant-data", timeout=7)
+
+        try:
+            analyze_module.subprocess.run = fake_run
+            gaps = analyze_module.check_quant_data(
+                Namespace(
+                    quant_data="quant-data",
+                    quant_data_arg=[],
+                    quant_data_cwd=str(SKILL_DIR),
+                    quant_data_timeout_seconds=7,
+                    fixture_provider=False,
+                )
+            )
+        finally:
+            analyze_module.subprocess.run = original
+
+        self.assertEqual(gaps[0]["code"], "quant_data_cli_timeout")
+        self.assertIn("7s", gaps[0]["message"])
 
     def test_run_quant_data_rejects_non_object_json_envelope(self) -> None:
         original = analyze_module.subprocess.run
