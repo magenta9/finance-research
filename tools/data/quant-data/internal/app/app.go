@@ -223,6 +223,18 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		})
 	}
 
+	normalizedInput, normalizationError := normalizeCommandInput(method, input)
+	if normalizationError != nil {
+		return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: normalizationError, MaintenanceStatus: emptyMaintenanceStatus()})
+	}
+	input = normalizedInput
+
+	if !isStoreOnlyMethod(method) {
+		if validationError := validateCommandInput(method, input); validationError != nil {
+			return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: emptyMaintenanceStatus()})
+		}
+	}
+
 	dataStore, err := openStore()
 	if err != nil {
 		return writeStoreError(stdout, err)
@@ -234,17 +246,8 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeStoreError(stdout, err)
 	}
 
-	normalizedInput, normalizationError := normalizeCommandInput(method, input)
-	if normalizationError != nil {
-		return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: normalizationError, MaintenanceStatus: maintenanceStatus})
-	}
-	input = normalizedInput
-
 	if isStoreOnlyMethod(method) {
 		return runStoreOnlyMethod(method, input, dataStore, maintenanceStatus, stdout)
-	}
-	if validationError := validateCommandInput(method, input); validationError != nil {
-		return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: maintenanceStatus})
 	}
 	if os.Getenv("QUANT_DATA_FIXTURE_PROVIDER") == "1" {
 		return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewFixtureProvider())

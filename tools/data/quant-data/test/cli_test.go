@@ -159,6 +159,20 @@ func TestDataMethodRejectsTrailingJSONAsInvalidInput(t *testing.T) {
 	}
 }
 
+func TestProviderMethodRejectsInvalidInputBeforeStoreOpen(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+	t.Setenv("QUANT_DATA_HOME", path)
+
+	envelope := runJSONCommand(t, "get-price-series", `{"symbol":"510300","start":"20250101","end":"2025-01-31"}`)
+	if envelope.OK {
+		t.Fatalf("expected ok=false envelope")
+	}
+	assertMaintenanceField(t, envelope, app.MaintenanceCodeInvalidCommandInput, "start")
+}
+
 func TestDataMethodHardensInsecureConfig(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("QUANT_DATA_HOME", home)
