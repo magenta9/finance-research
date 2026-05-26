@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -91,29 +92,36 @@ func normalizeCommandField(value any, kind commandFieldKind) (any, error) {
 	case commandNumberField:
 		switch value := value.(type) {
 		case float64:
-			return value, nil
+			return finiteCommandNumber(value)
 		case float32:
-			return float64(value), nil
+			return finiteCommandNumber(float64(value))
 		case int:
-			return float64(value), nil
+			return finiteCommandNumber(float64(value))
 		case int64:
-			return float64(value), nil
+			return finiteCommandNumber(float64(value))
 		case json.Number:
 			parsed, err := strconv.ParseFloat(value.String(), 64)
 			if err != nil {
 				return nil, fmt.Errorf("must be a number")
 			}
-			return parsed, nil
+			return finiteCommandNumber(parsed)
 		case string:
 			parsed, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
 			if err != nil {
 				return nil, fmt.Errorf("must be a number")
 			}
-			return parsed, nil
+			return finiteCommandNumber(parsed)
 		default:
 			return nil, fmt.Errorf("must be a number")
 		}
 	default:
 		return value, nil
 	}
+}
+
+func finiteCommandNumber(value float64) (float64, error) {
+	if !math.IsInf(value, 0) && !math.IsNaN(value) {
+		return value, nil
+	}
+	return 0, fmt.Errorf("must be a finite number")
 }

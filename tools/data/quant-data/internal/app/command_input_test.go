@@ -45,6 +45,16 @@ func TestNormalizeCommandInputRejectsInvalidNumber(t *testing.T) {
 	}
 }
 
+func TestNormalizeCommandInputRejectsNonFiniteNumber(t *testing.T) {
+	_, err := normalizeCommandInput("read-price-freshness", map[string]any{"assetId": "asset-1", "maxAgeHours": "NaN"})
+	if err == nil {
+		t.Fatalf("expected normalization error")
+	}
+	if err.Message != "must be a finite number" {
+		t.Fatalf("message = %q, want must be a finite number", err.Message)
+	}
+}
+
 func TestNormalizeCommandInputRejectsInvalidBool(t *testing.T) {
 	_, err := normalizeCommandInput("search-assets", map[string]any{"query": "SPY", "exactMatch": "true"})
 	if err == nil {
