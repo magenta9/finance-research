@@ -87,8 +87,16 @@ var knownIndexAliases = map[string]string{
 	"中证传媒":     "000971.CSI",
 	"中证农林牧渔": "000949.CSI",
 	"中证电力设备": "931932.CSI",
-	// === 港股/海外 ===
-	"恒生科技":    "^HSTECH",   // 注: tushare 里 index name 为英文 Hang Seng TECH Index
+	// === 港股/海外（^前缀 = tushare index_global API）===
+	"恒生指数":    "^HSI",        // Hang Seng Index（tushare name 为英文，无中文别名）
+	"恒生科技":    "^HSTECH",     // Hang Seng TECH Index（tushare name 为英文）
+	// === 港股通（A-H 轮动分析用，tushare 93xxx 系列，CNY 计价）===
+	"港股通科技":   "931573",      // 港股通科技（不含 HKD 汇率转换）
+	"港股通消费":   "930964",      // 港股通消费 C（不含 HKD 汇率转换）
+	"港股通医疗":   "931966",      // 港股通医疗商业（不含 HKD 汇率转换）
+	"港股通金融":   "930966",      // 港股通金融 C（不含 HKD 汇率转换）
+	"港股通能源":   "930960",      // 港股通能源 C（不含 HKD 汇率转换）
+	"港股通地产":   "931025",      // 港股通地产（不含 HKD 汇率转换）
 }
 
 func resolveKnownIndexAlias(query string) (string, bool) {
