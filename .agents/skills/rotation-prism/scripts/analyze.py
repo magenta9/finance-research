@@ -587,11 +587,14 @@ def run_quant_data(
             f"quant-data {method} exited with {process.returncode}: {detail}"
         )
     try:
-        return json.loads(process.stdout)
+        envelope = json.loads(process.stdout)
     except json.JSONDecodeError as error:
         raise RuntimeError(
             f"quant-data {method} returned invalid JSON: {error}"
         ) from error
+    if not isinstance(envelope, dict):
+        raise RuntimeError(f"quant-data {method} returned non-object JSON envelope")
+    return envelope
 
 
 def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
