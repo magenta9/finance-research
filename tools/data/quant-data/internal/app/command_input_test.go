@@ -33,7 +33,7 @@ func TestNormalizeCommandInputRejectsInvalidNumber(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected normalization error")
 	}
-	if err.Code != "INVALID_COMMAND_INPUT" || err.Details.(map[string]any)["field"] != "maxAgeHours" {
+	if err.Code != MaintenanceCodeInvalidCommandInput || err.Details.(map[string]any)["field"] != "maxAgeHours" {
 		t.Fatalf("unexpected error: %#v", err)
 	}
 	if err.Message != "must be a number" {
@@ -46,7 +46,7 @@ func TestNormalizeCommandInputRejectsInvalidBool(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected normalization error")
 	}
-	if err.Code != "INVALID_COMMAND_INPUT" || err.Details.(map[string]any)["field"] != "exactMatch" {
+	if err.Code != MaintenanceCodeInvalidCommandInput || err.Details.(map[string]any)["field"] != "exactMatch" {
 		t.Fatalf("unexpected error: %#v", err)
 	}
 }
@@ -56,7 +56,7 @@ func TestNormalizeCommandInputRejectsCompoundStringField(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected normalization error")
 	}
-	if err.Code != "INVALID_COMMAND_INPUT" || err.Details.(map[string]any)["field"] != "query" {
+	if err.Code != MaintenanceCodeInvalidCommandInput || err.Details.(map[string]any)["field"] != "query" {
 		t.Fatalf("unexpected error: %#v", err)
 	}
 	if err.Message != "must be a string" {

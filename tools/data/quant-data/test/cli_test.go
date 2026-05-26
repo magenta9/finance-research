@@ -49,7 +49,7 @@ func TestEnvelopeSchemaIncludesEmittedMaintenanceCodes(t *testing.T) {
 		codes[value.(string)] = true
 	}
 
-	for _, code := range []string{"CONFIG_REQUIRED", "CONFIG_INSECURE", "INVALID_COMMAND_INPUT", "PROVIDER_UNAVAILABLE", "STORE_REPAIR_REQUIRED"} {
+	for _, code := range []string{app.MaintenanceCodeConfigRequired, app.MaintenanceCodeConfigInsecure, app.MaintenanceCodeInvalidCommandInput, app.MaintenanceCodeProviderUnavailable, app.MaintenanceCodeStoreRepairRequired} {
 		if !codes[code] {
 			t.Fatalf("envelope schema missing maintenanceError code %s", code)
 		}
@@ -63,7 +63,7 @@ func TestDataMethodReturnsConfigRequiredEnvelope(t *testing.T) {
 	if envelope.OK {
 		t.Fatalf("expected ok=false envelope")
 	}
-	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != "CONFIG_REQUIRED" {
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeConfigRequired {
 		t.Fatalf("expected CONFIG_REQUIRED, got %#v", envelope.MaintenanceError)
 	}
 }
@@ -82,7 +82,7 @@ func TestDataMethodHardensInsecureConfig(t *testing.T) {
 	}
 
 	envelope := runJSONCommand(t, "search-assets", `{"query":"沪深300"}`)
-	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != "CONFIG_REQUIRED" {
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeConfigRequired {
 		t.Fatalf("expected CONFIG_REQUIRED for missing TUSHARE_TOKEN, got %#v", envelope.MaintenanceError)
 	}
 	info, err := os.Stat(configPath)
@@ -169,7 +169,7 @@ func TestCommandValidationRejectsInvalidInput(t *testing.T) {
 			if envelope.OK {
 				t.Fatalf("expected ok=false envelope")
 			}
-			assertMaintenanceField(t, envelope, "INVALID_COMMAND_INPUT", test.field)
+			assertMaintenanceField(t, envelope, app.MaintenanceCodeInvalidCommandInput, test.field)
 		})
 	}
 }
@@ -197,7 +197,7 @@ func TestReadCommandValidationRejectsInvalidInput(t *testing.T) {
 			if envelope.OK {
 				t.Fatalf("expected ok=false envelope")
 			}
-			assertMaintenanceField(t, envelope, "INVALID_COMMAND_INPUT", test.field)
+			assertMaintenanceField(t, envelope, app.MaintenanceCodeInvalidCommandInput, test.field)
 		})
 	}
 }
@@ -322,14 +322,14 @@ func TestDeletePricesRequiresDateRange(t *testing.T) {
 	if envelope.OK {
 		t.Fatalf("expected ok=false envelope")
 	}
-	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != "INVALID_COMMAND_INPUT" {
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeInvalidCommandInput {
 		t.Fatalf("expected INVALID_COMMAND_INPUT, got %#v", envelope.MaintenanceError)
 	}
 }
 
 func TestUnknownMethodReturnsEnvelope(t *testing.T) {
 	envelope := runJSONCommand(t, "unknown-method", "")
-	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != "STORE_REPAIR_REQUIRED" {
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeStoreRepairRequired {
 		t.Fatalf("expected STORE_REPAIR_REQUIRED, got %#v", envelope.MaintenanceError)
 	}
 }

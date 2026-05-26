@@ -128,7 +128,7 @@ func parseCommandDate(value string) (time.Time, error) {
 
 func invalidInput(method string, field string, message string) *MaintenanceError {
 	return &MaintenanceError{
-		Code:    "INVALID_COMMAND_INPUT",
+		Code:    MaintenanceCodeInvalidCommandInput,
 		Message: message,
 		Details: map[string]any{
 			"field":  field,

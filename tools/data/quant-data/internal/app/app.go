@@ -88,7 +88,7 @@ func Run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int
 			return writeEnvelope(stdout, Envelope{
 				OK: false,
 				MaintenanceError: &MaintenanceError{
-					Code:    "STORE_REPAIR_REQUIRED",
+					Code:    MaintenanceCodeStoreRepairRequired,
 					Message: fmt.Sprintf("Unknown quant-data method: %s", args[0]),
 				},
 				MaintenanceStatus: emptyMaintenanceStatus(),
@@ -202,7 +202,7 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "STORE_REPAIR_REQUIRED",
+				Code:    MaintenanceCodeStoreRepairRequired,
 				Message: fmt.Sprintf("Invalid JSON input: %v", err),
 			},
 			MaintenanceStatus: emptyMaintenanceStatus(),
@@ -244,7 +244,7 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "CONFIG_REQUIRED",
+				Code:    MaintenanceCodeConfigRequired,
 				Message: "Configure provider credentials under ~/.quant_data/config before using data methods.",
 				Details: map[string]any{
 					"method":    method,
@@ -258,7 +258,7 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "CONFIG_INSECURE",
+				Code:    MaintenanceCodeConfigInsecure,
 				Message: "Provider config files must not be readable or writable by group/other users.",
 				Details: map[string]any{
 					"method": method,
@@ -274,7 +274,7 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "CONFIG_REQUIRED",
+				Code:    MaintenanceCodeConfigRequired,
 				Message: err.Error(),
 				Details: map[string]any{
 					"method":    method,
@@ -290,7 +290,7 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "PROVIDER_UNAVAILABLE",
+				Code:    MaintenanceCodeProviderUnavailable,
 				Message: fmt.Sprintf("Provider policy is invalid: %v", err),
 				Details: map[string]any{"method": method},
 			},
@@ -328,7 +328,7 @@ func runStoreOnlyMethod(method string, input map[string]any, dataStore *store.St
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "STORE_REPAIR_REQUIRED",
+				Code:    MaintenanceCodeStoreRepairRequired,
 				Message: fmt.Sprintf("Unknown store-only method: %s", method),
 			},
 			MaintenanceStatus: maintenanceStatus,
@@ -347,7 +347,7 @@ func runDeletePrices(input map[string]any, dataStore *store.Store, maintenanceSt
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "STORE_REPAIR_REQUIRED",
+				Code:    MaintenanceCodeStoreRepairRequired,
 				Message: err.Error(),
 			},
 			MaintenanceStatus: maintenanceStatus,
@@ -532,7 +532,7 @@ func writeStoreReadError(stdout io.Writer, err error, maintenanceStatus map[stri
 	return writeEnvelope(stdout, Envelope{
 		OK: false,
 		MaintenanceError: &MaintenanceError{
-			Code:    "STORE_REPAIR_REQUIRED",
+			Code:    MaintenanceCodeStoreRepairRequired,
 			Message: err.Error(),
 		},
 		MaintenanceStatus: maintenanceStatus,
@@ -552,7 +552,7 @@ func writeStoreError(stdout io.Writer, err error) int {
 	return writeEnvelope(stdout, Envelope{
 		OK: false,
 		MaintenanceError: &MaintenanceError{
-			Code:    "STORE_REPAIR_REQUIRED",
+			Code:    MaintenanceCodeStoreRepairRequired,
 			Message: err.Error(),
 		},
 		MaintenanceStatus: emptyMaintenanceStatus(),

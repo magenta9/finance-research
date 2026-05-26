@@ -43,7 +43,7 @@ func (executor commandExecutor) Run() int {
 		return writeEnvelope(executor.stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "PROVIDER_UNAVAILABLE",
+				Code:    MaintenanceCodeProviderUnavailable,
 				Message: fmt.Sprintf("Provider method is not implemented: %s", executor.method),
 			},
 			MaintenanceStatus: executor.maintenanceStatus,
