@@ -44,7 +44,35 @@ def utc_today() -> str:
 
 
 def shift_days(date_text: str, days: int) -> str:
-    return (date.fromisoformat(date_text) + timedelta(days=days)).isoformat()
+    return (strict_iso_date(date_text) + timedelta(days=days)).isoformat()
+
+
+def strict_iso_date(date_text: str) -> date:
+    if len(date_text) != 10 or date_text[4] != "-" or date_text[7] != "-":
+        raise ValueError("date must be YYYY-MM-DD")
+    return date.fromisoformat(date_text)
+
+
+def validate_date_inputs(
+    args: argparse.Namespace, start: str, end: str
+) -> list[str]:
+    gaps: list[str] = []
+    parsed_start: date | None = None
+    parsed_end: date | None = None
+    if start:
+        try:
+            parsed_start = strict_iso_date(start)
+        except ValueError:
+            gaps.append(f"start must be YYYY-MM-DD: {start}")
+    try:
+        parsed_end = strict_iso_date(end)
+    except ValueError:
+        gaps.append(f"end must be YYYY-MM-DD: {end}")
+    if parsed_start is not None and parsed_end is not None and parsed_start > parsed_end:
+        gaps.append("start must be on or before end")
+    if args.lookback_days <= 0:
+        gaps.append("lookback-days must be greater than 0")
+    return gaps
 
 
 def run_quant_data(
@@ -105,7 +133,20 @@ def malformed_quant_data_result(
 
 def analyze(args: argparse.Namespace) -> dict[str, Any]:
     end = args.end or utc_today()
-    start = args.start or shift_days(end, -args.lookback_days)
+    try:
+        start = args.start or shift_days(end, -args.lookback_days)
+    except ValueError:
+        start = args.start or ""
+    input_gaps = validate_date_inputs(args, start, end)
+    if input_gaps:
+        return unavailable_result(
+            asset_id=args.asset_id,
+            data_gaps=input_gaps,
+            end=end,
+            market=args.market,
+            start=start,
+            symbol=args.symbol,
+        )
     if quant_data_timeout_seconds(args) <= 0:
         return unavailable_result(
             asset_id=args.asset_id,

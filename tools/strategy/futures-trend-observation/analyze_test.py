@@ -46,6 +46,25 @@ class AnalyzeQuantDataBoundaryTest(unittest.TestCase):
         self.assertEqual(result["overall"]["status"], "unavailable")
         self.assertIn("quant-data-timeout-seconds", result["dataGaps"][0])
 
+    def test_invalid_end_date_returns_unavailable(self) -> None:
+        test_args = args()
+        test_args.end = "20260527"
+
+        result = analyze_module.analyze(test_args)
+
+        self.assertEqual(result["overall"]["status"], "unavailable")
+        self.assertIn("end must be YYYY-MM-DD", result["dataGaps"][0])
+
+    def test_start_after_end_returns_unavailable(self) -> None:
+        test_args = args()
+        test_args.start = "2026-05-28"
+        test_args.end = "2026-05-27"
+
+        result = analyze_module.analyze(test_args)
+
+        self.assertEqual(result["overall"]["status"], "unavailable")
+        self.assertIn("start must be on or before end", result["dataGaps"][0])
+
     def test_run_quant_data_reports_timeout(self) -> None:
         original = analyze_module.subprocess.run
 
