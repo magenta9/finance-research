@@ -1,9 +1,7 @@
 # quant-data
 
-`quant-data` is the canonical data acquisition CLI for this repository.
+`quant-data` 是本仓库保留的行情数据获取 CLI。
 
-The Go module lives here under `tools/data/quant-data/` so data tools are grouped with the rest of the reusable tool system.
+Go 模块位于 `tools/data/quant-data/`，作为 Skill 和仓库保留工具共享的行情数据基础设施。
 
-Go tests are maintained under `tools/data/quant-data/test/` and exercise the CLI through exported package APIs.
-
-Registered in `tools/catalog.yaml` as category `data`.
+Go 测试位于 `tools/data/quant-data/test/`，通过导出的 package API 覆盖 CLI 行为。
