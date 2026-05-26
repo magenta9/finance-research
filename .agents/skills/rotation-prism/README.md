@@ -9,7 +9,7 @@
 - `tests/test_analyze.py`: 不依赖 Agent runtime 的确定性测试。
 - `tests/agent_smoke_test.py`: 单独运行的 agent smoke 验证入口。
 - `docs/output-format.md`: Agent 最终报告格式和脚本 JSON 边界。
-- `examples/`: 示例输入和示例报告。
+- `examples/`: 可用于测试或演示的示例输入。
 
 ## 外部依赖
 
@@ -21,19 +21,13 @@
 确定性测试：
 
 ```bash
-python3 -m unittest discover -s tests -p 'test_*.py'
+uv run python -m unittest discover -s tests -p 'test_*.py'
 ```
 
 agent smoke：
 
 ```bash
-python3 tests/agent_smoke_test.py
+uv run python tests/agent_smoke_test.py
 ```
 
-默认只验证 Agent runtime 能发现 `skill:rotation-prism`。实际发起调用：
-
-```bash
-python3 tests/agent_smoke_test.py --run-prompt
-```
-
-`scripts/analyze.py` 已实现 quant-data 调用边界、三棱指标计算、A/B/C 信号评级和数据缺口输出。`tests/agent_smoke_test.py` 使用 Pi RPC 作为当前 transport，但验证名称统一叫 agent smoke。
+`scripts/analyze.py` 已实现 quant-data 调用边界、三棱指标计算、A/B/C 信号评级和数据缺口输出。`tests/agent_smoke_test.py` 使用 `pi -p` 发起真实非交互调用，并把最终报告直通输出到终端。

@@ -60,7 +60,8 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertEqual(payload["favor"], "neutral")
         self.assertEqual(payload["grade"], "unavailable")
         self.assertTrue(payload["nonExecution"])
-        self.assertEqual(payload["dataGaps"][0]["code"], "quant_data_invocation_failed")
+        self.assertEqual(payload["dataGaps"][0]["code"], "quant_data_cli_missing")
+        self.assertIn("make quant-data-install", payload["dataGaps"][0]["message"])
 
     def test_analyze_price_points_produces_available_grade(self) -> None:
         params = analyze_module.Params(ma_period=20, return_diff_window=5, rsi_period=5)

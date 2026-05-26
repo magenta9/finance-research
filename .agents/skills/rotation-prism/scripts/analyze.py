@@ -531,6 +531,63 @@ def run_quant_data(
         ) from error
 
 
+def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
+    command = [args.quant_data, *args.quant_data_arg, "help", "--json"]
+    env = os.environ.copy()
+    if args.fixture_provider:
+        env["QUANT_DATA_FIXTURE_PROVIDER"] = "1"
+    try:
+        process = subprocess.run(
+            command,
+            text=True,
+            cwd=args.quant_data_cwd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except OSError as error:
+        return [
+            {
+                "code": "quant_data_cli_missing",
+                "message": f"quant-data CLI 无法启动：{error}。请先运行 make quant-data-install，或通过 --quant-data 指定可执行文件路径。",
+            }
+        ]
+    if process.returncode != 0:
+        detail = process.stderr.strip() or process.stdout.strip() or "no output"
+        return [
+            {
+                "code": "quant_data_cli_unavailable",
+                "message": f"quant-data CLI 检查失败：{detail}",
+            }
+        ]
+    try:
+        payload = json.loads(process.stdout)
+    except json.JSONDecodeError:
+        return [
+            {
+                "code": "quant_data_cli_incompatible",
+                "message": "quant-data help --json 未返回合法 JSON，无法确认 contract。",
+            }
+        ]
+    methods = payload.get("methods") if isinstance(payload, dict) else None
+    method_names = {
+        str(item.get("name"))
+        for item in methods or []
+        if isinstance(item, dict) and item.get("name")
+    }
+    required = {"search-assets", "get-price-series"}
+    missing = sorted(required - method_names)
+    if missing:
+        return [
+            {
+                "code": "quant_data_cli_incompatible",
+                "message": f"quant-data contract 缺少方法：{', '.join(missing)}。请更新或重新安装 quant-data CLI。",
+            }
+        ]
+    return []
+
+
 def resolve_asset(
     args: argparse.Namespace, query: str, market: str
 ) -> tuple[dict[str, Any] | None, list[dict[str, str]]]:
@@ -599,6 +656,14 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
     start = args.start or shift_days(args.end, -args.lookback_days)
     asset_a_query = {"query": args.asset_a}
     asset_b_query = {"query": args.asset_b}
+    cli_gaps = check_quant_data(args)
+    if cli_gaps:
+        return unavailable_result(
+            asset_a=asset_a_query,
+            asset_b=asset_b_query,
+            data_gaps=cli_gaps,
+            params=params,
+        )
     try:
         asset_a, gaps_a = resolve_asset(args, args.asset_a, args.market_a)
         asset_b, gaps_b = resolve_asset(args, args.asset_b, args.market_b)
