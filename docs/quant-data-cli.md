@@ -167,7 +167,7 @@ Tool setup errors:
 
 ## Deadlines
 
-Tools pass a deadline in command JSON. The default deadline is 10 seconds. The CLI should block on store locks only within the active deadline and return a `TIMEOUT` maintenance error when work cannot finish in time.
+Callers should enforce their own process deadline when invoking `quant-data`. The current CLI contract does not accept a command JSON `deadline` field. Store waits and provider calls are bounded internally where implemented, and methods that can detect bounded wait failure may return a `TIMEOUT` maintenance error.
 
 ## Price Series
 
