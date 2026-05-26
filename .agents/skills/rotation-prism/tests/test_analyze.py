@@ -21,13 +21,17 @@ sys.modules["rotation_prism_analyze"] = analyze_module
 spec.loader.exec_module(analyze_module)
 
 
-def synthetic_rows(length: int, start: float, daily_step: float, date_offset: int = 0) -> list[object]:
+def synthetic_rows(
+    length: int, start: float, daily_step: float, date_offset: int = 0
+) -> list[object]:
     rows = []
     value = start
     for index in range(length):
         value += daily_step
         rows.append(
-            analyze_module.PricePoint(date=f"2025-01-{(index + date_offset) + 1:03d}", close=value)
+            analyze_module.PricePoint(
+                date=f"2025-01-{(index + date_offset) + 1:03d}", close=value
+            )
         )
     return rows
 
@@ -133,6 +137,30 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertEqual(payload["grade"], "unavailable")
         self.assertEqual(payload["trendEvidence"], [])
         self.assertEqual(payload["meanReversionEvidence"], [])
+
+    def test_resolve_asset_reports_ambiguous_candidates(self) -> None:
+        original = analyze_module.run_quant_data
+
+        def fake_run_quant_data(
+            args: object, method: str, payload: dict[str, object]
+        ) -> dict[str, object]:
+            self.assertEqual(method, "search-assets")
+            return {
+                "ok": True,
+                "data": [
+                    {"symbol": "000922", "name": "中证红利", "market": "A"},
+                    {"symbol": "932315", "name": "中证红利质量", "market": "A"},
+                ],
+            }
+
+        try:
+            analyze_module.run_quant_data = fake_run_quant_data
+            asset, gaps = analyze_module.resolve_asset(object(), "中证红利", "A")
+        finally:
+            analyze_module.run_quant_data = original
+
+        self.assertIsNone(asset)
+        self.assertEqual(gaps[0]["code"], "asset_ambiguous")
 
 
 if __name__ == "__main__":

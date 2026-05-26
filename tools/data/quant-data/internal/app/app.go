@@ -226,7 +226,6 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 	}
 	input = normalizedInput
 
-	useFixtureProvider := os.Getenv("QUANT_DATA_FIXTURE_PROVIDER") == "1"
 	if isStoreOnlyMethod(method) {
 		return runStoreOnlyMethod(method, input, dataStore, maintenanceStatus, stdout)
 	}
@@ -234,74 +233,70 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: maintenanceStatus})
 	}
 
-	if !useFixtureProvider {
-		configStatus, err := store.CheckProviderConfig(dataStore.ConfigDir())
-		if err != nil {
-			return writeStoreError(stdout, err)
-		}
-		if !configStatus.Exists {
-			return writeEnvelope(stdout, Envelope{
-				OK: false,
-				MaintenanceError: &MaintenanceError{
-					Code:    "CONFIG_REQUIRED",
-					Message: "Configure provider credentials under ~/.quant_data/config before using data methods.",
-					Details: map[string]any{
-						"method":    method,
-						"configDir": dataStore.ConfigDir(),
-					},
+	configStatus, err := store.CheckProviderConfig(dataStore.ConfigDir())
+	if err != nil {
+		return writeStoreError(stdout, err)
+	}
+	if !configStatus.Exists {
+		return writeEnvelope(stdout, Envelope{
+			OK: false,
+			MaintenanceError: &MaintenanceError{
+				Code:    "CONFIG_REQUIRED",
+				Message: "Configure provider credentials under ~/.quant_data/config before using data methods.",
+				Details: map[string]any{
+					"method":    method,
+					"configDir": dataStore.ConfigDir(),
 				},
-				MaintenanceStatus: maintenanceStatus,
-			})
-		}
-		if !configStatus.Secure {
-			return writeEnvelope(stdout, Envelope{
-				OK: false,
-				MaintenanceError: &MaintenanceError{
-					Code:    "CONFIG_INSECURE",
-					Message: "Provider config files must not be readable or writable by group/other users.",
-					Details: map[string]any{
-						"method": method,
-						"paths":  configStatus.InsecurePaths,
-					},
+			},
+			MaintenanceStatus: maintenanceStatus,
+		})
+	}
+	if !configStatus.Secure {
+		return writeEnvelope(stdout, Envelope{
+			OK: false,
+			MaintenanceError: &MaintenanceError{
+				Code:    "CONFIG_INSECURE",
+				Message: "Provider config files must not be readable or writable by group/other users.",
+				Details: map[string]any{
+					"method": method,
+					"paths":  configStatus.InsecurePaths,
 				},
-				MaintenanceStatus: maintenanceStatus,
-			})
-		}
-
-		providerConfig, err := store.LoadProviderConfig(dataStore.ConfigDir())
-		if err != nil {
-			return writeEnvelope(stdout, Envelope{
-				OK: false,
-				MaintenanceError: &MaintenanceError{
-					Code:    "CONFIG_REQUIRED",
-					Message: err.Error(),
-					Details: map[string]any{
-						"method":    method,
-						"configDir": dataStore.ConfigDir(),
-					},
-				},
-				MaintenanceStatus: maintenanceStatus,
-			})
-		}
-
-		policy, err := provider.LoadPolicy()
-		if err != nil {
-			return writeEnvelope(stdout, Envelope{
-				OK: false,
-				MaintenanceError: &MaintenanceError{
-					Code:    "PROVIDER_UNAVAILABLE",
-					Message: fmt.Sprintf("Provider policy is invalid: %v", err),
-					Details: map[string]any{"method": method},
-				},
-				MaintenanceStatus: maintenanceStatus,
-			})
-		}
-
-		tushareConfig := providerConfig.Provider("tushare")
-		return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewLiveProviderWithPolicy(provider.LiveConfig{TushareToken: tushareConfig.Token}, policy))
+			},
+			MaintenanceStatus: maintenanceStatus,
+		})
 	}
 
-	return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewFixtureProvider())
+	providerConfig, err := store.LoadProviderConfig(dataStore.ConfigDir())
+	if err != nil {
+		return writeEnvelope(stdout, Envelope{
+			OK: false,
+			MaintenanceError: &MaintenanceError{
+				Code:    "CONFIG_REQUIRED",
+				Message: err.Error(),
+				Details: map[string]any{
+					"method":    method,
+					"configDir": dataStore.ConfigDir(),
+				},
+			},
+			MaintenanceStatus: maintenanceStatus,
+		})
+	}
+
+	policy, err := provider.LoadPolicy()
+	if err != nil {
+		return writeEnvelope(stdout, Envelope{
+			OK: false,
+			MaintenanceError: &MaintenanceError{
+				Code:    "PROVIDER_UNAVAILABLE",
+				Message: fmt.Sprintf("Provider policy is invalid: %v", err),
+				Details: map[string]any{"method": method},
+			},
+			MaintenanceStatus: maintenanceStatus,
+		})
+	}
+
+	tushareConfig := providerConfig.Provider("tushare")
+	return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewLiveProviderWithPolicy(provider.LiveConfig{TushareToken: tushareConfig.Token}, policy))
 }
 
 func runStoreOnlyMethod(method string, input map[string]any, dataStore *store.Store, maintenanceStatus map[string]any, stdout io.Writer) int {

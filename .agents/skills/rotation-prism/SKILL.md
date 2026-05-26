@@ -46,34 +46,18 @@ quant-data help --json
 如果失败，明确告知用户先运行 `make quant-data-install` 或提供 `--quant-data` 路径，然后**直接返回失败**，不做市场判断。
 
 ### 第二步：解析标的
-分别调用 quant-data 解析两个标的。使用 `assetClass` 过滤和 `exactMatch` 参数来缩小结果范围。
+直接运行分析脚本，让脚本通过 quant-data `search-assets` 解析两个标的。解析策略属于 quant-data 的 External Instrument Resolution；Skill 不自行消歧、不挑最短名称、不猜代理标的。
 
-**解析策略（按顺序尝试）：**
-
-1. **先用名称搜索 + assetClass=index**（排除股票干扰）：
-   ```bash
-   quant-data search-assets --json '{"query": "<标的>", "assetClass": "index"}'
-   ```
-2. **若返回恰好 1 个结果**：直接使用。
-3. **若返回多个结果**：按优先级消歧：
-   a. **名称精确匹配**：选名称完全等于查询词的结果。
-   b. **排除细分类**：排除名称含红利、低贝塔、高贝塔、成长、价值、动态、稳定、信息、通信、全收益、净收益的结果。
-   c. **排除汇率变体**：排除名称含 USD/HKD/GBP/SGD 等货币代码的结果。
-   d. **仍有多个**：取最短名称（最通用/基准）。
-4. **若返回 0 个结果**：
-   a. 若查询词是已知指数的 tsCode 格式（如 `000922.CSI`、`399006.SZ`），直接用 `quant-data get-price-series` 验证数据可用性，验证通过则直接使用。
-   b. 若查询词是常见指数简称，quant-data 的 `knownIndexAliases` 已内置映射（如 "中证消费" → `399932.SZ`，"沪深300" → `000300.CSI`）。直接用验证步骤确认数据可用后使用。
-   c. 若以上均失败，返回失败报告。
-5. **若解析结果 assetClass 为 equity**：说明查询词同时匹配了股票代码，改用 tsCode 直接查询：`{"query": "<symbol>.CSI", "assetClass": "index"}`，确保命中指数而非股票。
+如果 quant-data 返回未找到或多个候选，脚本会返回 `status: unavailable` 和数据缺口；最终报告只解释缺口，不做市场判断。
 
 ### 第三步：运行分析脚本
-使用解析得到的精确代码调用脚本：
+使用用户输入的原始名称或代码调用脚本：
 ```bash
 uv run python .agents/skills/rotation-prism/scripts/analyze.py \
-  --asset-a <解析得到的 asset_a 代码> \
-  --market-a <解析得到的 asset_a market> \
-  --asset-b <解析得到的 asset_b 代码> \
-  --market-b <解析得到的 asset_b market> \
+   --asset-a <asset_a 名称或代码> \
+   --market-a <asset_a market> \
+   --asset-b <asset_b 名称或代码> \
+   --market-b <asset_b market> \
   --end <YYYY-MM-DD>
 ```
 

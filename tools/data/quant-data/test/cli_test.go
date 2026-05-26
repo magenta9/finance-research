@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"quant-data/internal/app"
+	"quant-data/internal/store"
 )
 
 func TestHelpJSON(t *testing.T) {
@@ -63,16 +64,6 @@ func TestDataMethodHardensInsecureConfig(t *testing.T) {
 	}
 	if info.Mode().Perm() != 0o600 {
 		t.Fatalf("expected config to be hardened to 0600, got %o", info.Mode().Perm())
-	}
-}
-
-func TestFixtureProviderBypassesConfigForE2E(t *testing.T) {
-	t.Setenv("QUANT_DATA_HOME", t.TempDir())
-	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "1")
-
-	envelope := runJSONCommand(t, "search-assets", `{"query":"SPY","market":"US"}`)
-	if !envelope.OK {
-		t.Fatalf("expected ok=true envelope, got error %#v", envelope.MaintenanceError)
 	}
 }
 
@@ -141,18 +132,7 @@ func TestReadCommandValidationRejectsInvalidInput(t *testing.T) {
 func TestReadCommandsReturnPersistedRowsWithoutProviderConfig(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("QUANT_DATA_HOME", home)
-	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "1")
-
-	priceInput := `{"assetId":"asset-510300","symbol":"510300","market":"A","start":"2026-05-11","end":"2026-05-14"}`
-	if envelope := runJSONCommand(t, "get-price-series", priceInput); !envelope.OK {
-		t.Fatalf("expected get-price-series ok=true, got %#v", envelope.MaintenanceError)
-	}
-	fxInput := `{"pair":"USD/CNY","start":"2026-05-11","end":"2026-05-14"}`
-	if envelope := runJSONCommand(t, "get-fx-rates", fxInput); !envelope.OK {
-		t.Fatalf("expected get-fx-rates ok=true, got %#v", envelope.MaintenanceError)
-	}
-
-	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "")
+	seedPersistedRows(t, home)
 
 	readEnvelope := runJSONCommand(t, "read-prices", `{"assetId":"asset-510300","start":"2026-05-11","end":"2026-05-14"}`)
 	if !readEnvelope.OK {
@@ -216,16 +196,7 @@ func TestStatusReturnsSuccessfulEnvelope(t *testing.T) {
 
 func TestStatusReturnsExternalDataStats(t *testing.T) {
 	t.Setenv("QUANT_DATA_HOME", t.TempDir())
-	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "1")
-
-	priceInput := `{"assetId":"asset-510300","symbol":"510300","market":"A","start":"2026-05-11","end":"2026-05-14"}`
-	if envelope := runJSONCommand(t, "get-price-series", priceInput); !envelope.OK {
-		t.Fatalf("expected get-price-series ok=true, got %#v", envelope.MaintenanceError)
-	}
-	fxInput := `{"pair":"USD/CNY","start":"2026-05-11","end":"2026-05-14"}`
-	if envelope := runJSONCommand(t, "get-fx-rates", fxInput); !envelope.OK {
-		t.Fatalf("expected get-fx-rates ok=true, got %#v", envelope.MaintenanceError)
-	}
+	seedPersistedRows(t, os.Getenv("QUANT_DATA_HOME"))
 
 	envelope := runJSONCommand(t, "status", "")
 	if !envelope.OK {
@@ -258,12 +229,7 @@ func TestRebuildUpdatesMaintenanceStatus(t *testing.T) {
 
 func TestDeletePricesRemovesPersistedFixtureRows(t *testing.T) {
 	t.Setenv("QUANT_DATA_HOME", t.TempDir())
-	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "1")
-
-	fetchInput := `{"assetId":"asset-510300","symbol":"510300","market":"A","start":"2026-05-11","end":"2026-05-14"}`
-	if envelope := runJSONCommand(t, "get-price-series", fetchInput); !envelope.OK {
-		t.Fatalf("expected get-price-series ok=true, got %#v", envelope.MaintenanceError)
-	}
+	seedPersistedRows(t, os.Getenv("QUANT_DATA_HOME"))
 
 	deleteInput := `{"assetId":"asset-510300","start":"2026-05-11","end":"2026-05-14"}`
 	envelope := runJSONCommand(t, "delete-prices", deleteInput)
@@ -323,5 +289,38 @@ func assertMaintenanceField(t *testing.T, envelope app.Envelope, code string, fi
 	details := envelope.MaintenanceError.Details.(map[string]any)
 	if details["field"] != field {
 		t.Fatalf("field = %#v, want %s", details["field"], field)
+	}
+}
+
+func seedPersistedRows(t *testing.T, home string) {
+	t.Helper()
+
+	dataStore, err := store.Open(home, app.StoreVersion)
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer dataStore.Close()
+
+	closeValue := 3.21
+	adjustedCloseValue := 3.18
+	if err := dataStore.SavePrices([]store.PriceInput{{
+		AssetID:       "asset-510300",
+		Date:          "2026-05-11",
+		Open:          &closeValue,
+		High:          &closeValue,
+		Low:           &closeValue,
+		Close:         &closeValue,
+		AdjustedClose: &adjustedCloseValue,
+		Source:        "seed-test",
+	}}); err != nil {
+		t.Fatalf("save prices: %v", err)
+	}
+	if err := dataStore.SaveFxRates([]store.FxRateInput{{
+		Pair:   "USD/CNY",
+		Date:   "2026-05-11",
+		Rate:   7.25,
+		Source: "seed-test",
+	}}); err != nil {
+		t.Fatalf("save fx rates: %v", err)
 	}
 }
