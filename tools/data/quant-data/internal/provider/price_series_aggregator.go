@@ -27,9 +27,6 @@ func aggregatePriceSeries(symbol string, market string, order []string, backends
 			}
 			rowsByDate[row.Date] = fillPriceGaps(existing, row)
 		}
-		if len(result.Prices) > 0 {
-			break
-		}
 	}
 
 	rows := make([]PriceRow, 0, len(rowsByDate))

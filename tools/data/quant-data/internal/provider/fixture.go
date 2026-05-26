@@ -79,20 +79,31 @@ var fixtureAssets = []Asset{
 	{Symbol: "001717", Name: "工银前沿医疗股票A", Market: "A", AssetClass: "equity", Currency: "CNY", Exchange: "基金", Source: FixtureSource, Metadata: map[string]any{"provider": FixtureSource, "instrumentType": "fund", "issueDate": "2016-02-03", "issueDateSource": FixtureSource, "tsCode": "001717.OF"}},
 }
 
-func SearchAssets(query string, market string) []Asset {
-	return NewFixtureProvider().SearchAssets(query, market)
+func SearchAssets(query string, market string, assetClass string, exactMatch bool) []Asset {
+	return NewFixtureProvider().SearchAssets(query, market, assetClass, exactMatch)
 }
 
-func (FixtureProvider) SearchAssets(query string, market string) []Asset {
+func (FixtureProvider) SearchAssets(query string, market string, assetClass string, exactMatch bool) []Asset {
 	query = strings.ToLower(strings.TrimSpace(query))
 	market = strings.ToUpper(strings.TrimSpace(market))
 	matches := make([]Asset, 0, len(fixtureAssets))
 
 	for _, asset := range fixtureAssets {
+		if assetClass != "" && assetClass != "default" && asset.AssetClass != assetClass {
+			continue
+		}
 		if market != "" && market != "ALL" && strings.ToUpper(asset.Market) != market {
 			continue
 		}
-		if query == "" || strings.Contains(strings.ToLower(asset.Symbol), query) || strings.Contains(strings.ToLower(asset.Name), query) || strings.Contains(strings.ToLower(fmt.Sprint(asset.Metadata["tsCode"])), query) {
+		if query == "" {
+			matches = append(matches, asset)
+			continue
+		}
+		if exactMatch {
+			if strings.EqualFold(asset.Symbol, query) || strings.EqualFold(asset.Name, query) {
+				matches = append(matches, asset)
+			}
+		} else if strings.Contains(strings.ToLower(asset.Symbol), query) || strings.Contains(strings.ToLower(asset.Name), query) || strings.Contains(strings.ToLower(fmt.Sprint(asset.Metadata["tsCode"])), query) {
 			matches = append(matches, asset)
 		}
 	}

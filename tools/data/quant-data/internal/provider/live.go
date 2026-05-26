@@ -37,7 +37,7 @@ type LiveProvider struct {
 
 type marketBackend interface {
 	ID() string
-	SearchAssets(query string, market string) ([]Asset, []string)
+	SearchAssets(query string, market string, assetClass string, exactMatch bool) ([]Asset, []string)
 	GetPriceSeries(symbol string, market string, start string, end string) (PriceSeriesResult, []string)
 	GetFxRates(pair string, start string, end string) (FxRatesResult, []string)
 }
@@ -67,14 +67,14 @@ func (LiveProvider) Mode() string {
 	return "live"
 }
 
-func (provider LiveProvider) SearchAssets(query string, market string) []Asset {
+func (provider LiveProvider) SearchAssets(query string, market string, assetClass string, exactMatch bool) []Asset {
 	assetsByKey := map[string]Asset{}
 	for _, providerID := range provider.policy.SearchOrder(market) {
 		backend := provider.backends[providerID]
 		if backend == nil {
 			continue
 		}
-		assets, _ := backend.SearchAssets(query, market)
+		assets, _ := backend.SearchAssets(query, market, assetClass, exactMatch)
 		for _, asset := range assets {
 			key := strings.ToUpper(asset.Symbol + "|" + asset.Market)
 			if _, exists := assetsByKey[key]; !exists {
@@ -152,7 +152,7 @@ type TushareProvider struct {
 
 func (TushareProvider) ID() string { return tushareSource }
 
-func (provider TushareProvider) SearchAssets(query string, market string) ([]Asset, []string) {
+func (provider TushareProvider) SearchAssets(query string, market string, assetClass string, exactMatch bool) ([]Asset, []string) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return []Asset{}, []string{}
@@ -160,6 +160,35 @@ func (provider TushareProvider) SearchAssets(query string, market string) ([]Ass
 	assets := []Asset{}
 	inferredAssets := []Asset{}
 	warnings := []string{}
+
+	// Step 1: If query matches a known index alias, resolve to canonical tsCode/name FIRST.
+	// This must happen before name-based index search to handle cases where the query
+	// (e.g. "沪深300") matches sub-indices but not the main index.
+	aliasQuery := query
+	if canonical, ok := resolveKnownIndexAlias(query); ok {
+		aliasUpper := strings.ToUpper(canonical)
+		// tsCode format (including ^-prefixed global indices): use inferTushareAsset directly
+		if strings.HasPrefix(aliasUpper, "^") {
+			// e.g. "^HSTECH" — global index with ^ prefix
+			if asset, ok := inferTushareAsset(canonical); ok && marketMatches(asset.Market, market) {
+				if assetClass == "" || assetClass == "default" || asset.AssetClass == assetClass {
+					return []Asset{asset}, warnings
+				}
+				return []Asset{}, warnings
+			}
+		} else if strings.HasSuffix(aliasUpper, ".SZ") || strings.HasSuffix(aliasUpper, ".SH") || strings.HasSuffix(aliasUpper, ".CSI") || strings.HasSuffix(aliasUpper, ".BJ") {
+			if asset, ok := inferTushareAsset(canonical); ok && marketMatches(asset.Market, market) {
+				if assetClass == "" || assetClass == "default" || asset.AssetClass == assetClass {
+					return []Asset{asset}, warnings
+				}
+				return []Asset{}, warnings
+			}
+		}
+		// Name format: use canonical name for the search
+		aliasQuery = canonical
+	}
+
+	// Step 2: Standard inferred asset resolution
 	if asset, ok := inferTushareGlobalIndex(query); ok && marketMatches(asset.Market, market) {
 		inferredAssets = append(inferredAssets, asset)
 	}
@@ -170,33 +199,77 @@ func (provider TushareProvider) SearchAssets(query string, market string) ([]Ass
 		inferredAssets = append(inferredAssets, asset)
 	}
 	if len(inferredAssets) > 0 && normalizeMarket(market) != "A" && normalizeMarket(market) != "DEFAULT" {
-		return dedupeAssets(inferredAssets), warnings
+		return filterByAssetClass(dedupeAssets(inferredAssets), assetClass), warnings
 	}
 
-	fundRows, err := provider.call("fund_basic", map[string]any{"market": "E", "status": "L"}, "ts_code,name,market,exchange,type,list_date")
-	if err != nil {
-		warnings = append(warnings, fmt.Sprintf("tushare fund_basic failed: %v", err))
-	} else {
-		assets = append(assets, filterTushareAssets(fundRows, query, market, "fund")...)
+	// Use aliasQuery for name-based searches (may be the canonical name from alias)
+	searchQuery := aliasQuery
+
+	// When assetClass is specified and is not "equity", skip the stock_basic call
+	skipStocks := assetClass != "" && assetClass != "equity" && assetClass != "default"
+
+	if !skipStocks || assetClass == "" || assetClass == "equity" {
+		stockRows, err := provider.call("stock_basic", map[string]any{"list_status": "L"}, "ts_code,name,market,exchange,list_date")
+		if err != nil {
+			warnings = append(warnings, fmt.Sprintf("tushare stock_basic failed: %v", err))
+		} else {
+			assets = append(assets, filterTushareAssets(stockRows, searchQuery, market, "equity", exactMatch)...)
+		}
 	}
 
-	stockRows, err := provider.call("stock_basic", map[string]any{"list_status": "L"}, "ts_code,name,market,exchange,list_date")
-	if err != nil {
-		warnings = append(warnings, fmt.Sprintf("tushare stock_basic failed: %v", err))
-	} else {
-		assets = append(assets, filterTushareAssets(stockRows, query, market, "equity")...)
+	if assetClass == "" || assetClass == "fund" || assetClass == "index" {
+		fundRows, err := provider.call("fund_basic", map[string]any{"market": "E", "status": "L"}, "ts_code,name,market,exchange,type,list_date")
+		if err != nil {
+			warnings = append(warnings, fmt.Sprintf("tushare fund_basic failed: %v", err))
+		} else {
+			assets = append(assets, filterTushareAssets(fundRows, searchQuery, market, "fund", exactMatch)...)
+		}
 	}
 
-	indexRows, err := provider.call("index_basic", map[string]any{"market": "CSI"}, "ts_code,name,market,publisher,category")
-	if err != nil {
-		warnings = append(warnings, fmt.Sprintf("tushare index_basic failed: %v", err))
-	} else {
-		assets = append(assets, filterTushareAssets(indexRows, query, market, "index")...)
+	if assetClass == "" || assetClass == "index" {
+		// When searching by name, omit market filter to also find SZ/SH indices (e.g. 399932.SZ 中证消费).
+		// When searching by code (numeric), use market filter to reduce noise.
+		indexParams := map[string]any{}
+		if market == "A" && !isDigits(searchQuery) {
+			// Name search on A market: get all indices, don't restrict to CSI only
+		} else {
+			indexParams["market"] = "CSI"
+		}
+		indexRows, err := provider.call("index_basic", indexParams, "ts_code,name,market,publisher,category")
+		if err != nil {
+			warnings = append(warnings, fmt.Sprintf("tushare index_basic failed: %v", err))
+		} else {
+			assets = append(assets, filterTushareAssets(indexRows, searchQuery, market, "index", exactMatch)...)
+		}
 	}
 
 	assets = append(assets, inferredAssets...)
+	result := filterByAssetClass(dedupeAssets(assets), assetClass)
 
-	return dedupeAssets(assets), warnings
+	// Fallback: if no results and query matches a known index alias, retry with canonical name
+	if len(result) == 0 {
+		if canonicalName, ok := resolveKnownIndexAlias(query); ok {
+			// If the alias is a tsCode (ends with .SZ/.SH/.CSI), infer directly.
+			// Otherwise search index_basic with canonical name.
+			var aliasAssets []Asset
+			aliasUpper := strings.ToUpper(canonicalName)
+			if strings.HasSuffix(aliasUpper, ".SZ") || strings.HasSuffix(aliasUpper, ".SH") || strings.HasSuffix(aliasUpper, ".CSI") || strings.HasSuffix(aliasUpper, ".BJ") {
+				if asset, ok := inferTushareAsset(canonicalName); ok && marketMatches(asset.Market, market) {
+					aliasAssets = []Asset{asset}
+				}
+			} else {
+				// Search all A-market indices (no CSI filter) by canonical name
+				indexRows, err := provider.call("index_basic", map[string]any{}, "ts_code,name,market,publisher,category")
+				if err == nil {
+					aliasAssets = filterTushareAssets(indexRows, canonicalName, market, "index", exactMatch)
+				}
+			}
+			aliasAssets = append(aliasAssets, result...)
+			return filterByAssetClass(dedupeAssets(aliasAssets), assetClass), warnings
+		}
+	}
+
+	return result, warnings
 }
 
 func (provider TushareProvider) GetPriceSeries(symbol string, market string, start string, end string) (PriceSeriesResult, []string) {
@@ -213,6 +286,12 @@ func (provider TushareProvider) GetPriceSeries(symbol string, market string, sta
 		return provider.getOpenFundNav(openFundCode, start, end)
 	}
 
+	// Handle .CSI/.SZ/.SH/.BJ tsCode format (e.g. "000922.CSI", "399932.SZ") for direct index lookups
+	symbolUpper := strings.ToUpper(symbol)
+	if strings.HasSuffix(symbolUpper, ".CSI") || strings.HasSuffix(symbolUpper, ".SZ") || strings.HasSuffix(symbolUpper, ".SH") || strings.HasSuffix(symbolUpper, ".BJ") {
+		tsCode := symbolUpper
+		return provider.getIndexPrices(tsCode, start, end)
+	}
 	tsCode := normalizeTushareCode(symbol)
 	if tsCode == "" {
 		return PriceSeriesResult{AttemptedSources: []string{tushareSource}, Symbol: symbol}, []string{"tushare requires a SH/SZ ts_code or six digit A-market symbol"}
@@ -299,6 +378,30 @@ func (provider TushareProvider) getGlobalIndexPrices(tsCode string, start string
 			Low:           row.float("low"),
 			Open:          row.float("open"),
 			Source:        tushareSource + "-index-global",
+			Volume:        row.float("vol"),
+		})
+	}
+	sort.SliceStable(prices, func(i, j int) bool { return prices[i].Date < prices[j].Date })
+	return PriceSeriesResult{AttemptedSources: []string{tushareSource}, Prices: prices, Symbol: tsCode, Warnings: []string{}}, []string{}
+}
+
+func (provider TushareProvider) getIndexPrices(tsCode string, start string, end string) (PriceSeriesResult, []string) {
+	params := map[string]any{"ts_code": tsCode, "start_date": compactDate(start), "end_date": compactDate(end)}
+	rows, err := provider.call("index_daily", params, "ts_code,trade_date,open,high,low,close,vol,amount")
+	if err != nil {
+		return PriceSeriesResult{AttemptedSources: []string{tushareSource}, Symbol: tsCode}, []string{fmt.Sprintf("tushare index_daily failed: %v", err)}
+	}
+	prices := make([]PriceRow, 0, len(rows))
+	for _, row := range rows {
+		closeValue := row.float("close")
+		prices = append(prices, PriceRow{
+			AdjustedClose: closeValue,
+			Close:         closeValue,
+			Date:          dashedDate(row.string("trade_date")),
+			High:          row.float("high"),
+			Low:           row.float("low"),
+			Open:          row.float("open"),
+			Source:        tushareSource + "-index",
 			Volume:        row.float("vol"),
 		})
 	}
@@ -464,8 +567,11 @@ type EastmoneyProvider struct{ client *http.Client }
 
 func (EastmoneyProvider) ID() string { return akshareSource }
 
-func (EastmoneyProvider) SearchAssets(query string, market string) ([]Asset, []string) {
+func (EastmoneyProvider) SearchAssets(query string, market string, assetClass string, exactMatch bool) ([]Asset, []string) {
 	if asset, ok := inferTushareAsset(query); ok && marketMatches(asset.Market, market) {
+		if assetClass != "" && asset.AssetClass != assetClass && assetClass != "default" {
+			return []Asset{}, []string{}
+		}
 		asset.Source = akshareSource
 		asset.Metadata["provider"] = akshareSource
 		return []Asset{asset}, []string{}
@@ -474,11 +580,16 @@ func (EastmoneyProvider) SearchAssets(query string, market string) ([]Asset, []s
 }
 
 func (provider EastmoneyProvider) GetPriceSeries(symbol string, market string, start string, end string) (PriceSeriesResult, []string) {
-	code := normalizeSixDigit(symbol)
+	// eastmoney API uses .SS suffix for SH indices; .CSI is CSI index notation.
+	symbolForApi := strings.ToUpper(symbol)
+	if strings.HasSuffix(symbolForApi, ".CSI") {
+		symbolForApi = strings.TrimSuffix(symbolForApi, ".CSI") + ".SS"
+	}
+	code := normalizeSixDigit(symbolForApi)
 	if code == "" {
 		return PriceSeriesResult{AttemptedSources: []string{akshareSource}, Symbol: symbol}, []string{"akshare price requires a six digit A-market symbol"}
 	}
-	secid := eastmoneySecID(code, symbol)
+	secid := eastmoneySecID(code, symbolForApi)
 	endpoint := "https://push2his.eastmoney.com/api/qt/stock/kline/get"
 	query := url.Values{}
 	query.Set("fields1", "f1,f2,f3,f4,f5,f6")
@@ -526,7 +637,7 @@ type YFinanceProvider struct{ client *http.Client }
 
 func (YFinanceProvider) ID() string { return yfinanceSource }
 
-func (provider YFinanceProvider) SearchAssets(query string, market string) ([]Asset, []string) {
+func (provider YFinanceProvider) SearchAssets(query string, market string, assetClass string, exactMatch bool) ([]Asset, []string) {
 	requestURL := "https://query2.finance.yahoo.com/v1/finance/search?q=" + url.QueryEscape(query) + "&quotesCount=10&newsCount=0"
 	response, err := provider.client.Get(requestURL)
 	if err != nil {
@@ -679,6 +790,21 @@ func dedupeAssets(assets []Asset) []Asset {
 	result := make([]Asset, 0, len(seen))
 	for _, asset := range seen {
 		result = append(result, asset)
+	}
+	return result
+}
+
+// filterByAssetClass returns assets matching the specified assetClass.
+// If assetClass is empty or "default", returns all assets.
+func filterByAssetClass(assets []Asset, assetClass string) []Asset {
+	if assetClass == "" || assetClass == "default" {
+		return assets
+	}
+	result := []Asset{}
+	for _, asset := range assets {
+		if asset.AssetClass == assetClass {
+			result = append(result, asset)
+		}
 	}
 	return result
 }

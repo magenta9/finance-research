@@ -499,6 +499,17 @@ func readString(input map[string]any, key string) string {
 	return strings.TrimSpace(fmt.Sprint(value))
 }
 
+func readBool(input map[string]any, key string) bool {
+	value, ok := input[key]
+	if !ok || value == nil {
+		return false
+	}
+	if b, ok := value.(bool); ok {
+		return b
+	}
+	return false
+}
+
 func readNumber(input map[string]any, key string) float64 {
 	value, ok := input[key]
 	if !ok || value == nil {

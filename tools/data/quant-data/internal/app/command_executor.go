@@ -74,7 +74,12 @@ func (executor commandExecutor) Run() int {
 func (executor commandExecutor) invoke() commandResult {
 	switch executor.method {
 	case "search-assets":
-		return commandResult{data: executor.dataProvider.SearchAssets(readString(executor.input, "query"), readString(executor.input, "market")), qualityStatus: "available", implemented: true}
+		return commandResult{data: executor.dataProvider.SearchAssets(
+			readString(executor.input, "query"),
+			readString(executor.input, "market"),
+			readString(executor.input, "assetClass"),
+			readBool(executor.input, "exactMatch"),
+		), qualityStatus: "available", implemented: true}
 	case "get-price-series":
 		result := executor.dataProvider.GetPriceSeries(readString(executor.input, "symbol"), readString(executor.input, "market"), readString(executor.input, "start"), readString(executor.input, "end"))
 		if assetID := readString(executor.input, "assetId"); assetID != "" {
