@@ -77,6 +77,8 @@ func TestFixtureProviderBypassesConfigForE2E(t *testing.T) {
 }
 
 func TestCommandValidationRejectsInvalidInput(t *testing.T) {
+	t.Setenv("QUANT_DATA_HOME", t.TempDir())
+
 	tests := []struct {
 		name   string
 		method string
@@ -84,6 +86,7 @@ func TestCommandValidationRejectsInvalidInput(t *testing.T) {
 		field  string
 	}{
 		{name: "search missing query", method: "search-assets", input: `{}`, field: "query"},
+		{name: "search malformed exact match", method: "search-assets", input: `{"query":"SPY","exactMatch":"true"}`, field: "exactMatch"},
 		{name: "price missing symbol", method: "get-price-series", input: `{"start":"2025-01-01","end":"2025-01-31"}`, field: "symbol"},
 		{name: "price invalid start", method: "get-price-series", input: `{"symbol":"510300","start":"20250101","end":"2025-01-31"}`, field: "start"},
 		{name: "price invalid range", method: "get-price-series", input: `{"symbol":"510300","start":"2025-02-01","end":"2025-01-31"}`, field: "end"},
@@ -119,6 +122,7 @@ func TestReadCommandValidationRejectsInvalidInput(t *testing.T) {
 		{name: "read prices missing asset", method: "read-prices", input: `{}`, field: "assetId"},
 		{name: "read prices partial range", method: "read-prices", input: `{"assetId":"asset-1","start":"2026-01-01"}`, field: "end"},
 		{name: "read price freshness invalid max age", method: "read-price-freshness", input: `{"assetId":"asset-1","maxAgeHours":0}`, field: "maxAgeHours"},
+		{name: "read price freshness malformed max age", method: "read-price-freshness", input: `{"assetId":"asset-1","maxAgeHours":"abc"}`, field: "maxAgeHours"},
 		{name: "read fx rates invalid pair", method: "read-fx-rates", input: `{"pair":"USDCNY","start":"2026-01-01","end":"2026-01-02"}`, field: "pair"},
 		{name: "read fx latest invalid date", method: "read-fx-latest", input: `{"pair":"USD/CNY","onOrBeforeDate":"20260101"}`, field: "onOrBeforeDate"},
 	}

@@ -220,12 +220,21 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeStoreError(stdout, err)
 	}
 
-	useFixtureProvider := os.Getenv("QUANT_DATA_FIXTURE_PROVIDER") == "1"
-	if !useFixtureProvider {
-		if isStoreOnlyMethod(method) {
-			return runStoreOnlyMethod(method, input, dataStore, maintenanceStatus, stdout)
-		}
+	normalizedInput, normalizationError := normalizeCommandInput(method, input)
+	if normalizationError != nil {
+		return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: normalizationError, MaintenanceStatus: maintenanceStatus})
+	}
+	input = normalizedInput
 
+	useFixtureProvider := os.Getenv("QUANT_DATA_FIXTURE_PROVIDER") == "1"
+	if isStoreOnlyMethod(method) {
+		return runStoreOnlyMethod(method, input, dataStore, maintenanceStatus, stdout)
+	}
+	if validationError := validateCommandInput(method, input); validationError != nil {
+		return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: maintenanceStatus})
+	}
+
+	if !useFixtureProvider {
 		configStatus, err := store.CheckProviderConfig(dataStore.ConfigDir())
 		if err != nil {
 			return writeStoreError(stdout, err)
@@ -290,10 +299,6 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 
 		tushareConfig := providerConfig.Provider("tushare")
 		return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewLiveProviderWithPolicy(provider.LiveConfig{TushareToken: tushareConfig.Token}, policy))
-	}
-
-	if isStoreOnlyMethod(method) {
-		return runStoreOnlyMethod(method, input, dataStore, maintenanceStatus, stdout)
 	}
 
 	return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewFixtureProvider())

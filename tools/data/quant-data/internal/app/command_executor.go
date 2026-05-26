@@ -37,10 +37,6 @@ func runProviderMethod(method string, input map[string]any, dataStore *store.Sto
 }
 
 func (executor commandExecutor) Run() int {
-	if validationError := validateCommandInput(executor.method, executor.input); validationError != nil {
-		return writeEnvelope(executor.stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: executor.maintenanceStatus})
-	}
-
 	result := executor.invoke()
 	if !result.implemented {
 		return writeEnvelope(executor.stdout, Envelope{

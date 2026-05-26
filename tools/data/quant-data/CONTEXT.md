@@ -20,6 +20,10 @@ _Avoid_: Host cache merge, presentation fallback, portfolio preparation rule
 The tool-facing contract for retrieving assets, market observations, research signals, and source material from the **Data Domain**.
 _Avoid_: Price API, sidecar API, market-data-only interface
 
+**Command Input Normalization**:
+The **Data Access Interface** rule that decodes quant-data JSON command input into normalized command values, including compatibility handling for stringified numbers and other accepted caller shapes before validation and execution. Values that cannot be normalized must produce `INVALID_COMMAND_INPUT` rather than silently becoming zero values.
+_Avoid_: Ad hoc map reads, per-command parsing helpers, strict JSON type boundary
+
 **External Data**:
 Provider-sourced asset facts, market observations, research signals, and source material maintained for reuse.
 _Avoid_: User workspace data, saved portfolio data
@@ -101,6 +105,7 @@ _Avoid_: Data maintenance, market-data fetch
 - **Data Maintenance** maintains the **Data Domain**.
 - **External Data Reconciliation** belongs to **Data Maintenance** and is implemented by the CLI store persistence path.
 - The **Data Access Interface** exposes the **Data Domain** to finance-research workflows.
+- **Command Input Normalization** belongs to the **Data Access Interface** and applies consistently across all quant-data command paths.
 - **External Data** is maintained outside **User Workspace Data**.
 - **External Data** belongs to an **External Instrument**.
 - **User Workspace Data** may reference **External Data** but does not own it.

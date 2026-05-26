@@ -597,6 +597,65 @@ def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
     return []
 
 
+# Keywords that identify variant/sub-class indices that should be excluded
+# when the user intends the plain/base version.
+_VARIANT_EXCLUDE_KEYWORDS = [
+    "全收益", "净收益",
+    "USD", "HKD", "GBP", "SGD", "EUR", "JPY", "AUD", "CAD", "SGD",
+    "低贝塔", "高贝塔",
+    "CNY", "CPR",
+]
+
+
+def _is_variant(name: str) -> bool:
+    """Return True if name looks like a variant/sub-class of a base index."""
+    for kw in _VARIANT_EXCLUDE_KEYWORDS:
+        if kw in name:
+            return True
+    return False
+
+
+def _resolve_with_disambiguation(
+    query: str, candidates: list[dict[str, Any]]
+) -> dict[str, Any] | None:
+    """Apply SKILL.md disambiguation rules to pick one asset from candidates.
+
+    Priority:
+    1. Exact name match (case-insensitive).
+    2. Filter out variants (全收益/净收益/currency), then:
+       a. Exact name match with what's left.
+       b. Shortest name among remaining (most generic/base).
+    3. Return None if nothing usable remains.
+    """
+    # Rule 1: exact name match
+    for asset in candidates:
+        name = str(asset.get("name") or "")
+        if name.lower() == query.lower():
+            return asset
+
+    # Separate plain vs variant candidates
+    plain = [a for a in candidates if not _is_variant(str(a.get("name") or ""))]
+    variants = [a for a in candidates if _is_variant(str(a.get("name") or ""))]
+
+    # Rule 2a: exact name match among plain candidates
+    for asset in plain:
+        if str(asset.get("name") or "").lower() == query.lower():
+            return asset
+
+    # Rule 2b: shortest name among plain candidates (most generic/base)
+    if plain:
+        chosen = min(plain, key=lambda a: len(str(a.get("name") or "")))
+        return chosen
+
+    # Fallback: if everything is variant (shouldn't happen for plain name queries),
+    # still pick shortest
+    if candidates:
+        chosen = min(candidates, key=lambda a: len(str(a.get("name") or "")))
+        return chosen
+
+    return None
+
+
 def resolve_asset(
     args: argparse.Namespace, query: str, market: str
 ) -> tuple[dict[str, Any] | None, list[dict[str, str]]]:
@@ -617,14 +676,17 @@ def resolve_asset(
             }
         ]
     assets = envelope.get("data") or []
-    if len(assets) == 1 and isinstance(assets[0], dict):
-        return assets[0], []
     if not assets:
         return None, [{"code": "asset_not_found", "message": f"未解析到标的：{query}"}]
+
+    resolved = _resolve_with_disambiguation(query, assets)
+    if resolved is not None:
+        return resolved, []
+
     return None, [
         {
-            "code": "asset_ambiguous",
-            "message": f"标的解析存在歧义：{query}，请提供更精确的代码或 market。",
+            "code": "asset_not_found",
+            "message": f"无法从候选列表中消歧标的：{query}。请提供更精确的代码。",
         }
     ]
 
