@@ -168,6 +168,24 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertIsNone(asset)
         self.assertEqual(gaps[0]["code"], "asset_search_invalid_response")
 
+    def test_resolve_asset_handles_malformed_maintenance_error(self) -> None:
+        original = analyze_module.run_quant_data
+
+        def fake_run_quant_data(
+            args: object, method: str, payload: dict[str, object]
+        ) -> dict[str, object]:
+            return {"ok": False, "maintenanceError": "boom"}
+
+        try:
+            analyze_module.run_quant_data = fake_run_quant_data
+            asset, gaps = analyze_module.resolve_asset(object(), "SPY", "US")
+        finally:
+            analyze_module.run_quant_data = original
+
+        self.assertIsNone(asset)
+        self.assertEqual(gaps[0]["code"], "asset_search_failed")
+        self.assertEqual(gaps[0]["message"], "标的解析失败。")
+
     def test_fetch_prices_rejects_non_object_data(self) -> None:
         original = analyze_module.run_quant_data
 

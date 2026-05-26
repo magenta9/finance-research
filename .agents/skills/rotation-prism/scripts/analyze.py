@@ -597,6 +597,18 @@ def run_quant_data(
     return envelope
 
 
+def envelope_error_gap(
+    envelope: dict[str, Any], default_code: str, default_message: str
+) -> dict[str, str]:
+    error = envelope.get("maintenanceError")
+    if not isinstance(error, dict):
+        return {"code": default_code, "message": default_message}
+    return {
+        "code": str(error.get("code") or default_code),
+        "message": str(error.get("message") or default_message),
+    }
+
+
 def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
     command = [args.quant_data, *args.quant_data_arg, "help", "--json"]
     env = os.environ.copy()
@@ -678,12 +690,8 @@ def resolve_asset(
         payload["market"] = market
     envelope = run_quant_data(args, "search-assets", payload)
     if not envelope.get("ok"):
-        error = envelope.get("maintenanceError") or {}
         return None, [
-            {
-                "code": str(error.get("code") or "asset_search_failed"),
-                "message": str(error.get("message") or "标的解析失败。"),
-            }
+            envelope_error_gap(envelope, "asset_search_failed", "标的解析失败。")
         ]
     assets = envelope.get("data")
     if assets is None:
@@ -720,12 +728,8 @@ def fetch_prices(
     }
     envelope = run_quant_data(args, "get-price-series", payload)
     if not envelope.get("ok"):
-        error = envelope.get("maintenanceError") or {}
         return [], [
-            {
-                "code": str(error.get("code") or "price_fetch_failed"),
-                "message": str(error.get("message") or "价格序列获取失败。"),
-            }
+            envelope_error_gap(envelope, "price_fetch_failed", "价格序列获取失败。")
         ]
     data = envelope.get("data")
     if data is None:
