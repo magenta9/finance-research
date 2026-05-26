@@ -168,6 +168,8 @@ func TestCommandValidationRejectsInvalidInput(t *testing.T) {
 		{name: "price invalid range", method: "get-price-series", input: `{"symbol":"510300","start":"2025-02-01","end":"2025-01-31"}`, field: "end"},
 		{name: "fx missing pair", method: "get-fx-rates", input: `{"start":"2025-01-01","end":"2025-01-31"}`, field: "pair"},
 		{name: "fx invalid pair", method: "get-fx-rates", input: `{"pair":"USDCNY","start":"2025-01-01","end":"2025-01-31"}`, field: "pair"},
+		{name: "fx incomplete pair", method: "get-fx-rates", input: `{"pair":"USD/","start":"2025-01-01","end":"2025-01-31"}`, field: "pair"},
+		{name: "fx multi slash pair", method: "get-fx-rates", input: `{"pair":"USD/CNY/JPY","start":"2025-01-01","end":"2025-01-31"}`, field: "pair"},
 		{name: "fundamentals missing symbol", method: "get-fundamentals", input: `{}`, field: "symbol"},
 		{name: "flow missing symbol", method: "get-flow-sentiment", input: `{}`, field: "symbol"},
 		{name: "news missing symbol", method: "search-news-catalysts", input: `{}`, field: "symbol"},
@@ -200,6 +202,7 @@ func TestReadCommandValidationRejectsInvalidInput(t *testing.T) {
 		{name: "read price freshness invalid max age", method: "read-price-freshness", input: `{"assetId":"asset-1","maxAgeHours":0}`, field: "maxAgeHours"},
 		{name: "read price freshness malformed max age", method: "read-price-freshness", input: `{"assetId":"asset-1","maxAgeHours":"abc"}`, field: "maxAgeHours"},
 		{name: "read fx rates invalid pair", method: "read-fx-rates", input: `{"pair":"USDCNY","start":"2026-01-01","end":"2026-01-02"}`, field: "pair"},
+		{name: "read fx latest incomplete pair", method: "read-fx-latest", input: `{"pair":"/CNY","onOrBeforeDate":"2026-01-01"}`, field: "pair"},
 		{name: "read fx latest invalid date", method: "read-fx-latest", input: `{"pair":"USD/CNY","onOrBeforeDate":"20260101"}`, field: "onOrBeforeDate"},
 	}
 

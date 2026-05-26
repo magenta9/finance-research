@@ -19,7 +19,7 @@ func validateCommandInput(method string, input map[string]any) *MaintenanceError
 		if err := requireFields(input, method, "pair", "start", "end"); err != nil {
 			return err
 		}
-		if !strings.Contains(readString(input, "pair"), "/") {
+		if !validFxPair(readString(input, "pair")) {
 			return invalidInput(method, "pair", "pair must use BASE/QUOTE format")
 		}
 		return requireDateRange(input, method)
@@ -66,7 +66,7 @@ func validateReadCommandInput(method string, input map[string]any) *MaintenanceE
 		if err := requireFields(input, method, "pair", "start", "end"); err != nil {
 			return err
 		}
-		if !strings.Contains(readString(input, "pair"), "/") {
+		if !validFxPair(readString(input, "pair")) {
 			return invalidInput(method, "pair", "pair must use BASE/QUOTE format")
 		}
 		return requireDateRange(input, method)
@@ -74,7 +74,7 @@ func validateReadCommandInput(method string, input map[string]any) *MaintenanceE
 		if err := requireFields(input, method, "pair", "onOrBeforeDate"); err != nil {
 			return err
 		}
-		if !strings.Contains(readString(input, "pair"), "/") {
+		if !validFxPair(readString(input, "pair")) {
 			return invalidInput(method, "pair", "pair must use BASE/QUOTE format")
 		}
 		if _, err := parseCommandDate(readString(input, "onOrBeforeDate")); err != nil {
@@ -85,13 +85,18 @@ func validateReadCommandInput(method string, input map[string]any) *MaintenanceE
 		if err := requireFields(input, method, "pair"); err != nil {
 			return err
 		}
-		if !strings.Contains(readString(input, "pair"), "/") {
+		if !validFxPair(readString(input, "pair")) {
 			return invalidInput(method, "pair", "pair must use BASE/QUOTE format")
 		}
 		return nil
 	default:
 		return nil
 	}
+}
+
+func validFxPair(pair string) bool {
+	parts := strings.Split(pair, "/")
+	return len(parts) == 2 && strings.TrimSpace(parts[0]) != "" && strings.TrimSpace(parts[1]) != ""
 }
 
 func requireFields(input map[string]any, method string, fields ...string) *MaintenanceError {
