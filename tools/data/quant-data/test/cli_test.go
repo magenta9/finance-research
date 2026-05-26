@@ -80,6 +80,18 @@ func TestDataMethodRejectsMalformedJSONAsInvalidInput(t *testing.T) {
 	}
 }
 
+func TestDataMethodRejectsTrailingJSONAsInvalidInput(t *testing.T) {
+	t.Setenv("QUANT_DATA_HOME", t.TempDir())
+
+	envelope := runJSONCommand(t, "search-assets", `{"query":"SPY"}{"query":"QQQ"}`)
+	if envelope.OK {
+		t.Fatalf("expected ok=false envelope")
+	}
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeInvalidCommandInput {
+		t.Fatalf("expected INVALID_COMMAND_INPUT, got %#v", envelope.MaintenanceError)
+	}
+}
+
 func TestDataMethodHardensInsecureConfig(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("QUANT_DATA_HOME", home)

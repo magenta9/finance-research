@@ -210,6 +210,18 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 			MaintenanceStatus: emptyMaintenanceStatus(),
 		})
 	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		return writeEnvelope(stdout, Envelope{
+			OK: false,
+			MaintenanceError: &MaintenanceError{
+				Code:    MaintenanceCodeInvalidCommandInput,
+				Message: "Invalid JSON input: expected a single JSON object",
+				Details: map[string]any{"method": method},
+			},
+			MaintenanceStatus: emptyMaintenanceStatus(),
+		})
+	}
 
 	dataStore, err := openStore()
 	if err != nil {
