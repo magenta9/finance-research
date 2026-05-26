@@ -19,6 +19,7 @@ DEFAULT_MA_PERIOD = 242
 DEFAULT_BOLLINGER_STD = 2.0
 DEFAULT_RETURN_DIFF_WINDOW = 40
 DEFAULT_RSI_PERIOD = 14
+EXPECTED_CONTRACT_VERSION = "quant-data-cli.v1"
 
 
 @dataclass(frozen=True)
@@ -90,6 +91,12 @@ def rounded(value: float | None, digits: int = 6) -> float | None:
 
 def shift_days(date_text: str, days: int) -> str:
     return (date.fromisoformat(date_text) + timedelta(days=days)).isoformat()
+
+
+def strict_iso_date(date_text: str) -> date:
+    if len(date_text) != 10 or date_text[4] != "-" or date_text[7] != "-":
+        raise ValueError("date must be YYYY-MM-DD")
+    return date.fromisoformat(date_text)
 
 
 def rolling_mean(values: list[float | None], period: int) -> list[float | None]:
@@ -236,6 +243,49 @@ def params_to_json(params: Params) -> dict[str, Any]:
         "returnDiffWindow": params.return_diff_window,
         "rsiPeriod": params.rsi_period,
     }
+
+
+def validate_analysis_inputs(
+    args: argparse.Namespace, params: Params
+) -> list[dict[str, str]]:
+    gaps: list[dict[str, str]] = []
+    parsed_start: date | None = None
+    parsed_end: date | None = None
+    if args.start:
+        try:
+            parsed_start = strict_iso_date(args.start)
+        except ValueError:
+            gaps.append(
+                {
+                    "code": "invalid_input",
+                    "message": f"start 必须是 YYYY-MM-DD：{args.start}",
+                }
+            )
+    try:
+        parsed_end = strict_iso_date(args.end)
+    except ValueError:
+        gaps.append(
+            {"code": "invalid_input", "message": f"end 必须是 YYYY-MM-DD：{args.end}"}
+        )
+    if (
+        parsed_start is not None
+        and parsed_end is not None
+        and parsed_start > parsed_end
+    ):
+        gaps.append({"code": "invalid_input", "message": "start 必须早于或等于 end。"})
+    if params.lookback_days <= 0:
+        gaps.append({"code": "invalid_input", "message": "lookback-days 必须大于 0。"})
+    if params.ma_period <= 1:
+        gaps.append({"code": "invalid_input", "message": "ma-period 必须大于 1。"})
+    if params.bollinger_std <= 0:
+        gaps.append({"code": "invalid_input", "message": "bollinger-std 必须大于 0。"})
+    if params.return_diff_window <= 0:
+        gaps.append(
+            {"code": "invalid_input", "message": "return-diff-window 必须大于 0。"}
+        )
+    if params.rsi_period <= 1:
+        gaps.append({"code": "invalid_input", "message": "rsi-period 必须大于 1。"})
+    return gaps
 
 
 def unavailable_result(
@@ -583,6 +633,16 @@ def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
                 "message": "quant-data help --json 未返回合法 JSON，无法确认 contract。",
             }
         ]
+    if (
+        not isinstance(payload, dict)
+        or payload.get("contractVersion") != EXPECTED_CONTRACT_VERSION
+    ):
+        return [
+            {
+                "code": "quant_data_cli_incompatible",
+                "message": f"quant-data contractVersion 必须是 {EXPECTED_CONTRACT_VERSION}。请更新或重新安装 quant-data CLI。",
+            }
+        ]
     methods = payload.get("methods") if isinstance(payload, dict) else None
     method_names = {
         str(item.get("name"))
@@ -674,9 +734,17 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         return_diff_window=args.return_diff_window,
         rsi_period=args.rsi_period,
     )
-    start = args.start or shift_days(args.end, -args.lookback_days)
     asset_a_query = {"query": args.asset_a}
     asset_b_query = {"query": args.asset_b}
+    input_gaps = validate_analysis_inputs(args, params)
+    if input_gaps:
+        return unavailable_result(
+            asset_a=asset_a_query,
+            asset_b=asset_b_query,
+            data_gaps=input_gaps,
+            params=params,
+        )
+    start = args.start or shift_days(args.end, -args.lookback_days)
     cli_gaps = check_quant_data(args)
     if cli_gaps:
         return unavailable_result(

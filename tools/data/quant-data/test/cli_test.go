@@ -68,6 +68,18 @@ func TestDataMethodReturnsConfigRequiredEnvelope(t *testing.T) {
 	}
 }
 
+func TestDataMethodRejectsMalformedJSONAsInvalidInput(t *testing.T) {
+	t.Setenv("QUANT_DATA_HOME", t.TempDir())
+
+	envelope := runJSONCommand(t, "search-assets", `{"query":`)
+	if envelope.OK {
+		t.Fatalf("expected ok=false envelope")
+	}
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeInvalidCommandInput {
+		t.Fatalf("expected INVALID_COMMAND_INPUT, got %#v", envelope.MaintenanceError)
+	}
+}
+
 func TestDataMethodHardensInsecureConfig(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("QUANT_DATA_HOME", home)
@@ -329,8 +341,8 @@ func TestDeletePricesRequiresDateRange(t *testing.T) {
 
 func TestUnknownMethodReturnsEnvelope(t *testing.T) {
 	envelope := runJSONCommand(t, "unknown-method", "")
-	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeStoreRepairRequired {
-		t.Fatalf("expected STORE_REPAIR_REQUIRED, got %#v", envelope.MaintenanceError)
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeInvalidCommandInput {
+		t.Fatalf("expected INVALID_COMMAND_INPUT, got %#v", envelope.MaintenanceError)
 	}
 }
 

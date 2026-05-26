@@ -88,8 +88,9 @@ func Run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int
 			return writeEnvelope(stdout, Envelope{
 				OK: false,
 				MaintenanceError: &MaintenanceError{
-					Code:    MaintenanceCodeStoreRepairRequired,
+					Code:    MaintenanceCodeInvalidCommandInput,
 					Message: fmt.Sprintf("Unknown quant-data method: %s", args[0]),
+					Details: map[string]any{"method": args[0]},
 				},
 				MaintenanceStatus: emptyMaintenanceStatus(),
 			})
@@ -202,8 +203,9 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    MaintenanceCodeStoreRepairRequired,
+				Code:    MaintenanceCodeInvalidCommandInput,
 				Message: fmt.Sprintf("Invalid JSON input: %v", err),
+				Details: map[string]any{"method": method},
 			},
 			MaintenanceStatus: emptyMaintenanceStatus(),
 		})

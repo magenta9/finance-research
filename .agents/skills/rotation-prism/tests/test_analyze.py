@@ -7,6 +7,7 @@ import json
 import subprocess
 import sys
 import unittest
+from argparse import Namespace
 from pathlib import Path
 
 
@@ -66,6 +67,67 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertTrue(payload["nonExecution"])
         self.assertEqual(payload["dataGaps"][0]["code"], "quant_data_cli_missing")
         self.assertIn("make quant-data-install", payload["dataGaps"][0]["message"])
+
+    def test_cli_reports_unavailable_for_invalid_end_date(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(ANALYZE_SCRIPT),
+                "--asset-a",
+                "SPY",
+                "--asset-b",
+                "QQQ",
+                "--end",
+                "20260526",
+                "--quant-data",
+                "/path/to/missing/quant-data",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        payload = json.loads(completed.stdout)
+
+        self.assertEqual(payload["status"], "unavailable")
+        self.assertEqual(payload["dataGaps"][0]["code"], "invalid_input")
+
+    def test_check_quant_data_rejects_incompatible_contract_version(self) -> None:
+        original = analyze_module.subprocess.run
+
+        def fake_run(
+            *args: object, **kwargs: object
+        ) -> subprocess.CompletedProcess[str]:
+            return subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=json.dumps(
+                    {
+                        "contractVersion": "quant-data-cli.v0",
+                        "methods": [
+                            {"name": "search-assets"},
+                            {"name": "get-price-series"},
+                        ],
+                    }
+                ),
+                stderr="",
+            )
+
+        try:
+            analyze_module.subprocess.run = fake_run
+            gaps = analyze_module.check_quant_data(
+                Namespace(
+                    quant_data="quant-data",
+                    quant_data_arg=[],
+                    quant_data_cwd=str(SKILL_DIR),
+                    fixture_provider=False,
+                )
+            )
+        finally:
+            analyze_module.subprocess.run = original
+
+        self.assertEqual(gaps[0]["code"], "quant_data_cli_incompatible")
+        self.assertIn("contractVersion", gaps[0]["message"])
 
     def test_analyze_price_points_produces_available_grade(self) -> None:
         params = analyze_module.Params(ma_period=20, return_diff_window=5, rsi_period=5)
