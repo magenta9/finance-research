@@ -190,21 +190,28 @@ def align_price_points(
 ) -> tuple[list[PricePoint], list[PricePoint], list[dict[str, str]]]:
     dates_a = {row.date for row in rows_a}
     dates_b = {row.date for row in rows_b}
-    if dates_a != dates_b:
+    shared = dates_a & dates_b
+    gaps = []
+    if not shared:
         return (
             [],
             [],
             [
                 {
                     "code": "date_alignment_mismatch",
-                    "message": "两个标的的日频价格日期无法完全对齐，按当前规则不形成结论。",
+                    "message": "两个标的的交易日无任何交集，无法计算比值。",
                 }
             ],
         )
+    if shared != dates_a or shared != dates_b:
+        gaps.append({
+            "code": "date_alignment_partial",
+            "message": f"两个标的交易日不同步（A股 {len(dates_a)} 天，港股 {len(dates_b)} 天，共同 {len(shared)} 天），取共同日期计算。",
+        })
     by_date_a = {row.date: row for row in rows_a}
     by_date_b = {row.date: row for row in rows_b}
-    dates = sorted(dates_a)
-    return [by_date_a[item] for item in dates], [by_date_b[item] for item in dates], []
+    dates = sorted(shared)
+    return [by_date_a[item] for item in dates], [by_date_b[item] for item in dates], gaps
 
 
 def direction_from_votes(votes: list[str]) -> str:
@@ -263,8 +270,10 @@ def analyze_price_points(
     minimum_bars = max(
         params.ma_period + params.return_diff_window, params.rsi_period + 1
     )
-    if data_gaps or len(aligned_a) < minimum_bars:
-        gaps = data_gaps or [
+    critical_gaps = [g for g in data_gaps if g["code"] != "date_alignment_partial"]
+    warnings = [g for g in data_gaps if g["code"] == "date_alignment_partial"]
+    if critical_gaps or len(aligned_a) < minimum_bars:
+        gaps = critical_gaps or [
             {
                 "code": "insufficient_calculation_coverage",
                 "message": f"至少需要 {minimum_bars} 个对齐日频收盘点，当前只有 {len(aligned_a)} 个。",
@@ -493,7 +502,7 @@ def analyze_price_points(
         },
         "trendEvidence": trend_evidence,
         "meanReversionEvidence": mean_reversion_evidence,
-        "dataGaps": [],
+        "dataGaps": warnings,
         "nonExecution": True,
     }
 
@@ -592,7 +601,11 @@ def resolve_asset(
     args: argparse.Namespace, query: str, market: str
 ) -> tuple[dict[str, Any] | None, list[dict[str, str]]]:
     payload = {"query": query}
-    if market:
+    # tsCode formats (e.g. "399006.SZ", "^HSTECH") already encode market;
+    # passing market separately can cause ambiguity (e.g. market=A with "399006.SZ"
+    # returns both "399006" and "399006.SZ"). Only use market for name queries.
+    is_ts_code = any(x in query for x in (".SZ", ".CSI", ".SH", ".HK", ".BJ")) or query.startswith("^")
+    if market and not is_ts_code:
         payload["market"] = market
     envelope = run_quant_data(args, "search-assets", payload)
     if not envelope.get("ok"):

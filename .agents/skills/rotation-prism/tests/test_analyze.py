@@ -21,13 +21,13 @@ sys.modules["rotation_prism_analyze"] = analyze_module
 spec.loader.exec_module(analyze_module)
 
 
-def synthetic_rows(length: int, start: float, daily_step: float) -> list[object]:
+def synthetic_rows(length: int, start: float, daily_step: float, date_offset: int = 0) -> list[object]:
     rows = []
     value = start
     for index in range(length):
         value += daily_step
         rows.append(
-            analyze_module.PricePoint(date=f"2025-01-{index + 1:03d}", close=value)
+            analyze_module.PricePoint(date=f"2025-01-{(index + date_offset) + 1:03d}", close=value)
         )
     return rows
 
@@ -82,10 +82,28 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertTrue(payload["trendEvidence"])
         self.assertEqual(payload["dataGaps"], [])
 
-    def test_date_alignment_mismatch_is_unavailable(self) -> None:
+    def test_date_alignment_partial_with_shared_dates(self) -> None:
         params = analyze_module.Params(ma_period=20, return_diff_window=5, rsi_period=5)
         rows_a = synthetic_rows(80, start=100, daily_step=1.0)
         rows_b = synthetic_rows(79, start=100, daily_step=1.0)
+
+        payload = analyze_module.analyze_price_points(
+            asset_a={"symbol": "A"},
+            asset_b={"symbol": "B"},
+            rows_a=rows_a,
+            rows_b=rows_b,
+            params=params,
+        )
+
+        # 有 79 天交集，继续分析，仅返回 partial warning
+        self.assertEqual(payload["status"], "available")
+        self.assertEqual(payload["dataGaps"][0]["code"], "date_alignment_partial")
+
+    def test_date_alignment_mismatch_no_shared_dates(self) -> None:
+        params = analyze_module.Params(ma_period=20, return_diff_window=5, rsi_period=5)
+        rows_a = synthetic_rows(80, start=100, daily_step=1.0)
+        # rows_b 完全错开，无任何交集（偏移 80 天，两序列恰好无重叠）
+        rows_b = synthetic_rows(80, start=100, daily_step=1.0, date_offset=80)
 
         payload = analyze_module.analyze_price_points(
             asset_a={"symbol": "A"},
