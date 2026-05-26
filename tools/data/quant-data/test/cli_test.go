@@ -67,6 +67,27 @@ func TestDataMethodHardensInsecureConfig(t *testing.T) {
 	}
 }
 
+func TestPriceSeriesEnvelopeIncludesRoutingProvenance(t *testing.T) {
+	t.Setenv("QUANT_DATA_HOME", t.TempDir())
+	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "1")
+
+	envelope := runJSONCommand(t, "get-price-series", `{"symbol":"SPY","market":"US","start":"2026-05-01","end":"2026-05-03"}`)
+	if !envelope.OK {
+		t.Fatalf("expected ok=true envelope, got error %#v", envelope.MaintenanceError)
+	}
+	provenance := envelope.ResultProvenance
+	if provenance["sourceId"] != "quant-data-fixture" {
+		t.Fatalf("sourceId = %#v, want quant-data-fixture", provenance["sourceId"])
+	}
+	if provenance["selectedSource"] != "quant-data-fixture" {
+		t.Fatalf("selectedSource = %#v, want quant-data-fixture", provenance["selectedSource"])
+	}
+	attempted := provenance["attemptedProviders"].([]any)
+	if len(attempted) != 1 || attempted[0] != "quant-data-fixture" {
+		t.Fatalf("attemptedProviders = %#v, want [quant-data-fixture]", attempted)
+	}
+}
+
 func TestCommandValidationRejectsInvalidInput(t *testing.T) {
 	t.Setenv("QUANT_DATA_HOME", t.TempDir())
 

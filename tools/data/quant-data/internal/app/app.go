@@ -232,6 +232,9 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 	if validationError := validateCommandInput(method, input); validationError != nil {
 		return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: maintenanceStatus})
 	}
+	if os.Getenv("QUANT_DATA_FIXTURE_PROVIDER") == "1" {
+		return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewFixtureProvider())
+	}
 
 	configStatus, err := store.CheckProviderConfig(dataStore.ConfigDir())
 	if err != nil {

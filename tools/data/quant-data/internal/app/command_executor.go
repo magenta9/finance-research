@@ -21,6 +21,7 @@ type commandResult struct {
 	data          any
 	qualityStatus string
 	implemented   bool
+	provenance    map[string]any
 	storeErr      error
 }
 
@@ -61,9 +62,7 @@ func (executor commandExecutor) Run() int {
 			"provider": executor.dataProvider.Source(),
 			"mode":     executor.dataProvider.Mode(),
 		},
-		ResultProvenance: map[string]any{
-			"sourceId": executor.dataProvider.Source(),
-		},
+		ResultProvenance: resultProvenance(executor.dataProvider.Source(), result.provenance),
 	})
 }
 
@@ -83,13 +82,13 @@ func (executor commandExecutor) invoke() commandResult {
 				return commandResult{implemented: true, storeErr: err}
 			}
 		}
-		return commandResult{data: result, qualityStatus: "available", implemented: true}
+		return commandResult{data: result, qualityStatus: "available", implemented: true, provenance: priceSeriesProvenance(result)}
 	case "get-fx-rates":
 		result := executor.dataProvider.GetFxRates(readString(executor.input, "pair"), readString(executor.input, "start"), readString(executor.input, "end"))
 		if err := executor.saveFxRates(result.Pair, result.Rates); err != nil {
 			return commandResult{implemented: true, storeErr: err}
 		}
-		return commandResult{data: result, qualityStatus: "available", implemented: true}
+		return commandResult{data: result, qualityStatus: "available", implemented: true, provenance: fxRatesProvenance(result)}
 	case "get-fundamentals":
 		return commandResult{data: executor.dataProvider.EmptyFundamentals(readString(executor.input, "symbol"), readString(executor.input, "market")), qualityStatus: "degraded", implemented: true}
 	case "get-flow-sentiment":
@@ -103,6 +102,36 @@ func (executor commandExecutor) invoke() commandResult {
 	default:
 		return commandResult{}
 	}
+}
+
+func resultProvenance(sourceID string, extra map[string]any) map[string]any {
+	provenance := map[string]any{"sourceId": sourceID}
+	for key, value := range extra {
+		provenance[key] = value
+	}
+	return provenance
+}
+
+func priceSeriesProvenance(result provider.PriceSeriesResult) map[string]any {
+	provenance := map[string]any{
+		"attemptedProviders": result.AttemptedSources,
+		"warnings":           result.Warnings,
+	}
+	if len(result.Prices) > 0 {
+		provenance["selectedSource"] = result.Prices[0].Source
+	}
+	return provenance
+}
+
+func fxRatesProvenance(result provider.FxRatesResult) map[string]any {
+	provenance := map[string]any{
+		"attemptedProviders": result.AttemptedSources,
+		"warnings":           result.Warnings,
+	}
+	if len(result.Rates) > 0 {
+		provenance["selectedSource"] = result.Rates[0].Source
+	}
+	return provenance
 }
 
 func (executor commandExecutor) savePrices(assetID string, prices []provider.PriceRow) error {
