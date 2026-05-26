@@ -162,6 +162,22 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertIsNone(asset)
         self.assertEqual(gaps[0]["code"], "asset_ambiguous")
 
+    def test_normalize_price_rows_uses_calculation_close_only(self) -> None:
+        rows = [
+            {
+                "date": "2026-05-01",
+                "calculationClose": 10.0,
+                "adjustedClose": 9.0,
+                "close": 8.0,
+            },
+            {"date": "2026-05-02", "adjustedClose": 9.0, "close": 8.0},
+        ]
+
+        points = analyze_module.normalize_price_rows(rows)
+
+        self.assertEqual(len(points), 1)
+        self.assertEqual(points[0].close, 10.0)
+
 
 if __name__ == "__main__":
     unittest.main()

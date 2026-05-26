@@ -20,6 +20,7 @@ func aggregatePriceSeries(symbol string, market string, order []string, backends
 		warnings = append(warnings, providerWarnings...)
 		warnings = append(warnings, result.Warnings...)
 		for _, row := range result.Prices {
+			row = withCalculationClose(row)
 			existing, exists := rowsByDate[row.Date]
 			if !exists || shouldReplacePrice(policy, existing, row, market) {
 				rowsByDate[row.Date] = row
@@ -77,6 +78,18 @@ func fillPriceGaps(existing PriceRow, incoming PriceRow) PriceRow {
 		existing.Volume = incoming.Volume
 	}
 	return existing
+}
+
+func withCalculationClose(row PriceRow) PriceRow {
+	if row.CalculationClose != nil {
+		return row
+	}
+	if row.AdjustedClose != nil {
+		row.CalculationClose = row.AdjustedClose
+		return row
+	}
+	row.CalculationClose = row.Close
+	return row
 }
 
 func priceCompleteness(row PriceRow) int {

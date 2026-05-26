@@ -100,7 +100,7 @@ func (FixtureProvider) GetPriceSeries(symbol string, market string, start string
 		lowValue := round4(closeValue * 0.989)
 		volumeValue := float64(700000 + index*3500 + int(seed%1000))
 		adjusted := closeValue
-		rows = append(rows, PriceRow{
+		rows = append(rows, withCalculationClose(PriceRow{
 			AdjustedClose: &adjusted,
 			Close:         &closeValue,
 			Date:          date,
@@ -109,7 +109,7 @@ func (FixtureProvider) GetPriceSeries(symbol string, market string, start string
 			Open:          &openValue,
 			Source:        FixtureSource,
 			Volume:        &volumeValue,
-		})
+		}))
 	}
 
 	return PriceSeriesResult{

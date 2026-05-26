@@ -176,9 +176,7 @@ def ratio_rsi(values: list[float], period: int) -> list[float | None]:
 def normalize_price_rows(rows: list[dict[str, Any]]) -> list[PricePoint]:
     points: list[PricePoint] = []
     for row in rows:
-        close = finite_number(
-            row.get("calculationClose") or row.get("adjustedClose") or row.get("close")
-        )
+        close = finite_number(row.get("calculationClose"))
         if not row.get("date") or close is None:
             continue
         points.append(PricePoint(date=str(row["date"]), close=close))
