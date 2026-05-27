@@ -1,7 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import type { MarketDataPort } from '../sidecar/market-data-port';
 import { QuantDataCliClient, type QuantDataProcessRequest } from './client';
-import { QuantDataMarketDataAdapter } from './market-data-adapter';
+import { QuantDataMarketDataAdapter, QuantDataMarketDataPort } from './market-data-adapter';
 
 const createAdapter = () => {
     const calls: QuantDataProcessRequest[] = [];
@@ -181,6 +182,47 @@ describe('QuantDataMarketDataAdapter', () => {
         expect(calls[0]).toMatchObject({
             args: ['status'],
             input: undefined,
+        });
+    });
+
+    test('uses quant-data for market data while delegating research providers to sidecar fallback', async () => {
+        const { adapter, calls } = createAdapter();
+        const fallback = {
+            fetchFlowSentiment: vi.fn(),
+            fetchFundamentals: vi.fn(async () => ({
+                asOf: null,
+                attemptedSources: [],
+                dataAgeDays: null,
+                dataProvenance: [],
+                market: 'A',
+                metrics: { period: { fiscalPeriod: null, reportDate: null } },
+                providerErrors: [],
+                qualityStatus: 'unavailable',
+                symbol: '510300',
+                warnings: [],
+            })),
+            fetchFxRates: vi.fn(),
+            fetchMarketSource: vi.fn(),
+            fetchPrices: vi.fn(),
+            searchAnnouncements: vi.fn(),
+            searchAssets: vi.fn(),
+            searchNewsCatalysts: vi.fn(),
+        } as unknown as MarketDataPort;
+        const port = new QuantDataMarketDataPort({ fallback, quantData: adapter });
+
+        await expect(port.searchAssets({ enabledSources: ['akshare'], market: 'A', query: '510300' })).resolves.toEqual([
+            expect.objectContaining({ source: 'akshare', symbol: '510300' }),
+        ]);
+        await expect(port.fetchFundamentals({ enabledProviders: ['akshare'], market: 'A', symbol: '510300' })).resolves.toEqual(
+            expect.objectContaining({ qualityStatus: 'unavailable', symbol: '510300' }),
+        );
+
+        expect(calls[0]).toMatchObject({ args: ['search-assets'] });
+        expect(fallback.searchAssets).not.toHaveBeenCalled();
+        expect(fallback.fetchFundamentals).toHaveBeenCalledWith({
+            enabledProviders: ['akshare'],
+            market: 'A',
+            symbol: '510300',
         });
     });
 });

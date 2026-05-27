@@ -1,6 +1,7 @@
 import type { AssetLookupResult } from '@quantdesk/shared';
 
 import type {
+    MarketDataPort,
     FetchFxRatesRequest,
     FetchPricesRequest,
     MarketDataFxFetchResult,
@@ -58,6 +59,45 @@ export interface QuantDataStatusResult {
     };
     storePath?: string;
     storeVersion?: number;
+}
+
+export class QuantDataMarketDataPort implements MarketDataPort {
+    private readonly fallback: MarketDataPort;
+
+    private readonly quantData: QuantDataMarketDataAdapter;
+
+    constructor({
+        fallback,
+        quantData = new QuantDataMarketDataAdapter(),
+    }: {
+        fallback: MarketDataPort;
+        quantData?: QuantDataMarketDataAdapter;
+    }) {
+        this.fallback = fallback;
+        this.quantData = quantData;
+    }
+
+    async searchAssets(request: SearchAssetsRequest): Promise<AssetLookupResult[]> {
+        return await this.quantData.searchAssets(request);
+    }
+
+    async fetchPrices(request: FetchPricesRequest): Promise<MarketDataPriceFetchResult> {
+        return await this.quantData.fetchPrices(request);
+    }
+
+    async fetchFxRates(request: FetchFxRatesRequest): Promise<MarketDataFxFetchResult> {
+        return await this.quantData.fetchFxRates(request);
+    }
+
+    searchNewsCatalysts: MarketDataPort['searchNewsCatalysts'] = async (request) => await this.fallback.searchNewsCatalysts(request);
+
+    searchAnnouncements: MarketDataPort['searchAnnouncements'] = async (request) => await this.fallback.searchAnnouncements(request);
+
+    fetchMarketSource: MarketDataPort['fetchMarketSource'] = async (request) => await this.fallback.fetchMarketSource(request);
+
+    fetchFundamentals: MarketDataPort['fetchFundamentals'] = async (request) => await this.fallback.fetchFundamentals(request);
+
+    fetchFlowSentiment: MarketDataPort['fetchFlowSentiment'] = async (request) => await this.fallback.fetchFlowSentiment(request);
 }
 
 export class QuantDataMarketDataAdapter {

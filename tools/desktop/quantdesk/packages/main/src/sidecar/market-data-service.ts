@@ -30,14 +30,16 @@ export const createMarketDataServices = ({
     logger,
     sidecarRuntime,
     syncQueue = new SyncQueue(),
+    marketDataPort: providedMarketDataPort,
 }: {
     dataServices: DataServices;
     logger?: LoggerLike;
+    marketDataPort?: MarketDataPort;
     sidecarRuntime: SidecarRpc;
     syncQueue?: SyncQueue;
 }): MarketDataServices => {
     const { assetRepository, fxRateRepository, positionRepository, preferencesRepository, priceRepository } = dataServices.repositories;
-    const marketDataPort = new SidecarMarketDataAdapter(sidecarRuntime);
+    const marketDataPort = providedMarketDataPort ?? new SidecarMarketDataAdapter(sidecarRuntime);
     const newsCatalystServices = createNewsCatalystServices({ dataServices, marketDataPort });
     const researchProviderServices = createResearchProviderServices({ dataServices, marketDataPort });
     const priceSyncService = new PriceSyncService(

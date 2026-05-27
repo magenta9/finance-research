@@ -5,7 +5,9 @@ import { MarketDataOrchestrator } from './market-data-orchestrator';
 import { createMarketDataServices, type MarketDataServices } from './market-data-service';
 import type { SidecarManager } from './manager';
 import { SidecarRuntime } from './runtime';
+import { SidecarMarketDataAdapter } from './sidecar-market-data-adapter';
 import { SyncQueue } from './sync-queue';
+import { QuantDataMarketDataPort } from '../quant-data/market-data-adapter';
 
 export interface MarketDataRuntimeGroup {
     historySyncScheduler: HistorySyncScheduler;
@@ -27,9 +29,12 @@ export const createMarketDataRuntimeGroup = ({
     syncQueue?: SyncQueue;
 }): MarketDataRuntimeGroup => {
     const sidecarRuntime = new SidecarRuntime(sidecarManager);
+    const sidecarMarketDataPort = new SidecarMarketDataAdapter(sidecarRuntime);
+    const marketDataPort = new QuantDataMarketDataPort({ fallback: sidecarMarketDataPort });
     const services = createMarketDataServices({
         dataServices,
         logger,
+        marketDataPort,
         sidecarRuntime,
         syncQueue,
     });
