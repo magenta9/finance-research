@@ -18,6 +18,7 @@ import type { AllocationPreparationService } from './preparation-service';
 import { optimizeWeights } from './optimizer';
 import { runSidecarOptimization } from './sidecar-optimizer-adapter';
 import { simulateTrendFollowingSleeve } from './trend-following';
+import { runActiveDualMomentumBacktest } from './active-dual-momentum';
 import {
     annualizedReturns,
     annualizedVolatility,
@@ -155,6 +156,26 @@ export class PortfolioAllocationPipeline {
         }
 
         const isTrendStrategy = strategy === 'ewmac_trend_following';
+        const isActiveDualMomentumStrategy = strategy === 'active_dual_momentum_gtaa';
+
+        if (isActiveDualMomentumStrategy) {
+            return this.buildOutcome({
+                calculationDateRange,
+                effectiveDateRange,
+                optimizerPath: 'js',
+                result: runActiveDualMomentumBacktest({
+                    annualizedMeanReturns: analysisInput.annualizedMeanReturns,
+                    annualizedVolatility: analysisInput.annualizedAssetVolatility,
+                    baseCurrency,
+                    calculationDateRange,
+                    config: strategyMix?.activeDualMomentum,
+                    prepared,
+                }),
+                stage: 'completed',
+                warnings: prepared.warnings,
+            });
+        }
+
         const mergedConstraints = this.mergeConstraints(constraints);
         const constraintError = isTrendStrategy ? null : this.validateConstraints(mergedConstraints);
 

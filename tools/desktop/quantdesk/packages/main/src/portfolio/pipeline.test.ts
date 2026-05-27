@@ -10,14 +10,21 @@ const buildSeries = (basePrice: number, length = 90) =>
     Array.from({ length }, (_, index) =>
         Number((basePrice * (1 + index * 0.0025) * (1 + Math.sin(index / 7) * 0.018)).toFixed(4)));
 
+const buildTrendSeries = (basePrice: number, drift: number, length: number) =>
+    Array.from({ length }, (_, index) => Number((basePrice * (1 + drift) ** index).toFixed(4)));
+
 const buildPreparedSuccess = ({
     assets,
+    length = 90,
+    priceSeries,
     warnings = [],
 }: {
     assets: StoredAsset[];
+    length?: number;
+    priceSeries?: number[][];
     warnings?: string[];
 }) => {
-    const alignedDates = buildDateRange(90);
+    const alignedDates = buildDateRange(length);
 
     return {
         calculationDateRange: {
@@ -45,7 +52,7 @@ const buildPreparedSuccess = ({
                 annualizedReturn: 0,
                 annualizedVolatility: 0,
                 asset,
-                prices: buildSeries(80 + index * 15),
+                prices: priceSeries?.[index] ?? buildSeries(80 + index * 15, length),
             })),
             warnings,
         },
@@ -159,6 +166,47 @@ describe('portfolio allocation pipeline', () => {
             allocationEquity: expect.any(Number),
             trendFollowingEquity: expect.any(Number),
         }));
+    });
+
+    test('runs Active Dual Momentum for mixed ETF and futures pools', async () => {
+        const length = 520;
+        const assets = [
+            buildAsset('asset-etf-up', 'SPY', 'equity', { market: 'US' }),
+            buildAsset('asset-etf-down', 'TLT', 'fixed_income', { market: 'US' }),
+            buildAsset('asset-future-up', 'RB9999', 'commodity', { market: 'COMMODITY', metadata: { instrumentType: 'future' } }),
+            buildAsset('asset-future-down', 'FU9999', 'commodity', { market: 'COMMODITY', metadata: { instrumentType: 'future' } }),
+        ];
+        const { pipeline } = createPipeline({
+            preparationResult: buildPreparedSuccess({
+                assets,
+                length,
+                priceSeries: [
+                    buildTrendSeries(100, 0.0012, length),
+                    buildTrendSeries(120, -0.0002, length),
+                    buildTrendSeries(80, 0.0015, length),
+                    buildTrendSeries(90, -0.0018, length),
+                ],
+            }),
+        });
+
+        const outcome = await pipeline.allocate({
+            assetIds: assets.map((asset) => asset.id),
+            baseCurrency: 'USD',
+            constraints: baseConstraints,
+            mode: 'inverse_volatility',
+            strategy: 'active_dual_momentum_gtaa',
+        });
+
+        expect(outcome.meta.stage).toBe('completed');
+        expect(outcome.result.error).toBeUndefined();
+        expect(outcome.result.strategy).toBe('active_dual_momentum_gtaa');
+        expect(outcome.result.diagnostics.activeDualMomentum?.status).toBe('ok');
+        expect(outcome.result.diagnostics.activeDualMomentum?.rebalanceRecords.length).toBeGreaterThan(26);
+        expect(outcome.result.diagnostics.activeDualMomentum?.rebalanceRecords.at(-1)?.holdings).toEqual(expect.arrayContaining([
+            expect.objectContaining({ direction: 'short', symbol: 'FU9999' }),
+            expect.objectContaining({ direction: 'long', symbol: 'RB9999' }),
+        ]));
+        expect(outcome.result.portfolioPath).toHaveLength(length);
     });
 
     test('configuration strategies ignore legacy allocation sleeve subsets', async () => {

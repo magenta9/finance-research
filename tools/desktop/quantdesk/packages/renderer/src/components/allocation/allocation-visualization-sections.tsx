@@ -37,6 +37,7 @@ const modeLabelMap = {
 const strategyLabelMap = {
     ...modeLabelMap,
     ewmac_trend_following: 'EWMAC 趋势跟随',
+    active_dual_momentum_gtaa: 'Active Dual Momentum',
 } as const;
 
 const cadenceLabelMap = {

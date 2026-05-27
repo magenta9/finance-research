@@ -11,7 +11,7 @@ export type AssetClass =
 
 export type AllocationType = 'erc' | 'inverse_volatility' | 'max_diversification';
 
-export type AllocationStrategy = AllocationType | 'ewmac_trend_following';
+export type AllocationStrategy = AllocationType | 'ewmac_trend_following' | 'active_dual_momentum_gtaa';
 
 export type RebalanceCadence = 'none' | 'weekly' | 'monthly' | 'quarterly';
 
@@ -21,6 +21,16 @@ export interface EwmacRuleConfig {
   slow?: number;
   scalar?: number;
   weight?: number;
+}
+
+export interface ActiveDualMomentumStrategyConfig {
+  absoluteMomentumFilter?: boolean;
+  longLookbackWeeks?: number;
+  shortLookbackWeeks?: number;
+  slippageBps?: number;
+  sleeveWeights?: { long: number; short: number };
+  topK?: number;
+  transactionCostBps?: number;
 }
 
 export interface TrendFollowingStrategyConfig {
@@ -39,6 +49,7 @@ export interface AllocationSleeveStrategyConfig {
 }
 
 export interface AllocationStrategyMix {
+  activeDualMomentum?: ActiveDualMomentumStrategyConfig;
   allocation?: AllocationSleeveStrategyConfig;
   trendFollowing?: TrendFollowingStrategyConfig;
 }
@@ -79,6 +90,7 @@ export interface AllocationAssetWeight {
   market: Market;
   assetClass: AssetClass;
   currency: Currency;
+  direction?: 'long' | 'short';
   weight: number;
   riskContribution: number;
   annualizedReturn: number;
@@ -141,6 +153,38 @@ export interface AssetDateCoverage {
   isFallback: boolean;
 }
 
+export interface ActiveDualMomentumDiagnostics {
+  averageNetExposure: number;
+  averageNominalExposure: number;
+  calmarRatio?: number;
+  cashWeight: number;
+  maxNetExposure: number;
+  maxNominalExposure: number;
+  rebalanceRecords: Array<{
+    cashWeight: number;
+    date: string;
+    holdings: Array<{
+      assetId: string;
+      direction: 'long' | 'short';
+      longMomentum?: number;
+      shortMomentum?: number;
+      source: 'short' | 'long' | 'both';
+      symbol: string;
+      weight: number;
+    }>;
+    selectedButFiltered: Array<{
+      assetId: string;
+      momentum: number;
+      reason: 'NEGATIVE_MOMENTUM';
+      symbol: string;
+    }>;
+  }>;
+  status: 'ok' | 'degraded' | 'unavailable';
+  totalCost?: number;
+  turnover: number;
+  winRate?: number;
+}
+
 export interface AllocationDiagnostics {
   strategy?: AllocationStrategy;
   optimizer: 'js' | 'python';
@@ -156,6 +200,7 @@ export interface AllocationDiagnostics {
   fallbackReason?: 'erc_non_converged' | 'singular_matrix' | 'invalid_volatility' | 'unsupported_constraints';
   fallbackEquivalentMode?: 'inverse_volatility' | 'equal_weight';
   erc?: ErcDiagnostics;
+  activeDualMomentum?: ActiveDualMomentumDiagnostics;
   trades?: AllocationTrade[];
   strategyMix?: {
     allocationSleeveWeight: number;

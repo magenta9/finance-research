@@ -85,6 +85,15 @@ const createDefaultTrendFollowingConfig = (): TrendFollowingStrategyConfig => ({
 });
 
 const createDefaultStrategyMix = (): AllocationStrategyMix => ({
+    activeDualMomentum: {
+        absoluteMomentumFilter: true,
+        longLookbackWeeks: 25,
+        shortLookbackWeeks: 10,
+        slippageBps: 0,
+        sleeveWeights: { long: 0.5, short: 0.5 },
+        topK: 3,
+        transactionCostBps: 0,
+    },
     trendFollowing: createDefaultTrendFollowingConfig(),
 });
 

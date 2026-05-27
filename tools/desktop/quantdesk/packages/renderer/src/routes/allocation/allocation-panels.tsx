@@ -29,6 +29,7 @@ const strategyOptions: Array<{ description: string; label: string; value: Alloca
     { description: '低波动资产权重更高', label: '反波动率加权', value: 'inverse_volatility' },
     { description: '最大化组合分散化效率', label: '最大分散化', value: 'max_diversification' },
     { description: '用 EWMAC 长短线规则生成趋势暴露', label: 'EWMAC 趋势跟随', value: 'ewmac_trend_following' },
+    { description: '周度双动量 GTAA，支持 ETF 与期货混合池。', label: 'Active Dual Momentum', value: 'active_dual_momentum_gtaa' },
 ];
 
 const strategyLabelMap: Record<AllocationStrategy, string> = Object.fromEntries(
