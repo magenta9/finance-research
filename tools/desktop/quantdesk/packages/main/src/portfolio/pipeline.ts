@@ -17,6 +17,7 @@ import {
     buildAllocationErrorResult,
 } from './allocation-result-assembler';
 import type { AllocationPreparationService } from './preparation-service';
+import { getPreparedPriceSeries } from './prepared-allocation-context';
 import {
     defaultAllocationStrategyRegistry,
     type AllocationStrategyHandler,
@@ -274,7 +275,7 @@ export class PortfolioAllocationPipeline {
     }
 
     private buildAnalysisInput(prepared: PreparedAllocationData) {
-        const priceSeries = prepared.series.map((entry) => entry.prices);
+        const priceSeries = getPreparedPriceSeries(prepared);
         const returns = computeLogReturns(priceSeries);
 
         if (returns[0]?.length < 60) {

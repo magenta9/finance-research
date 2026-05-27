@@ -20,6 +20,13 @@ import {
     validateAllocationStrategyMix,
 } from './allocation-validator';
 import { runActiveDualMomentumBacktest } from './active-dual-momentum';
+import {
+    getPreparedAssetIds,
+    getPreparedAssetNames,
+    getPreparedAssetSymbols,
+    getPreparedPriceSeries,
+    resolvePreparedAssetIndexes,
+} from './prepared-allocation-context';
 import type { PreparedAllocationData } from './preprocessor';
 import { simulateTrendFollowingSleeve } from './trend-following';
 
@@ -103,17 +110,6 @@ const buildStrategyErrorResult = ({
     strategy,
 });
 
-const resolveAllocationAssetIndexes = (prepared: PreparedAllocationData, assetIds?: string[]) => {
-    if (!assetIds) {
-        return prepared.series.map((_entry, index) => index);
-    }
-
-    const assetIdSet = new Set(assetIds);
-    return prepared.series
-        .map((entry, index) => assetIdSet.has(entry.asset.id) ? index : -1)
-        .filter((index) => index >= 0);
-};
-
 const expandWeights = (weights: number[], assetIndexes: number[], assetCount: number) => {
     const expandedWeights = Array.from({ length: assetCount }, () => 0);
 
@@ -152,7 +148,7 @@ const createConfigurationStrategyHandler = (strategy: AllocationType): Allocatio
             };
         }
 
-        const allocationAssetIndexes = resolveAllocationAssetIndexes(prepared);
+        const allocationAssetIndexes = resolvePreparedAssetIndexes(prepared);
         const allocationAssetError = validateAllocationAssetSelection(allocationAssetIndexes);
 
         if (allocationAssetError) {
@@ -268,11 +264,11 @@ const ewmacTrendFollowingHandler: AllocationStrategyHandler = {
                 strategy: 'ewmac_trend_following',
                 trendFollowing: simulateTrendFollowingSleeve({
                     alignedDates: prepared.alignedDates,
-                    assetIds: prepared.series.map((entry) => entry.asset.id),
-                    assetNames: prepared.series.map((entry) => entry.asset.name),
-                    priceSeries: prepared.series.map((entry) => entry.prices),
+                    assetIds: getPreparedAssetIds(prepared),
+                    assetNames: getPreparedAssetNames(prepared),
+                    priceSeries: getPreparedPriceSeries(prepared),
                     strategyMix: runnableStrategyMix,
-                    symbols: prepared.series.map((entry) => entry.asset.symbol),
+                    symbols: getPreparedAssetSymbols(prepared),
                 }),
                 weights: Array.from({ length: prepared.series.length }, () => 0),
             }),

@@ -13,6 +13,7 @@ import { buildAllocationRecords } from './allocation-records';
 import { buildAllocationRiskMetrics } from './allocation-risk-metrics';
 import { composeAllocationStrategyMix } from './allocation-strategy-mix-composer';
 import { simulatePortfolioPath } from './path-simulator';
+import { getPreparedAssetMetadata, getPreparedPriceSeries } from './prepared-allocation-context';
 import { buildScenarioAnalysis } from './scenarios';
 import type {
     TrendFollowingSimulationResult,
@@ -53,14 +54,10 @@ export const assembleAllocationResult = ({
     trendFollowing,
     weights,
 }: AssembleAllocationResultInput): AllocationResult => {
-    const priceSeries = prepared.series.map((entry) => entry.prices);
+    const priceSeries = getPreparedPriceSeries(prepared);
     const pathSimulation = simulatePortfolioPath({
         alignedDates: prepared.alignedDates,
-        assetMetadata: prepared.series.map((entry) => ({
-            assetId: entry.asset.id,
-            name: entry.asset.name,
-            symbol: entry.asset.symbol,
-        })),
+        assetMetadata: getPreparedAssetMetadata(prepared),
         priceSeries,
         rebalanceCadence,
         targetWeights: weights,
