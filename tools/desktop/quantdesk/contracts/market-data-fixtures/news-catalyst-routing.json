@@ -1,0 +1,51 @@
+{
+    "cases": [
+        {
+            "name": "a-share-uses-cninfo-then-eastmoney-fallback",
+            "market": "A",
+            "enabledProviders": [
+                "cninfo",
+                "eastmoney_notice",
+                "sse_disclosure"
+            ],
+            "expectedProviders": [
+                "cninfo",
+                "eastmoney_notice"
+            ]
+        },
+        {
+            "name": "hk-uses-hkexnews-only",
+            "market": "HK",
+            "enabledProviders": [
+                "hkexnews",
+                "hsi_index_notices",
+                "sec_edgar"
+            ],
+            "expectedProviders": [
+                "hkexnews",
+                "hsi_index_notices"
+            ]
+        },
+        {
+            "name": "us-uses-sec-edgar-while-efts-planned",
+            "market": "US",
+            "enabledProviders": [
+                "sec_edgar",
+                "sec_efts"
+            ],
+            "expectedProviders": [
+                "sec_edgar"
+            ]
+        },
+        {
+            "name": "unresolved-market-has-no-provider-order",
+            "market": null,
+            "enabledProviders": [
+                "cninfo",
+                "hkexnews",
+                "sec_edgar"
+            ],
+            "expectedProviders": []
+        }
+    ]
+}

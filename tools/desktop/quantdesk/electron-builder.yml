@@ -1,0 +1,33 @@
+appId: ai.quantdesk.desktop
+productName: QuantDesk
+asar: true
+directories:
+  output: release
+files:
+  - packages/main/dist/**
+  - packages/preload/dist/**
+  - packages/renderer/dist/**
+  - from: build/electron-main-runtime/node_modules
+    to: node_modules
+    filter:
+      - "**/*"
+  - package.json
+extraResources:
+  - from: contracts
+    to: contracts
+  - from: packages/main/src/db/migrations
+    to: db/migrations
+  - from: .pi
+    to: .pi
+  - from: build/sidecar-package
+    to: sidecar
+extraMetadata:
+  main: packages/main/dist/index.js
+asarUnpack:
+  - node_modules/**
+mac:
+  category: public.app-category.finance
+  target:
+    - target: dmg
+      arch:
+        - arm64

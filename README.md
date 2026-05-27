@@ -8,6 +8,7 @@
 - `tools/data/quant-data/`: 外部行情数据获取和 provider policy 处理的 Go CLI。
 - `tools/strategy/futures-trend-observation/`: 期货趋势观察位分析器、agent 批处理驱动、报告生成器、测试和合约列表。
 - `tools/jobs/`: 用于定时或手动运行的稳定批处理入口。
+- `tools/desktop/quantdesk/`: 隔离迁入的 QuantDesk 桌面工具。
 - `tools/data/quant-data/contracts/`: quant-data 拥有的 CLI schema、fixture 和 provider policy contract。
 - `docs/quant-data-cli.md` 和 `tools/data/quant-data/docs/adr/`: 保留的 quant-data 文档和决策记录。
 
@@ -23,6 +24,12 @@ make data.install
 make data.test
 make strategy.test
 make jobs.smoke
+```
+
+运行桌面工具检查时使用显式 desktop 入口：
+
+```bash
+make desktop.test
 ```
 
 运行保留栈的全部检查：

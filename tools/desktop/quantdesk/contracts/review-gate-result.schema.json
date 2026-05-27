@@ -1,0 +1,110 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://quantdesk.local/contracts/review-gate-result.schema.json",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "dataProvenance",
+        "reasons",
+        "reasonCodes",
+        "requiredDowngrades",
+        "reviewerRole",
+        "status",
+        "verdict"
+    ],
+    "properties": {
+        "dataProvenance": {
+            "type": "array",
+            "items": {
+                "$ref": "researcher-output.schema.json#/definitions/dataProvenance"
+            }
+        },
+        "explanation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "actionConstraint",
+                "reasonCount",
+                "requiredDowngradeCount",
+                "summary"
+            ],
+            "properties": {
+                "actionConstraint": {
+                    "enum": [
+                        "none",
+                        "avoid",
+                        "observe",
+                        "prepare",
+                        "suggested_operation",
+                        "trading_plan"
+                    ]
+                },
+                "reasonCount": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "requiredDowngradeCount": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "summary": {
+                    "type": "string",
+                    "minLength": 1
+                }
+            }
+        },
+        "reasons": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "reasonCodes": {
+            "type": "array",
+            "items": {
+                "enum": [
+                    "aggressive_action_review_required",
+                    "allocation_window_insufficient",
+                    "local_asset_pool_empty",
+                    "market_source_unfetched",
+                    "missing_provenance",
+                    "price_history_missing",
+                    "price_history_stale",
+                    "provider_degraded",
+                    "provider_source_unavailable",
+                    "requested_asset_missing",
+                    "researcher_low_confidence",
+                    "researcher_runtime_failure",
+                    "researcher_second_review_requested",
+                    "schema_invalid",
+                    "schema_repair",
+                    "unauthorized_tool",
+                    "risk_profile_missing"
+                ]
+            }
+        },
+        "requiredDowngrades": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "reviewerRole": {
+            "enum": [
+                "data_quality",
+                "devil_advocate"
+            ]
+        },
+        "status": {
+            "enum": [
+                "pass",
+                "warn",
+                "block"
+            ]
+        },
+        "verdict": {
+            "type": "string",
+            "minLength": 1
+        }
+    }
+}

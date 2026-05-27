@@ -18,6 +18,7 @@
 ## Tool Repository
 - 当前仓库围绕生产级 Agent Skill 和保留的金融工具组织，不再回到旧桌面应用栈。
 - 除非用户明确批准新方案，不要重新引入 Electron、React、pnpm workspace、TypeScript monorepo 或 `packages/*` 基础设施。
+- 已批准的 QuantDesk 桌面工具迁移位于 `tools/desktop/quantdesk/`，其桌面栈必须保持在该隔离目录内。
 - 生产级 Agent Skill 可以在 `.agents/skills/<skill-id>/` 下自包含，包含迁移所需的脚本、fixture、验证驱动和支撑文档。
 - 自包含 Agent Skill 不需要登记到仓库级工具目录。
 - `tools/` 仍可用于保留在仓库中的工具和共享基础设施，但不再是 skill-owned 实现的强制位置。

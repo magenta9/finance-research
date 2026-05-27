@@ -1,0 +1,29 @@
+[project]
+name = "quantdesk-sidecar"
+version = "0.1.0"
+description = "QuantDesk Python sidecar for market data and optimization"
+requires-python = ">=3.10"
+dependencies = [
+  "akshare>=1.16.95",
+  "jsonrpcserver>=5.0.9",
+  "jsonschema>=4.26.0",
+  "numpy>=2.2.5",
+  "pandas>=2.2.3",
+  "pypdf>=6.10.2",
+  "scipy>=1.15.2",
+  "tushare>=1.4.24",
+  "websockets>=15.0.1",
+  "yfinance>=0.2.61",
+]
+
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]

@@ -1,0 +1,40 @@
+{
+  "cases": [
+    {
+      "name": "higher-priority-provider-wins-fx-row",
+      "existing": {
+        "date": "2026-01-02",
+        "rate": 7,
+        "source": "frankfurter"
+      },
+      "incoming": {
+        "date": "2026-01-02",
+        "rate": 7.1,
+        "source": "akshare"
+      },
+      "expected": {
+        "date": "2026-01-02",
+        "rate": 7.1,
+        "source": "akshare"
+      }
+    },
+    {
+      "name": "same-source-keeps-latest-row",
+      "existing": {
+        "date": "2026-01-02",
+        "rate": 7,
+        "source": "akshare"
+      },
+      "incoming": {
+        "date": "2026-01-02",
+        "rate": 7.02,
+        "source": "akshare"
+      },
+      "expected": {
+        "date": "2026-01-02",
+        "rate": 7.02,
+        "source": "akshare"
+      }
+    }
+  ]
+}

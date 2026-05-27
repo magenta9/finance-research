@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "providerStatus": {
+    "akshare": "enabled",
+    "tushare": "enabled",
+    "yfinance": "enabled"
+  },
+  "fundamentalsProviderOrder": {
+    "A": ["tushare", "akshare"],
+    "HK": ["akshare", "tushare"],
+    "US": ["yfinance", "akshare"],
+    "BOND": [],
+    "COMMODITY": [],
+    "default": []
+  },
+  "flowSentimentProviderOrder": {
+    "A": ["tushare", "akshare"],
+    "HK": ["akshare", "tushare"],
+    "US": ["yfinance"],
+    "BOND": ["akshare"],
+    "COMMODITY": ["akshare"],
+    "default": ["akshare"]
+  },
+  "fieldCaveats": {
+    "northboundNetInflow": "disclosure_policy_change_2024"
+  },
+  "freshness": {
+    "fundamentalsStaleAfterDays": 180,
+    "providerPermissionBackoffHours": 24
+  }
+}

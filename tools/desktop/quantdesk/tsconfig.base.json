@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@quantdesk/shared": [
+        "packages/shared/src/index.ts"
+      ],
+      "@quantdesk/shared/*": [
+        "packages/shared/src/*"
+      ],
+      "@shared/*": [
+        "packages/shared/src/*"
+      ],
+      "@renderer/*": [
+        "packages/renderer/src/*"
+      ],
+      "@main/*": [
+        "packages/main/src/*"
+      ]
+    },
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true
+  }
+}

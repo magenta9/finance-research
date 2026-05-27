@@ -1,0 +1,196 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "searchProviderOrder",
+        "priceProviderOrder",
+        "fxProviderOrder",
+        "sourcePriorityWeights",
+        "derivedSourcePenalty"
+    ],
+    "additionalProperties": false,
+    "definitions": {
+        "marketDataProvider": {
+            "type": "string",
+            "enum": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ]
+        },
+        "marketDataProviderOrder": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "$ref": "#/definitions/marketDataProvider"
+            }
+        },
+        "priceWeights": {
+            "type": "object",
+            "required": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "akshare": {
+                    "type": "number"
+                },
+                "tushare": {
+                    "type": "number"
+                },
+                "yfinance": {
+                    "type": "number"
+                }
+            }
+        }
+    },
+    "properties": {
+        "searchProviderOrder": {
+            "type": "object",
+            "required": [
+                "default",
+                "US",
+                "HK",
+                "A",
+                "BOND",
+                "COMMODITY"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "default": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "US": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "HK": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "A": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "BOND": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "COMMODITY": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                }
+            }
+        },
+        "priceProviderOrder": {
+            "type": "object",
+            "required": [
+                "default",
+                "digitSymbolFallback",
+                "US",
+                "HK",
+                "A",
+                "BOND",
+                "COMMODITY"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "default": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "digitSymbolFallback": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "US": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "HK": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "A": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "BOND": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                },
+                "COMMODITY": {
+                    "$ref": "#/definitions/marketDataProviderOrder"
+                }
+            }
+        },
+        "fxProviderOrder": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "string",
+                "enum": [
+                    "akshare",
+                    "yfinance",
+                    "frankfurter"
+                ]
+            }
+        },
+        "sourcePriorityWeights": {
+            "type": "object",
+            "required": [
+                "price",
+                "fx"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "price": {
+                    "type": "object",
+                    "required": [
+                        "default",
+                        "US",
+                        "HK",
+                        "A",
+                        "BOND",
+                        "COMMODITY"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "default": {
+                            "$ref": "#/definitions/priceWeights"
+                        },
+                        "US": {
+                            "$ref": "#/definitions/priceWeights"
+                        },
+                        "HK": {
+                            "$ref": "#/definitions/priceWeights"
+                        },
+                        "A": {
+                            "$ref": "#/definitions/priceWeights"
+                        },
+                        "BOND": {
+                            "$ref": "#/definitions/priceWeights"
+                        },
+                        "COMMODITY": {
+                            "$ref": "#/definitions/priceWeights"
+                        }
+                    }
+                },
+                "fx": {
+                    "type": "object",
+                    "required": [
+                        "akshare",
+                        "yfinance",
+                        "frankfurter"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "akshare": {
+                            "type": "number"
+                        },
+                        "yfinance": {
+                            "type": "number"
+                        },
+                        "frankfurter": {
+                            "type": "number"
+                        }
+                    }
+                }
+            }
+        },
+        "derivedSourcePenalty": {
+            "type": "number"
+        }
+    }
+}

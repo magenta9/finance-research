@@ -1,0 +1,72 @@
+{
+  "name": "@quantdesk/shared",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.mjs",
+      "require": "./dist/constants.js"
+    },
+    "./date-utils": {
+      "types": "./dist/date-utils.d.ts",
+      "import": "./dist/date-utils.mjs",
+      "require": "./dist/date-utils.js"
+    },
+    "./ipc-channels": {
+      "types": "./dist/ipc-channels.d.ts",
+      "import": "./dist/ipc-channels.mjs",
+      "require": "./dist/ipc-channels.js"
+    },
+    "./ipc-contract": {
+      "types": "./dist/ipc-contract.d.ts",
+      "import": "./dist/ipc-contract.mjs",
+      "require": "./dist/ipc-contract.js"
+    },
+    "./quantdesk-port": {
+      "types": "./dist/quantdesk-port.d.ts",
+      "import": "./dist/quantdesk-port.mjs",
+      "require": "./dist/quantdesk-port.js"
+    },
+    "./types/api": {
+      "types": "./dist/types/api.d.ts",
+      "import": "./dist/types/api.mjs",
+      "require": "./dist/types/api.js"
+    },
+    "./types/market": {
+      "types": "./dist/types/market.d.ts",
+      "import": "./dist/types/market.mjs",
+      "require": "./dist/types/market.js"
+    },
+    "./types/pi-runtime": {
+      "types": "./dist/types/pi-runtime.d.ts",
+      "import": "./dist/types/pi-runtime.mjs",
+      "require": "./dist/types/pi-runtime.js"
+    },
+    "./types/system": {
+      "types": "./dist/types/system.d.ts",
+      "import": "./dist/types/system.mjs",
+      "require": "./dist/types/system.js"
+    },
+    "./type-guards": {
+      "types": "./dist/type-guards.d.ts",
+      "import": "./dist/type-guards.mjs",
+      "require": "./dist/type-guards.js"
+    }
+  },
+  "scripts": {
+    "assert:no-source-declarations": "node ./scripts/assert-no-source-declarations.mjs",
+    "build": "pnpm run assert:no-source-declarations && tsup src/index.ts src/constants.ts src/date-utils.ts src/ipc-channels.ts src/ipc-contract.ts src/quantdesk-port.ts src/type-guards.ts src/types/api.ts src/types/market.ts src/types/pi-runtime.ts src/types/system.ts --format esm,cjs && tsc -p tsconfig.build.json",
+    "dev": "tsup src/index.ts src/constants.ts src/date-utils.ts src/ipc-channels.ts src/ipc-contract.ts src/quantdesk-port.ts src/type-guards.ts src/types/api.ts src/types/market.ts src/types/pi-runtime.ts src/types/system.ts --format esm,cjs --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QuantDesk Research Provider Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "providerStatus",
+    "fundamentalsProviderOrder",
+    "flowSentimentProviderOrder",
+    "fieldCaveats",
+    "freshness"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "providerStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["akshare", "tushare", "yfinance"],
+      "properties": {
+        "akshare": { "$ref": "#/definitions/providerStatus" },
+        "tushare": { "$ref": "#/definitions/providerStatus" },
+        "yfinance": { "$ref": "#/definitions/providerStatus" }
+      }
+    },
+    "fundamentalsProviderOrder": { "$ref": "#/definitions/providerOrderByMarket" },
+    "flowSentimentProviderOrder": { "$ref": "#/definitions/providerOrderByMarket" },
+    "fieldCaveats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["northboundNetInflow"],
+      "properties": {
+        "northboundNetInflow": { "const": "disclosure_policy_change_2024" }
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fundamentalsStaleAfterDays", "providerPermissionBackoffHours"],
+      "properties": {
+        "fundamentalsStaleAfterDays": { "type": "integer", "minimum": 1 },
+        "providerPermissionBackoffHours": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "definitions": {
+    "providerId": { "enum": ["akshare", "tushare", "yfinance"] },
+    "providerStatus": { "enum": ["disabled", "enabled", "planned"] },
+    "providerOrder": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/providerId" },
+      "uniqueItems": true
+    },
+    "providerOrderByMarket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["A", "HK", "US", "BOND", "COMMODITY", "default"],
+      "properties": {
+        "A": { "$ref": "#/definitions/providerOrder" },
+        "HK": { "$ref": "#/definitions/providerOrder" },
+        "US": { "$ref": "#/definitions/providerOrder" },
+        "BOND": { "$ref": "#/definitions/providerOrder" },
+        "COMMODITY": { "$ref": "#/definitions/providerOrder" },
+        "default": { "$ref": "#/definitions/providerOrder" }
+      }
+    }
+  }
+}

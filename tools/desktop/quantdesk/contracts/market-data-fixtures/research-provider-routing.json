@@ -1,0 +1,39 @@
+{
+  "cases": [
+    {
+      "name": "A-share fundamentals prefer TuShare then AKShare",
+      "kind": "fundamentals",
+      "market": "A",
+      "enabledProviders": ["akshare", "tushare", "yfinance"],
+      "expectedProviders": ["tushare", "akshare"]
+    },
+    {
+      "name": "US fundamentals prefer yfinance with AKShare fallback",
+      "kind": "fundamentals",
+      "market": "US",
+      "enabledProviders": ["akshare", "tushare", "yfinance"],
+      "expectedProviders": ["yfinance", "akshare"]
+    },
+    {
+      "name": "HK flow filters disabled TuShare",
+      "kind": "flow_sentiment",
+      "market": "HK",
+      "enabledProviders": ["akshare", "yfinance"],
+      "expectedProviders": ["akshare"]
+    },
+    {
+      "name": "Unknown fundamentals does not blind search providers",
+      "kind": "fundamentals",
+      "market": null,
+      "enabledProviders": ["akshare", "tushare", "yfinance"],
+      "expectedProviders": []
+    },
+    {
+      "name": "Default flow can use no-token AKShare proxy",
+      "kind": "flow_sentiment",
+      "market": null,
+      "enabledProviders": ["akshare", "tushare", "yfinance"],
+      "expectedProviders": ["akshare"]
+    }
+  ]
+}

@@ -1,0 +1,167 @@
+{
+  "fetchFundamentals": {
+    "method": "fetch_fundamentals",
+    "params": {
+      "assetMetadata": {
+        "market": "A",
+        "name": "贵州茅台",
+        "symbol": "600519",
+        "tsCode": "600519.SH"
+      },
+      "enabledProviders": [
+        "tushare",
+        "akshare"
+      ],
+      "market": "A",
+      "symbol": "600519"
+    },
+    "result": {
+      "asOf": "2026-05-05",
+      "attemptedSources": [
+        "tushare"
+      ],
+      "dataAgeDays": 35,
+      "dataProvenance": [
+        {
+          "fetchedAt": "2026-05-05T00:00:00Z",
+          "providerIds": [
+            "tushare"
+          ],
+          "qualityStatus": "pass",
+          "rowsUsed": 1,
+          "sourceId": "fundamentals:tushare:600519",
+          "warnings": []
+        }
+      ],
+      "market": "A",
+      "metrics": {
+        "period": {
+          "fiscalPeriod": "2025Q4",
+          "reportDate": "2026-03-31"
+        },
+        "profitability": {
+          "roe": 0.31
+        },
+        "valuation": {
+          "pb": 8.2,
+          "peTtm": 24.3
+        }
+      },
+      "providerErrors": [],
+      "qualityStatus": "available",
+      "symbol": "600519",
+      "warnings": []
+    }
+  },
+  "fetchFundamentalsFundFacts": {
+    "method": "fetch_fundamentals",
+    "params": {
+      "assetMetadata": {
+        "assetClass": "equity",
+        "market": "A",
+        "name": "恒生科技ETF",
+        "symbol": "159740",
+        "underlyingMarket": "HK"
+      },
+      "enabledProviders": [
+        "tushare"
+      ],
+      "market": "A",
+      "symbol": "159740"
+    },
+    "result": {
+      "asOf": "2026-05-05",
+      "attemptedSources": [],
+      "dataAgeDays": null,
+      "dataProvenance": [
+        {
+          "fetchedAt": "2026-05-05T00:00:00Z",
+          "providerIds": [
+            "asset_metadata"
+          ],
+          "qualityStatus": "warn",
+          "rowsUsed": 0,
+          "sourceId": "fundamentals:asset_metadata:159740",
+          "warnings": [
+            "Fund/ETF issuer-style fundamentals are not covered by asset_metadata; returning asset metadata facts instead.",
+            "ETF/fund PE/PB requires an explicit underlying-index valuation source; do not infer it from issuer-style fundamentals."
+          ]
+        }
+      ],
+      "market": "A",
+      "metrics": {
+        "period": {
+          "fiscalPeriod": null,
+          "reportDate": null
+        },
+        "fundFacts": {
+          "assetClass": "equity",
+          "assetName": "恒生科技ETF",
+          "issuerStyleFundamentals": "asset_not_covered",
+          "underlyingMarket": "HK"
+        }
+      },
+      "providerErrors": [],
+      "qualityStatus": "degraded",
+      "symbol": "159740",
+      "warnings": [
+        "Fund/ETF issuer-style fundamentals are not covered by asset_metadata; returning asset metadata facts instead.",
+        "ETF/fund PE/PB requires an explicit underlying-index valuation source; do not infer it from issuer-style fundamentals."
+      ]
+    }
+  },
+  "fetchFlowSentiment": {
+    "method": "fetch_flow_sentiment",
+    "params": {
+      "assetMetadata": {
+        "market": "A",
+        "tsCode": "600519.SH"
+      },
+      "enabledProviders": [
+        "tushare",
+        "akshare"
+      ],
+      "market": "A",
+      "symbol": "600519"
+    },
+    "result": {
+      "asOf": "2026-05-05",
+      "attemptedSources": [
+        "akshare"
+      ],
+      "dataProvenance": [
+        {
+          "fetchedAt": "2026-05-05T00:00:00Z",
+          "providerIds": [
+            "akshare"
+          ],
+          "qualityStatus": "warn",
+          "rowsUsed": 1,
+          "sourceId": "flow_sentiment:akshare:600519",
+          "warnings": [
+            "northboundNetInflow is best-effort after 2024 disclosure changes."
+          ]
+        }
+      ],
+      "market": "A",
+      "providerErrors": [],
+      "qualityStatus": "degraded",
+      "signals": {
+        "flow": {
+          "mainNetInflow": 12000000,
+          "northboundAvailabilityCaveat": "disclosure_policy_change_2024",
+          "northboundNetInflow": null,
+          "sourceWindow": "recent"
+        },
+        "sentiment": {
+          "attentionLabel": "normal",
+          "hotRank": null
+        }
+      },
+      "symbol": "600519",
+      "warnings": [
+        "northboundNetInflow is best-effort after 2024 disclosure changes."
+      ]
+    }
+  }
+}

@@ -1,0 +1,1 @@
+export const ExampleForm = () => <input type="text" />;

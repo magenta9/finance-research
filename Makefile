@@ -3,7 +3,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: data.build data.install data.test data.aliases strategy.test jobs.smoke fmt test clean help
+.PHONY: data.build data.install data.test data.aliases strategy.test jobs.smoke desktop.install desktop.dev desktop.test desktop.build desktop.package fmt test clean help
 
 ##@ Data
 
@@ -28,6 +28,23 @@ strategy.test: ## Run Python strategy tests
 
 jobs.smoke: ## Dry-run the futures trend observation batch job
 	python3 tools/jobs/futures-trend-observation-report.py --dry-run --limit 1
+
+##@ Desktop
+
+desktop.install: ## Install QuantDesk desktop dependencies
+	$(MAKE) -C tools/desktop/quantdesk install
+
+desktop.dev: ## Start QuantDesk desktop dev environment
+	$(MAKE) -C tools/desktop/quantdesk dev
+
+desktop.test: ## Run QuantDesk desktop tests
+	$(MAKE) -C tools/desktop/quantdesk test
+
+desktop.build: ## Build QuantDesk desktop workspace packages
+	$(MAKE) -C tools/desktop/quantdesk build
+
+desktop.package: ## Build QuantDesk macOS package
+	$(MAKE) -C tools/desktop/quantdesk package
 
 ##@ Repository
 

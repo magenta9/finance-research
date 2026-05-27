@@ -1,0 +1,32 @@
+{
+  "name": "@quantdesk/main",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsup src/index.ts src/pi/wrapper/cli.ts --format cjs --external electron --external better-sqlite3 --external keytar --external @quantdesk/shared && tsc -p tsconfig.build.json",
+    "build:e2e": "tsup e2e/*-probe.ts --format cjs --outDir e2e-dist --external electron --external better-sqlite3 --external keytar --external @quantdesk/shared --clean",
+    "dev": "tsup src/index.ts src/pi/wrapper/cli.ts --format cjs --watch --external electron --external better-sqlite3 --external keytar --external @quantdesk/shared",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@cfworker/json-schema": "^4.1.1",
+    "@mariozechner/pi-ai": "0.68.0",
+    "@mariozechner/pi-coding-agent": "0.68.0",
+    "@modelcontextprotocol/client": "^2.0.0-alpha.2",
+    "@modelcontextprotocol/server": "^2.0.0-alpha.2",
+    "@quantdesk/shared": "workspace:*",
+    "ajv": "^8.17.1",
+    "better-sqlite3": "^12.8.0",
+    "chokidar": "^4.0.3",
+    "gray-matter": "^4.0.3",
+    "keytar": "^7.9.0",
+    "ml-matrix": "^6.12.1",
+    "undici": "^7.16.0",
+    "ws": "^8.18.3",
+    "yaml": "^2.8.1",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.1"
+  }
+}
