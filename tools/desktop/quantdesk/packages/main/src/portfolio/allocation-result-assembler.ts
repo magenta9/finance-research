@@ -2,7 +2,6 @@ import type {
     AllocationDiagnostics,
     AllocationResult,
     AllocationStrategy,
-    AllocationTrade,
     AllocationType,
     Currency,
     RebalanceCadence,
@@ -10,20 +9,13 @@ import type {
 
 import type { PreparedAllocationData } from './preprocessor';
 import { simulatePortfolioPath } from './path-simulator';
-import { minimumPortfolioTradeWeight } from './portfolio-constants';
 import { buildScenarioAnalysis } from './scenarios';
+import { blendAllocationSleeves } from './sleeve-blender';
 import { computeRiskContributions, correlationMatrix } from './statistics';
 import type {
     TrendFollowingSimulationResult,
 } from './trend-following';
 import { combineSleeveReturns } from './trend-following';
-
-const scaleTrade = (trade: AllocationTrade, scale: number): AllocationTrade => ({
-    ...trade,
-    fromWeight: trade.fromWeight * scale,
-    toWeight: trade.toWeight * scale,
-    weightChange: trade.weightChange * scale,
-});
 
 export interface AssembleAllocationResultInput {
     allocationAssetIds?: string[];
@@ -79,15 +71,13 @@ export const assembleAllocationResult = ({
             trendFollowing,
         })
         : null;
-    const allocationSleeveWeight = combinedSleeveSimulation?.allocationSleeveWeight ?? 1;
-    const effectiveWeights = trendFollowing
-        ? weights.map((weight, index) =>
-            allocationSleeveWeight * weight + trendFollowing.sleeveWeight * (trendFollowing.latestWeights[index] ?? 0))
-        : weights;
-    const trades = [
-        ...pathSimulation.trades.map((trade) => scaleTrade(trade, allocationSleeveWeight)),
-        ...(trendFollowing?.trades ?? []),
-    ].filter((trade) => Math.abs(trade.weightChange) >= minimumPortfolioTradeWeight);
+    const sleeveBlend = blendAllocationSleeves({
+        allocationSleeveWeight: combinedSleeveSimulation?.allocationSleeveWeight,
+        allocationTrades: pathSimulation.trades,
+        trendFollowing,
+        weights,
+    });
+    const { allocationSleeveWeight, effectiveWeights, trades } = sleeveBlend;
     const hasStrategyMix = trendFollowing != null || allocationAssetIds != null;
     const contributions = computeRiskContributions(effectiveWeights, covariance);
     const allocations = prepared.series.map((entry, index) => ({
