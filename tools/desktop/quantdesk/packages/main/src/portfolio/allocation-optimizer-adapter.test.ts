@@ -95,6 +95,27 @@ describe('allocation optimizer adapter', () => {
         }));
     });
 
+    test('uses the injected optimizer selector for routing', async () => {
+        const callMock = vi.fn();
+        const sidecarRuntime: SidecarRpc = {
+            call: async <T>(method: string, params?: unknown) => {
+                callMock(method, params);
+                return {
+                    version: 2,
+                    weights: [0.5, 0.5],
+                } as T;
+            },
+        };
+        const adapter = new DefaultAllocationOptimizerAdapter(sidecarRuntime, {
+            selectOptimizer: () => 'python',
+        });
+
+        const result = await adapter.optimize(buildRequest(2));
+
+        expect(callMock).toHaveBeenCalledWith('run_optimization', expect.any(Object));
+        expect(result).toEqual(expect.objectContaining({ ok: true, optimizer: 'python' }));
+    });
+
     test('converts JS optimizer failures into allocation errors', async () => {
         const sidecarRuntime: SidecarRpc = { call: vi.fn() };
         const adapter = new DefaultAllocationOptimizerAdapter(sidecarRuntime);

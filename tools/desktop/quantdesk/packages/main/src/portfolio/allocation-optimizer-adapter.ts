@@ -2,6 +2,10 @@ import type { AllocationConstraints, AllocationType } from '@quantdesk/shared';
 
 import type { SidecarRpc } from '../sidecar/runtime-types';
 import { optimizeWeights } from './optimizer';
+import {
+    SizeBasedAllocationOptimizerSelector,
+    type AllocationOptimizerSelector,
+} from './optimizer-selector';
 import type { PreparedAllocationData } from './preprocessor';
 import { runSidecarOptimization } from './sidecar-optimizer-adapter';
 import type { StrategyOptimizationRequest, StrategyOptimizationResult } from './strategy-registry';
@@ -35,16 +39,23 @@ const buildOptimizerSubset = ({
 });
 
 export class DefaultAllocationOptimizerAdapter implements AllocationOptimizerAdapter {
+    private readonly optimizerSelector: AllocationOptimizerSelector;
+
     private readonly sidecarRuntime: SidecarRpc;
 
-    constructor(sidecarRuntime: SidecarRpc) {
+    constructor(
+        sidecarRuntime: SidecarRpc,
+        optimizerSelector: AllocationOptimizerSelector = new SizeBasedAllocationOptimizerSelector(),
+    ) {
+        this.optimizerSelector = optimizerSelector;
         this.sidecarRuntime = sidecarRuntime;
     }
 
     async optimize(request: StrategyOptimizationRequest): Promise<StrategyOptimizationResult> {
         const optimizerInput = buildOptimizerSubset(request);
+        const optimizerPath = this.optimizerSelector.selectOptimizer({ assetCount: request.assetIndexes.length });
 
-        if (request.assetIndexes.length > 20) {
+        if (optimizerPath === 'python') {
             const sidecarResult = await runSidecarOptimization(this.sidecarRuntime, optimizerInput);
 
             if (!sidecarResult.ok) {
