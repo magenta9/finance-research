@@ -144,6 +144,34 @@ describe('portfolio allocation pipeline', () => {
         expect(outcome.result.error).toEqual(expect.objectContaining({ code: 'UNSUPPORTED_STRATEGY' }));
     });
 
+    test('returns a structured error when a strategy handler throws', async () => {
+        const assets = [
+            buildAsset('asset-a', 'SPY', 'equity'),
+            buildAsset('asset-b', 'AGG', 'fixed_income'),
+        ];
+        const { preparationService, sidecarManager } = createPipeline({
+            preparationResult: buildPreparedSuccess({ assets }),
+        });
+        const pipeline = new PortfolioAllocationPipeline(preparationService, sidecarManager as never, {
+            ...defaultAllocationStrategyRegistry,
+            erc: { run: vi.fn().mockRejectedValue(new Error('strategy blew up')) },
+        });
+
+        const outcome = await pipeline.allocate({
+            assetIds: assets.map((asset) => asset.id),
+            baseCurrency: 'USD',
+            constraints: baseConstraints,
+            mode: 'erc',
+        });
+
+        expect(outcome.meta.stage).toBe('optimization_failed');
+        expect(outcome.meta.optimizerPath).toBeNull();
+        expect(outcome.result.error).toEqual(expect.objectContaining({
+            code: 'ALLOCATION_STRATEGY_FAILED',
+            message: 'strategy blew up',
+        }));
+    });
+
     test('returns completed outcome with js optimizer path on success', async () => {
         const assets = [
             buildAsset('asset-a', 'SPY', 'equity'),

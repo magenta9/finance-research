@@ -181,7 +181,7 @@ export class PortfolioAllocationPipeline {
             });
         }
 
-        const strategyExecution = await strategyHandler.run({
+        const strategyExecution = await this.runStrategyHandler({
             analysisInput,
             baseCurrency,
             calculationDateRange,
@@ -190,6 +190,8 @@ export class PortfolioAllocationPipeline {
             optimize: (request) => this.optimize(request),
             prepared,
             rebalanceCadence,
+            strategy,
+            strategyHandler,
             strategyMix,
         });
 
@@ -205,6 +207,39 @@ export class PortfolioAllocationPipeline {
 
     private resolveStrategyHandler(strategy: AllocationStrategy): AllocationStrategyHandler | null {
         return (this.strategyRegistry as Partial<AllocationStrategyRegistry>)[strategy] ?? null;
+    }
+
+    private async runStrategyHandler({
+        strategy,
+        strategyHandler,
+        ...context
+    }: Parameters<AllocationStrategyHandler['run']>[0] & {
+        strategy: AllocationStrategy;
+        strategyHandler: AllocationStrategyHandler;
+    }) {
+        try {
+            return await strategyHandler.run(context);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+
+            return {
+                optimizerPath: null,
+                result: buildAllocationErrorResult({
+                    baseCurrency: context.baseCurrency,
+                    effectiveDateRange: context.calculationDateRange,
+                    error: {
+                        code: 'ALLOCATION_STRATEGY_FAILED',
+                        message,
+                        suggestions: ['Review strategy parameters and retry.', 'If the error persists, inspect strategy diagnostics.'],
+                    },
+                    mode: context.mode,
+                    prepared: context.prepared,
+                    rebalanceCadence: context.rebalanceCadence,
+                    strategy,
+                }),
+                stage: 'optimization_failed' as const,
+            };
+        }
     }
 
     private buildOutcome({
