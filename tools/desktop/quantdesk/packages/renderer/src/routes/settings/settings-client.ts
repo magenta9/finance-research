@@ -1,8 +1,4 @@
 import type {
-    CacheSummary,
-    SyncStatus,
-} from '@quantdesk/shared/types/market';
-import type {
     PiRiskGateState,
     PiRuntimeDirectoryTarget,
     PiRuntimeStatus,
@@ -18,30 +14,24 @@ import type { PreferencesDraft } from './settings-types';
 
 export interface SettingsPageData {
     browserLiveConfig: RuntimeConfig;
-    cacheSummary: CacheSummary;
     piRiskGateState: PiRiskGateState;
     piStatus: PiRuntimeStatus;
     preferences: Record<string, string>;
     runtimeMode: RuntimeMode;
     runtimeStatus: RuntimeStatusResponse;
-    syncStatus: SyncStatus;
 }
 
 export const loadSettingsPageData = async (): Promise<SettingsPageData> => {
     const [
         preferences,
-        cacheSummary,
         runtimeStatus,
-        syncStatus,
         runtimeMode,
         browserLiveConfig,
         piRiskGateState,
         piStatus,
     ] = await Promise.all([
         apiClient.settings.getAll(),
-        apiClient.data.getCacheSummary(),
         apiClient.system.getRuntimeStatus(),
-        apiClient.data.getSyncStatus(),
         apiClient.runtime.getMode(),
         apiClient.runtime.getConfig(),
         apiClient.piRuntime.getRiskGateState(),
@@ -50,18 +40,13 @@ export const loadSettingsPageData = async (): Promise<SettingsPageData> => {
 
     return {
         browserLiveConfig,
-        cacheSummary,
         piRiskGateState,
         piStatus,
         preferences,
         runtimeMode,
         runtimeStatus,
-        syncStatus,
     };
 };
-
-export const subscribeToSettingsSyncStatus = (listener: (status: SyncStatus) => void) =>
-    apiClient.data.subscribeSyncStatus(listener);
 
 export const loadRuntimeConfig = async () => await apiClient.runtime.getConfig();
 
@@ -104,9 +89,6 @@ export const validateSidecarConnection = async (sidecarUrl: string) => {
         validation,
     };
 };
-
-export const clearMarketDataCache = async () =>
-    await apiClient.data.clearCache();
 
 export const openLogDirectory = async () =>
     await apiClient.log.openDirectory();

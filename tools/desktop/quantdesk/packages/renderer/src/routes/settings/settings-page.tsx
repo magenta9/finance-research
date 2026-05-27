@@ -5,7 +5,6 @@ import { Button } from '../../components/button';
 import { InlineNotice } from '../../components/inline-notice';
 import { PreferencesEditModal } from './preferences-edit-modal';
 import {
-    CacheSummarySection,
     RuntimeSummarySection,
     SettingsMetricCard,
     PreferencesSummarySection,
@@ -15,17 +14,14 @@ import { useSettingsPageController } from './use-settings-page-controller';
 export const SettingsPage = () => {
     const {
         browserLiveConfig,
-        cacheSummary,
         dataSourceSummary,
         errorMessage,
         handleAcknowledgePiRisk,
-        handleClearCache,
         handleClearMessages,
         handleClosePreferencesModal,
         handleOpenLogDirectory,
         handleOpenPreferencesModal,
         handleRefreshPiRuntime,
-        handleReloadSettings,
         handleSavePreferences,
         handleValidateSidecarConnection,
         isLoading,
@@ -43,7 +39,6 @@ export const SettingsPage = () => {
         setPreferencesDraft,
         setSidecarUrlDraft,
         sidecarUrlDraft,
-        syncStatus,
     } = useSettingsPageController();
 
     return (
@@ -134,12 +129,6 @@ export const SettingsPage = () => {
                     dataSourceSummary={dataSourceSummary}
                     onOpenPreferencesModal={handleOpenPreferencesModal}
                     preferencesDraft={preferencesDraft}
-                />
-                <CacheSummarySection
-                    cacheSummary={cacheSummary}
-                    onClearCache={handleClearCache}
-                    onRefresh={handleReloadSettings}
-                    syncStatus={syncStatus}
                 />
             </div>
 

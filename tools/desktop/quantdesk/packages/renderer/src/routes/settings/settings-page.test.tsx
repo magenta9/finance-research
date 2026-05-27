@@ -2,11 +2,10 @@
 
 import '@testing-library/jest-dom/vitest';
 
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import type { SyncStatus } from '@quantdesk/shared/types/market';
 import type { QuantdeskApi } from '@quantdesk/shared/types/api';
 
 import { setApiClientOverride } from '../../lib/api-client';
@@ -15,10 +14,8 @@ import { formatPiModelDisplay } from './use-settings-page-controller';
 
 describe('SettingsPage', () => {
     let mockApi: QuantdeskApi;
-    let syncListener: ((status: SyncStatus) => void) | null;
 
     beforeEach(() => {
-        syncListener = null;
         vi.spyOn(window, 'confirm').mockReturnValue(true);
 
         mockApi = {
@@ -81,12 +78,7 @@ describe('SettingsPage', () => {
                 importPricesCsv: vi.fn(),
                 lookupAssets: vi.fn(),
                 searchAssets: vi.fn(),
-                subscribeSyncStatus: vi.fn().mockImplementation((listener: (status: SyncStatus) => void) => {
-                    syncListener = listener;
-                    return () => {
-                        syncListener = null;
-                    };
-                }),
+                subscribeSyncStatus: vi.fn().mockReturnValue(() => undefined),
                 syncFxRates: vi.fn().mockResolvedValue({ insertedRows: 0, pairs: [], warnings: [] }),
                 syncPrices: vi.fn(),
                 updateAsset: vi.fn(),
@@ -182,6 +174,22 @@ describe('SettingsPage', () => {
                         state: 'completed',
                         updatedAssets: 3,
                     },
+                    quantData: {
+                        lastError: null,
+                        providerConfiguration: {
+                            code: null,
+                            message: null,
+                            ready: true,
+                        },
+                        ready: true,
+                        stats: {
+                            fxRateRowCount: 2,
+                            latestPriceFetchAt: '2026-04-13T00:00:00.000Z',
+                            priceRowCount: 42,
+                        },
+                        storePath: '/tmp/quant-data.sqlite3',
+                        storeVersion: 1,
+                    },
                     sidecarPid: 123,
                     sidecarPort: 9000,
                     sidecarReady: true,
@@ -225,45 +233,22 @@ describe('SettingsPage', () => {
         setApiClientOverride(null);
     });
 
-    test('显示 Pi runtime 分区，并在确认后清除本地行情缓存', async () => {
-        const user = userEvent.setup();
-
+    test('显示 Pi runtime 分区和 quant-data provider 状态', async () => {
         render(<SettingsPage />);
 
         await screen.findByTestId('settings-page');
 
         expect(screen.getByTestId('settings-pi-runtime-section')).toBeInTheDocument();
         expect(screen.getByTestId('settings-preferences-section')).toBeInTheDocument();
-        expect(screen.getByTestId('settings-cache-section')).toBeInTheDocument();
+        expect(screen.queryByTestId('settings-cache-section')).not.toBeInTheDocument();
         expect(screen.getByTestId('settings-runtime-section')).toBeInTheDocument();
         expect(screen.getByText('qwen3:latest [openai-compatible]')).toBeInTheDocument();
         expect(screen.getByTestId('settings-pi-diagnostics-list')).toHaveTextContent('analyze_asset, search_quantdesk_docs');
         expect(screen.getByTestId('settings-metadata-backfill-summary')).toHaveTextContent('已完成 · 更新 3 / 5');
-        expect(screen.getByText('最近 warning：旧缓存仍在使用')).toBeInTheDocument();
-
-        await act(async () => {
-            syncListener?.({
-                activeTask: null,
-                completedTasks: 5,
-                failedTasks: 0,
-                lastWarning: '后台同步完成',
-                queuedTasks: 0,
-                recentEvents: [],
-                running: false,
-            });
-        });
-
-        await waitFor(() => {
-            expect(screen.getByText('最近 warning：后台同步完成')).toBeInTheDocument();
-        });
-
-        await user.click(screen.getByTestId('settings-clear-cache-button'));
-
-        expect(window.confirm).toHaveBeenCalledTimes(1);
-        await waitFor(() => {
-            expect(mockApi.data.clearCache).toHaveBeenCalledTimes(1);
-        });
-        expect(screen.getByText('本地行情缓存已清除。')).toBeInTheDocument();
+        expect(screen.getByTestId('settings-quant-data-provider-status')).toHaveTextContent('ready');
+        expect(mockApi.data.getCacheSummary).not.toHaveBeenCalled();
+        expect(mockApi.data.getSyncStatus).not.toHaveBeenCalled();
+        expect(mockApi.data.subscribeSyncStatus).not.toHaveBeenCalled();
     });
 
     test('确认 Pi 高权限风险会调用 runtime API', async () => {

@@ -4,6 +4,7 @@ import { app, ipcMain, shell, webContents } from 'electron';
 
 import {
   type LogWriteInput,
+  type QuantDataRuntimeStatus,
 } from '@quantdesk/shared';
 
 import {
@@ -45,6 +46,7 @@ export interface RegisterIpcRuntime {
   agent?: Pick<AgentRuntimeGroup, 'portfolioEngine'>;
   marketData?: {
     orchestrator: MarketDataPublicApi;
+    quantData?: Pick<MarketDataRuntimeGroup['quantData'], 'getStatus'>;
     services: Pick<MarketDataServices, 'cacheService' | 'csvImportService' | 'metadataBackfillService' | 'priceSyncService'>;
     sidecarRuntime: Pick<MarketDataRuntimeGroup['sidecarRuntime'], 'snapshot'>;
   };
@@ -104,19 +106,61 @@ export const registerIpcHandlers = ({
     }
   };
 
+  const resolveQuantDataStatus = async (): Promise<QuantDataRuntimeStatus> => {
+    if (!marketDataRuntime?.quantData) {
+      return {
+        lastError: null,
+        providerConfiguration: {
+          code: 'RUNTIME_UNAVAILABLE',
+          message: 'quant-data runtime is not configured.',
+          ready: false,
+        },
+        ready: false,
+      };
+    }
+
+    try {
+      const status = await marketDataRuntime.quantData.getStatus();
+      const providerConfiguration = status.providerConfiguration ?? {
+        code: null,
+        message: null,
+        ready: true,
+      };
+
+      return {
+        lastError: null,
+        providerConfiguration,
+        ready: providerConfiguration.ready,
+        stats: status.stats,
+        storePath: status.storePath,
+        storeVersion: status.storeVersion,
+      };
+    } catch (error) {
+      return {
+        lastError: error instanceof Error ? error.message : String(error),
+        providerConfiguration: {
+          code: 'STATUS_UNAVAILABLE',
+          message: error instanceof Error ? error.message : String(error),
+          ready: false,
+        },
+        ready: false,
+      };
+    }
+  };
+
   const resolvedSystemHandlers =
     systemHandlers ??
     createSystemHandlers(
       {
         ...createDefaultSystemDependencies(() => app.getVersion(), resolveDummyScriptPath),
-        getRuntimeStatus: () =>
-        ({
+        getRuntimeStatus: async () => ({
           lastError: marketDataRuntime?.sidecarRuntime.snapshot().lastError?.message ?? null,
           sidecarPid: marketDataRuntime?.sidecarRuntime.snapshot().pid ?? null,
           sidecarPort: parseSidecarPort(marketDataRuntime?.sidecarRuntime.snapshot().endpoint ?? null),
           sidecarReady: marketDataRuntime?.sidecarRuntime.snapshot().healthy ?? false,
           logDir: logger?.getLogDirectory() ?? null,
           metadataBackfill: metadataBackfillService?.getMetadataBackfillStatus(),
+          quantData: await resolveQuantDataStatus(),
         }),
       },
     );

@@ -1,10 +1,6 @@
 import { memo, type ReactNode } from 'react';
 
 import type {
-  CacheSummary,
-  SyncStatus,
-} from '@quantdesk/shared/types/market';
-import type {
   RuntimeConfig,
   RuntimeMode,
   RuntimeStatusResponse,
@@ -80,50 +76,6 @@ export const PreferencesSummarySection = memo(PreferencesSummarySectionComponent
 
 PreferencesSummarySection.displayName = 'PreferencesSummarySection';
 
-const CacheSummarySectionComponent = ({
-  cacheSummary,
-  onClearCache,
-  onRefresh,
-  syncStatus,
-}: {
-  cacheSummary: CacheSummary | null;
-  onClearCache: () => void;
-  onRefresh: () => void;
-  syncStatus: SyncStatus | null;
-}) => (
-  <SectionCard
-    actions={(
-      <>
-        <Button data-testid="settings-clear-cache-button" onClick={onClearCache} tone="secondary">清除缓存</Button>
-        <Button onClick={onRefresh} tone="ghost">刷新状态</Button>
-      </>
-    )}
-    eyebrow="数据源与缓存"
-    testId="settings-cache-section"
-    title="缓存、同步队列与近期事件"
-  >
-    <div className="space-y-4 text-sm leading-6 text-[var(--color-copy)]">
-      <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.44)] p-4">
-        <p>资产数：{cacheSummary?.assetCount ?? 0}</p>
-        <p data-testid="settings-cache-price-rows">价格缓存：{cacheSummary?.priceRowCount ?? 0}</p>
-        <p>FX 缓存：{cacheSummary?.fxRateRowCount ?? 0}</p>
-        <p>最近同步：{cacheSummary?.latestPriceFetchAt ?? '无'}</p>
-      </div>
-
-      <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.44)] p-4">
-        <p>运行中：{syncStatus?.running ? 'true' : 'false'}</p>
-        <p>队列长度：{syncStatus?.queuedTasks ?? 0}</p>
-        <p>当前任务：{syncStatus?.activeTask ? `${syncStatus.activeTask.kind} · ${syncStatus.activeTask.target}` : '无'}</p>
-        <p>最近 warning：{syncStatus?.lastWarning ?? '无'}</p>
-      </div>
-    </div>
-  </SectionCard>
-);
-
-export const CacheSummarySection = memo(CacheSummarySectionComponent);
-
-CacheSummarySection.displayName = 'CacheSummarySection';
-
 const RuntimeSummarySectionComponent = ({
   browserLiveConfig,
   isValidatingSidecar,
@@ -145,12 +97,15 @@ const RuntimeSummarySectionComponent = ({
 }) => (
   <SectionCard
     actions={<Button onClick={onOpenLogDirectory} tone="ghost">打开日志目录</Button>}
-    eyebrow="Market Data Runtime"
+    eyebrow="Data Runtime"
     testId="settings-runtime-section"
-    title="Sidecar 与 browser-live 连接"
+    title="quant-data、Sidecar 与 browser-live 连接"
   >
     <div className="space-y-4 text-sm leading-6 text-[var(--color-copy)]">
       <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.44)] p-4">
+        <p data-testid="settings-quant-data-provider-status">quant-data Provider：{runtimeStatus?.quantData?.providerConfiguration.ready ? 'ready' : (runtimeStatus?.quantData?.providerConfiguration.code ?? 'unavailable')}</p>
+        <p>quant-data Message：{runtimeStatus?.quantData?.providerConfiguration.message ?? runtimeStatus?.quantData?.lastError ?? '无'}</p>
+        <p>quant-data Store：{runtimeStatus?.quantData?.storePath ?? 'n/a'}</p>
         <p>Sidecar Ready：{runtimeStatus?.sidecarReady ? 'true' : 'false'}</p>
         <p>PID：{runtimeStatus?.sidecarPid ?? 'n/a'}</p>
         <p>Port：{runtimeStatus?.sidecarPort ?? 'n/a'}</p>

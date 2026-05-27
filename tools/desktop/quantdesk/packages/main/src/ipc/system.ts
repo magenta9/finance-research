@@ -23,7 +23,7 @@ export interface SystemDependencies {
   getSqliteVersion: () => string;
   resolveDummyScriptPath: () => string;
   runDummyPython: (scriptPath: string) => Promise<DummyPythonResponse>;
-  getRuntimeStatus: () => RuntimeStatusResponse;
+  getRuntimeStatus: () => Promise<RuntimeStatusResponse> | RuntimeStatusResponse;
 }
 
 export const createSystemHandlers = ({
@@ -51,7 +51,7 @@ export const createSystemHandlers = ({
     return runDummyPython(resolveDummyScriptPath());
   },
   async getRuntimeStatus() {
-    return getRuntimeStatus();
+    return await getRuntimeStatus();
   },
 });
 
@@ -76,6 +76,15 @@ export const createDefaultSystemDependencies = (
     sidecarPid: null,
     sidecarPort: null,
     sidecarReady: false,
+    quantData: {
+      lastError: null,
+      providerConfiguration: {
+        code: 'RUNTIME_UNAVAILABLE',
+        message: 'quant-data runtime is not configured.',
+        ready: false,
+      },
+      ready: false,
+    },
   }),
   resolveDummyScriptPath,
   runDummyPython: runDummyPythonScript,

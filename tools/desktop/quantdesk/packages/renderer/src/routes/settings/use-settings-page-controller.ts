@@ -5,14 +5,12 @@ import type { RuntimeConfig, RuntimeMode } from '@quantdesk/shared/types/system'
 
 import {
     acknowledgePiHighPrivilegeRisk,
-    clearMarketDataCache,
     getPiRiskGateState,
     loadSettingsPageData,
     openLogDirectory,
     openPiRuntimeDirectory,
     refreshPiStatus,
     savePreferencesDraft,
-    subscribeToSettingsSyncStatus,
     validateSidecarConnection as validateSidecarConnectionRequest,
 } from './settings-client';
 import {
@@ -57,7 +55,6 @@ export const formatPiModelDisplay = (modelStatus: PiModelStatus) => {
 
 export const useSettingsPageController = () => {
     const [browserLiveConfig, setBrowserLiveConfig] = useState<RuntimeConfig>(createEmptyRuntimeConfig());
-    const [cacheSummary, setCacheSummary] = useState<Awaited<ReturnType<typeof clearMarketDataCache>>['cacheSummary'] | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
@@ -70,22 +67,18 @@ export const useSettingsPageController = () => {
     const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>('electron');
     const [runtimeStatus, setRuntimeStatus] = useState<Awaited<ReturnType<typeof loadSettingsPageData>>['runtimeStatus'] | null>(null);
     const [sidecarUrlDraft, setSidecarUrlDraft] = useState('');
-    const [syncStatus, setSyncStatus] = useState<Awaited<ReturnType<typeof loadSettingsPageData>>['syncStatus'] | null>(null);
 
     const hydrateSettings = useCallback(async () => {
         const {
             browserLiveConfig: nextBrowserLiveConfig,
-            cacheSummary: nextCacheSummary,
             piRiskGateState: nextPiRiskGateState,
             piStatus: nextPiStatus,
             preferences,
             runtimeMode: nextRuntimeMode,
             runtimeStatus: nextRuntimeStatus,
-            syncStatus: nextSyncStatus,
         } = await loadSettingsPageData();
 
         setBrowserLiveConfig(nextBrowserLiveConfig);
-        setCacheSummary(nextCacheSummary);
         setPiRiskGateState(nextPiRiskGateState);
         setPiStatus(nextPiStatus);
         setPreferencesDraft({
@@ -101,7 +94,6 @@ export const useSettingsPageController = () => {
         setRuntimeMode(nextRuntimeMode);
         setRuntimeStatus(nextRuntimeStatus);
         setSidecarUrlDraft(nextBrowserLiveConfig.sidecarUrl);
-        setSyncStatus(nextSyncStatus);
     }, []);
 
     const loadSettings = useCallback(async () => {
@@ -120,14 +112,6 @@ export const useSettingsPageController = () => {
     useEffect(() => {
         void loadSettings();
     }, [loadSettings]);
-
-    useEffect(() => {
-        const unsubscribe = subscribeToSettingsSyncStatus((status) => {
-            setSyncStatus(status);
-        });
-
-        return unsubscribe;
-    }, []);
 
     const savePreferences = useCallback(async () => {
         setErrorMessage(null);
@@ -207,23 +191,6 @@ export const useSettingsPageController = () => {
         }
     }, [sidecarUrlDraft]);
 
-    const clearCache = useCallback(async () => {
-        const confirmed = window.confirm('这会删除本地 daily_prices 和 fx_rates 缓存，但不会影响资产池、持仓和已保存方案。是否继续？');
-
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-            const result = await clearMarketDataCache();
-            setCacheSummary(result.cacheSummary);
-            setSyncStatus(result.syncStatus);
-            setNoticeMessage('本地行情缓存已清除。');
-        } catch (error) {
-            setErrorMessage(formatSettingsError(error));
-        }
-    }, []);
-
     const handleClearMessages = useCallback(() => {
         setErrorMessage(null);
         setNoticeMessage(null);
@@ -240,14 +207,6 @@ export const useSettingsPageController = () => {
     const handleOpenPreferencesModal = useCallback(() => {
         setIsPreferencesModalOpen(true);
     }, []);
-
-    const handleClearCache = useCallback(() => {
-        void clearCache();
-    }, [clearCache]);
-
-    const handleReloadSettings = useCallback(() => {
-        void loadSettings();
-    }, [loadSettings]);
 
     const handleOpenLogDirectory = useCallback(() => {
         void openLogDirectory();
@@ -322,17 +281,14 @@ export const useSettingsPageController = () => {
 
     return {
         browserLiveConfig,
-        cacheSummary,
         dataSourceSummary,
         errorMessage,
         handleAcknowledgePiRisk,
-        handleClearCache,
         handleClearMessages,
         handleClosePreferencesModal,
         handleOpenLogDirectory,
         handleOpenPreferencesModal,
         handleRefreshPiRuntime,
-        handleReloadSettings,
         handleSavePreferences,
         handleValidateSidecarConnection,
         isLoading,
@@ -350,6 +306,5 @@ export const useSettingsPageController = () => {
         setPreferencesDraft,
         setSidecarUrlDraft,
         sidecarUrlDraft,
-        syncStatus,
     };
 };

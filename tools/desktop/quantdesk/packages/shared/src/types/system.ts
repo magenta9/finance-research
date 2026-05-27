@@ -35,6 +35,26 @@ export interface RuntimeStatusResponse {
   lastError: string | null;
   logDir: string | null;
   metadataBackfill?: MetadataBackfillStatus;
+  quantData?: QuantDataRuntimeStatus;
+}
+
+export interface QuantDataProviderConfigurationStatus {
+  ready: boolean;
+  code: string | null;
+  message: string | null;
+}
+
+export interface QuantDataRuntimeStatus {
+  ready: boolean;
+  lastError: string | null;
+  providerConfiguration: QuantDataProviderConfigurationStatus;
+  stats?: {
+    priceRowCount?: number;
+    fxRateRowCount?: number;
+    latestPriceFetchAt?: string | null;
+  };
+  storePath?: string;
+  storeVersion?: number;
 }
 
 export type RuntimeMode = 'electron' | 'browser-live';
