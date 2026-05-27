@@ -1,6 +1,7 @@
 import type { Currency, DailyPriceRecord, FxRateRecord, StoredAsset } from '@quantdesk/shared';
 
 import type { Repositories } from '../db/repositories';
+import { DirectInverseFxRateResolver, type FxRateResolver } from './fx-rate-resolver';
 import { AllocationPreparationError } from './preparation-errors';
 
 export interface AllocationPreparationContext {
@@ -29,9 +30,15 @@ export interface AllocationPreparationReader {
 }
 
 export class PreparationRepositoryAdapter implements AllocationPreparationReader {
+    private readonly fxRateResolver: FxRateResolver;
+
     private readonly repositories: Pick<Repositories, 'assetRepository' | 'fxRateRepository' | 'priceRepository'>;
 
-    constructor(repositories: Pick<Repositories, 'assetRepository' | 'fxRateRepository' | 'priceRepository'>) {
+    constructor(
+        repositories: Pick<Repositories, 'assetRepository' | 'fxRateRepository' | 'priceRepository'>,
+        fxRateResolver: FxRateResolver = new DirectInverseFxRateResolver(repositories.fxRateRepository),
+    ) {
+        this.fxRateResolver = fxRateResolver;
         this.repositories = repositories;
     }
 
@@ -69,28 +76,11 @@ export class PreparationRepositoryAdapter implements AllocationPreparationReader
         baseCurrency: Currency;
         onOrBeforeDate: string;
     }) {
-        const directPair = `${assetCurrency}/${baseCurrency}`;
-        const inversePair = `${baseCurrency}/${assetCurrency}`;
-        const directRate = this.repositories.fxRateRepository.getLatestRate(directPair, onOrBeforeDate);
-
-        if (directRate) {
-            return {
-                ...directRate,
-                pair: directPair,
-            };
-        }
-
-        const inverseRate = this.repositories.fxRateRepository.getLatestRate(inversePair, onOrBeforeDate);
-        if (!inverseRate) {
-            return null;
-        }
-
-        return {
-            date: inverseRate.date,
-            pair: inversePair,
-            rate: 1 / inverseRate.rate,
-            source: inverseRate.source,
-        } satisfies FxRateRecord & { pair: string };
+        return this.fxRateResolver.resolve({
+            assetCurrency,
+            baseCurrency,
+            onOrBeforeDate,
+        });
     }
 
     readPreparationContext({ assetIds, endDate, startDate }: { assetIds: string[]; endDate?: string; startDate?: string; }) {
