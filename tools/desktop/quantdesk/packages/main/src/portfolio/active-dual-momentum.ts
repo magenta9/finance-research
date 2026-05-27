@@ -6,11 +6,9 @@ import type {
     AllocationTrade,
     Currency,
     PortfolioMetrics,
-    PortfolioPathPoint,
 } from '@quantdesk/shared';
 
 import type { PreparedAllocationData } from './preprocessor';
-import { annualizationFactor } from './analytics-constants';
 import { buildScenarioAnalysis } from './scenarios';
 import {
     activeDualMomentumMinimumTradeWeight,
@@ -21,60 +19,22 @@ import {
     signedActiveDualMomentumWeight,
     type ActiveDualMomentumPosition,
 } from './active-dual-momentum-rules';
+import {
+    buildPortfolioPathFromDailyReturns,
+    computePortfolioCalmarRatio,
+    computePortfolioMetricsFromDailyReturns,
+    computePortfolioWinRate,
+    meanPortfolioValues,
+} from './portfolio-performance';
 import { buildWeeklyRebalanceIndexesOnOrBeforeWeekday } from './rebalance-calendar';
 
-const mean = (values: number[]) => values.length === 0
-    ? 0
-    : values.reduce((sum, value) => sum + value, 0) / values.length;
-
-const standardDeviation = (values: number[]) => {
-    if (values.length <= 1) {
-        return 0;
-    }
-
-    const average = mean(values);
-    const variance = values.reduce((sum, value) => sum + (value - average) ** 2, 0) / (values.length - 1);
-    return Math.sqrt(Math.max(variance, 0));
-};
-
-const buildPath = (dates: string[], dailyReturns: number[]) => {
-    let equity = 1;
-    const equityCurve = [equity];
-    const path: PortfolioPathPoint[] = dates.length === 0 ? [] : [{ date: dates[0], equity }];
-
-    dailyReturns.forEach((dailyReturn, index) => {
-        equity *= 1 + dailyReturn;
-        equityCurve.push(equity);
-        path.push({ date: dates[index + 1] ?? dates.at(-1) ?? '', equity });
-    });
-
-    return { equityCurve, path };
-};
-
-const maxDrawdown = (equityCurve: number[]) => {
-    let peak = equityCurve[0] ?? 1;
-    let drawdown = 0;
-
-    equityCurve.forEach((equity) => {
-        peak = Math.max(peak, equity);
-        drawdown = Math.min(drawdown, equity / peak - 1);
-    });
-
-    return Math.abs(drawdown);
-};
-
 const metricsFromReturns = (dailyReturns: number[], equityCurve: number[]): PortfolioMetrics & { calmarRatio: number; winRate: number } => {
-    const expectedReturn = mean(dailyReturns) * annualizationFactor;
-    const volatility = standardDeviation(dailyReturns) * Math.sqrt(annualizationFactor);
-    const drawdown = maxDrawdown(equityCurve);
+    const metrics = computePortfolioMetricsFromDailyReturns(dailyReturns, equityCurve);
 
     return {
-        calmarRatio: drawdown === 0 ? 0 : expectedReturn / drawdown,
-        expectedReturn,
-        maxDrawdown: drawdown,
-        sharpeRatio: volatility === 0 ? 0 : expectedReturn / volatility,
-        volatility,
-        winRate: dailyReturns.length === 0 ? 0 : dailyReturns.filter((value) => value > 0).length / dailyReturns.length,
+        ...metrics,
+        calmarRatio: computePortfolioCalmarRatio(metrics.expectedReturn, metrics.maxDrawdown),
+        winRate: computePortfolioWinRate(dailyReturns),
     };
 };
 
@@ -303,7 +263,7 @@ export const runActiveDualMomentumBacktest = ({
         netExposures.push(currentPositions.reduce((sum, position) => sum + signedActiveDualMomentumWeight(position), 0));
     }
 
-    const { equityCurve, path } = buildPath(prepared.alignedDates, dailyReturns);
+    const { equityCurve, path } = buildPortfolioPathFromDailyReturns(prepared.alignedDates, dailyReturns);
     const metrics = metricsFromReturns(dailyReturns, equityCurve);
     const allocations = latestAllocations(prepared, latestPositions, annualizedMeanReturns, annualizedVolatility);
     const status = warnings.length > prepared.warnings.length ? 'degraded' : 'ok';
@@ -316,8 +276,8 @@ export const runActiveDualMomentumBacktest = ({
         correlationMatrix: { labels: prepared.series.map((entry) => entry.asset.symbol), matrix: [] },
         diagnostics: {
             activeDualMomentum: {
-                averageNetExposure: mean(netExposures.map((value) => Math.abs(value))),
-                averageNominalExposure: mean(nominalExposures),
+                averageNetExposure: meanPortfolioValues(netExposures.map((value) => Math.abs(value))),
+                averageNominalExposure: meanPortfolioValues(nominalExposures),
                 calmarRatio: metrics.calmarRatio,
                 cashWeight: rebalanceRecords.at(-1)?.cashWeight ?? 0,
                 maxNetExposure,

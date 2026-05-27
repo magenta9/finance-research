@@ -6,7 +6,6 @@ import type {
     PortfolioPathPoint,
 } from '@quantdesk/shared';
 
-import { annualizationFactor } from './analytics-constants';
 import {
     computeEwmacFamily,
     defaultEwmacRules,
@@ -14,6 +13,11 @@ import {
     type EwmacFamilyForecast,
     type NormalizedEwmacRule,
 } from './ewmac';
+import {
+    buildPortfolioPathFromDailyReturns,
+    computePortfolioMetricsFromDailyReturns,
+    meanPortfolioValues,
+} from './portfolio-performance';
 
 export interface NormalizedTrendFollowingConfig {
     assetIds?: string[];
@@ -80,67 +84,6 @@ const normalizeAssetIds = (assetIds?: string[]) => {
         seen.add(trimmed);
         return true;
     });
-};
-
-const mean = (values: number[]) => values.length === 0
-    ? 0
-    : values.reduce((sum, value) => sum + value, 0) / values.length;
-
-const standardDeviation = (values: number[]) => {
-    if (values.length <= 1) {
-        return 0;
-    }
-
-    const average = mean(values);
-    const variance = values.reduce((sum, value) => sum + (value - average) ** 2, 0) / (values.length - 1);
-    return Math.sqrt(Math.max(variance, 0));
-};
-
-const computeMaxDrawdownFromEquity = (equityCurve: number[]) => {
-    let peak = equityCurve[0] ?? 1;
-    let maxDrawdown = 0;
-
-    for (const equity of equityCurve) {
-        peak = Math.max(peak, equity);
-        maxDrawdown = Math.min(maxDrawdown, equity / peak - 1);
-    }
-
-    return Math.abs(maxDrawdown);
-};
-
-const metricsFromDailyReturns = (dailyReturns: number[], equityCurve: number[]): PortfolioMetrics => {
-    const expectedReturn = mean(dailyReturns) * annualizationFactor;
-    const volatility = standardDeviation(dailyReturns) * Math.sqrt(annualizationFactor);
-
-    return {
-        expectedReturn,
-        maxDrawdown: computeMaxDrawdownFromEquity(equityCurve),
-        sharpeRatio: volatility === 0 ? 0 : expectedReturn / volatility,
-        volatility,
-    };
-};
-
-const buildPathFromDailyReturns = (
-    alignedDates: string[],
-    dailyReturns: number[],
-    extraPointFields?: (index: number, equity: number) => Partial<PortfolioPathPoint>,
-) => {
-    const equityCurve = [1];
-    const path: PortfolioPathPoint[] = alignedDates.length === 0
-        ? []
-        : [{ date: alignedDates[0], equity: 1, ...extraPointFields?.(0, 1) }];
-
-    for (let index = 0; index < dailyReturns.length; index += 1) {
-        const nextEquity = equityCurve[index] * (1 + dailyReturns[index]);
-        equityCurve.push(nextEquity);
-        path.push({
-            date: alignedDates[index + 1] ?? alignedDates[alignedDates.length - 1] ?? '',
-            equity: nextEquity,
-            ...extraPointFields?.(index + 1, nextEquity),
-        });
-    }
-
-    return { equityCurve, path };
 };
 
 export const normalizeTrendFollowingConfig = (
@@ -289,7 +232,7 @@ const summarizeAssetDiagnostics = ({
         activeRuleCount: countActiveRules(family, family.forecast.length - 1, allowShort),
         activeShortRules: allowShort ? countShortRules(family, family.forecast.length - 1) : 0,
         assetId: assetIds[index],
-        averageAbsForecast: mean(family.forecast.map((value) => Math.abs(value))),
+        averageAbsForecast: meanPortfolioValues(family.forecast.map((value) => Math.abs(value))),
         latestForecast: family.forecast.at(-1) ?? 0,
         latestPositionWeight: sleeveWeight * (positionWeights[index]?.at(-1) ?? 0),
         symbol: symbols[index],
@@ -350,7 +293,7 @@ export const simulateTrendFollowingSleeve = ({
         }, 0));
     }
 
-    const { path } = buildPathFromDailyReturns(alignedDates, dailyReturns);
+    const { path } = buildPortfolioPathFromDailyReturns(alignedDates, dailyReturns);
 
     return {
         allowShort: config.allowShort,
@@ -397,9 +340,9 @@ export const combineSleeveReturns = ({
     const combinedDailyReturns = allocationDailyReturns.map((allocationReturn, index) =>
         allocationSleeveWeight * allocationReturn
         + trendFollowing.sleeveWeight * (trendFollowing.dailyReturns[index] ?? 0));
-    const allocationSleeveEquity = buildPathFromDailyReturns(alignedDates, allocationDailyReturns).equityCurve;
+    const allocationSleeveEquity = buildPortfolioPathFromDailyReturns(alignedDates, allocationDailyReturns).equityCurve;
     const trendSleeveEquity = trendFollowing.path.map((point) => point.equity);
-    const { equityCurve, path } = buildPathFromDailyReturns(
+    const { equityCurve, path } = buildPortfolioPathFromDailyReturns(
         alignedDates,
         combinedDailyReturns,
         (index) => ({
@@ -411,7 +354,7 @@ export const combineSleeveReturns = ({
     return {
         allocationSleeveWeight,
         combinedDailyReturns,
-        metrics: metricsFromDailyReturns(combinedDailyReturns, equityCurve),
+        metrics: computePortfolioMetricsFromDailyReturns(combinedDailyReturns, equityCurve),
         path,
     };
 };

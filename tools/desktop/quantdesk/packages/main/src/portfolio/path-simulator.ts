@@ -1,6 +1,6 @@
 import type { AllocationTrade, PortfolioMetrics, PortfolioPathPoint, RebalanceCadence } from '@quantdesk/shared';
 
-import { annualizationFactor } from './analytics-constants';
+import { computePortfolioMetricsFromDailyReturns } from './portfolio-performance';
 import { isPortfolioCadenceRebalanceDay } from './rebalance-calendar';
 
 export interface PathSimulationInput {
@@ -31,31 +31,6 @@ const resolveAllocationTradeAction = (fromWeight: number, toWeight: number): All
     }
 
     return toWeight < 0 ? 'open_short' : 'close_long';
-};
-
-const mean = (values: number[]) =>
-    values.reduce((sum, value) => sum + value, 0) / values.length;
-
-const standardDeviation = (values: number[]) => {
-    if (values.length <= 1) {
-        return 0;
-    }
-
-    const average = mean(values);
-    const variance = values.reduce((sum, value) => sum + (value - average) ** 2, 0) / (values.length - 1);
-    return Math.sqrt(Math.max(variance, 0));
-};
-
-const computeMaxDrawdownFromEquity = (equityCurve: number[]) => {
-    let peak = equityCurve[0] ?? 1;
-    let maxDrawdown = 0;
-
-    for (const equity of equityCurve) {
-        peak = Math.max(peak, equity);
-        maxDrawdown = Math.min(maxDrawdown, equity / peak - 1);
-    }
-
-    return Math.abs(maxDrawdown);
 };
 
 export const simulatePortfolioPath = ({
@@ -153,18 +128,10 @@ export const simulatePortfolioPath = ({
     }
 
     const dailyReturns = portfolioEquity.slice(1).map((equity, index) => equity / portfolioEquity[index] - 1);
-    const expectedReturn = dailyReturns.length === 0 ? 0 : mean(dailyReturns) * annualizationFactor;
-    const volatility = dailyReturns.length <= 1 ? 0 : standardDeviation(dailyReturns) * Math.sqrt(annualizationFactor);
-
     return {
         portfolioEquity,
         portfolioPath,
-        metrics: {
-            expectedReturn,
-            maxDrawdown: computeMaxDrawdownFromEquity(portfolioEquity),
-            sharpeRatio: volatility === 0 ? 0 : expectedReturn / volatility,
-            volatility,
-        },
+        metrics: computePortfolioMetricsFromDailyReturns(dailyReturns, portfolioEquity),
         rebalanceEventCount,
         trades,
     };
