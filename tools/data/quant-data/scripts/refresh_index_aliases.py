@@ -55,6 +55,14 @@ def run_quant_data(query: str, asset_class: str = "") -> list[dict]:
         return []
 
 
+def go_string_literal(value: str) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
+def go_comment_text(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("\r", "\\r").replace("\n", "\\n")
+
+
 # 已知的标准指数名称 → tsCode 映射
 # 来源: CSI 官网 / SZ 交所 / 投研常用
 # tsCode 格式: .SZ (深交所), .SH (上交所), .CSI (中证指数公司)
@@ -211,14 +219,18 @@ def main():
         ts_code = INDEX_ALIASES[display_name]
         ok, resolved_ts, resolved_name = verify_alias(display_name, ts_code)
         if ok:
-            lines.append(f'\t"{display_name}": "{resolved_ts}", // → {resolved_name}')
+            lines.append(
+                f"\t{go_string_literal(display_name)}: {go_string_literal(resolved_ts)}, // → {go_comment_text(resolved_name)}"
+            )
             verified += 1
             print(
                 f"  ✓ {display_name} → {resolved_ts} ({resolved_name})", file=sys.stderr
             )
         else:
             # Keep original mapping, mark as unverified
-            lines.append(f'\t"{display_name}": "{ts_code}", // [UNVERIFIED]')
+            lines.append(
+                f"\t{go_string_literal(display_name)}: {go_string_literal(ts_code)}, // [UNVERIFIED]"
+            )
             skipped += 1
             print(f"  ? {display_name} → {ts_code} [UNVERIFIED]", file=sys.stderr)
 

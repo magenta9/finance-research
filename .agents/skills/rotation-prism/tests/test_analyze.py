@@ -205,6 +205,44 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertEqual(gaps[0]["code"], "quant_data_cli_timeout")
         self.assertIn("7s", gaps[0]["message"])
 
+    def test_check_quant_data_rejects_missing_fx_method(self) -> None:
+        original = analyze_module.subprocess.run
+
+        def fake_run(
+            *args: object, **kwargs: object
+        ) -> subprocess.CompletedProcess[str]:
+            return subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=json.dumps(
+                    {
+                        "contractVersion": analyze_module.EXPECTED_CONTRACT_VERSION,
+                        "methods": [
+                            {"name": "search-assets"},
+                            {"name": "get-price-series"},
+                        ],
+                    }
+                ),
+                stderr="",
+            )
+
+        try:
+            analyze_module.subprocess.run = fake_run
+            gaps = analyze_module.check_quant_data_methods(
+                Namespace(
+                    quant_data="quant-data",
+                    quant_data_arg=[],
+                    quant_data_cwd=str(SKILL_DIR),
+                    fixture_provider=False,
+                ),
+                {"get-fx-rates"},
+            )
+        finally:
+            analyze_module.subprocess.run = original
+
+        self.assertEqual(gaps[0]["code"], "quant_data_cli_incompatible")
+        self.assertIn("get-fx-rates", gaps[0]["message"])
+
     def test_run_quant_data_rejects_non_object_json_envelope(self) -> None:
         original = analyze_module.subprocess.run
 
@@ -308,6 +346,15 @@ class AnalyzeScriptTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             analyze_module.shift_days("20260526", -1)
 
+    def test_default_start_for_lookback_uses_trading_day_buffer(self) -> None:
+        default_start = analyze_module.default_start_for_lookback("2026-05-26", 10)
+        naive_start = analyze_module.shift_days("2026-05-26", -10)
+
+        self.assertLess(
+            analyze_module.strict_iso_date(default_start),
+            analyze_module.strict_iso_date(naive_start),
+        )
+
     def test_analyze_price_points_produces_available_grade(self) -> None:
         params = analyze_module.Params(ma_period=20, return_diff_window=5, rsi_period=5)
         rows_a = synthetic_rows(80, start=100, daily_step=1.0)
@@ -326,6 +373,25 @@ class AnalyzeScriptTest(unittest.TestCase):
         self.assertIn(payload["grade"], {"A", "B"})
         self.assertTrue(payload["trendEvidence"])
         self.assertEqual(payload["dataGaps"], [])
+
+    def test_analyze_price_points_respects_limit_bars(self) -> None:
+        params = analyze_module.Params(ma_period=20, return_diff_window=5, rsi_period=5)
+        rows_a = synthetic_rows(80, start=100, daily_step=1.0)
+        rows_b = synthetic_rows(80, start=100, daily_step=0.1)
+
+        payload = analyze_module.analyze_price_points(
+            asset_a={"symbol": "A"},
+            asset_b={"symbol": "B"},
+            rows_a=rows_a,
+            rows_b=rows_b,
+            params=params,
+            limit_bars=10,
+        )
+
+        self.assertEqual(payload["status"], "unavailable")
+        self.assertEqual(
+            payload["dataGaps"][0]["code"], "insufficient_calculation_coverage"
+        )
 
     def test_date_alignment_partial_with_shared_dates(self) -> None:
         params = analyze_module.Params(ma_period=20, return_diff_window=5, rsi_period=5)
@@ -418,6 +484,40 @@ class AnalyzeScriptTest(unittest.TestCase):
 
         self.assertEqual(len(points), 1)
         self.assertEqual(points[0].close, 10.0)
+
+    def test_normalize_cross_currency_prices_uses_fx_rates(self) -> None:
+        original = analyze_module.run_quant_data
+
+        def fake_run_quant_data(
+            args: object, method: str, payload: dict[str, object]
+        ) -> dict[str, object]:
+            self.assertEqual(method, "get-fx-rates")
+            self.assertEqual(payload["pair"], "HKD/CNY")
+            return {
+                "ok": True,
+                "data": {"rates": [{"date": "2026-05-01", "rate": 0.918}]},
+            }
+
+        try:
+            analyze_module.run_quant_data = fake_run_quant_data
+            rows_a, rows_b, warnings, gaps = (
+                analyze_module.normalize_cross_currency_prices(
+                    object(),
+                    {"symbol": "A", "currency": "CNY"},
+                    {"symbol": "B", "currency": "HKD"},
+                    [analyze_module.PricePoint(date="2026-05-01", close=10.0)],
+                    [analyze_module.PricePoint(date="2026-05-01", close=100.0)],
+                    "2026-05-01",
+                    "2026-05-01",
+                )
+            )
+        finally:
+            analyze_module.run_quant_data = original
+
+        self.assertEqual(gaps, [])
+        self.assertEqual(warnings, [])
+        self.assertEqual(rows_a[0].close, 10.0)
+        self.assertAlmostEqual(rows_b[0].close, 91.8)
 
 
 if __name__ == "__main__":

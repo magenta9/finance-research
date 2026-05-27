@@ -80,7 +80,7 @@ func (provider LiveProvider) SearchAssets(query string, market string, assetClas
 		assets, providerWarnings := backend.SearchAssets(query, market, assetClass, exactMatch)
 		warnings = append(warnings, providerWarnings...)
 		for _, asset := range assets {
-			key := strings.ToUpper(asset.Symbol + "|" + asset.Market)
+			key := assetDedupKey(asset)
 			if _, exists := assetsByKey[key]; !exists {
 				assetsByKey[key] = asset
 			}
@@ -290,11 +290,13 @@ func (provider TushareProvider) GetPriceSeries(symbol string, market string, sta
 		return provider.getOpenFundNav(openFundCode, start, end)
 	}
 
-	// Handle .CSI/.SZ/.SH/.BJ tsCode format (e.g. "000922.CSI", "399932.SZ") for direct index lookups
+	// Explicit tsCodes can point to different A-market asset classes:
+	// 000922.CSI -> index, 510300.SH -> fund, 600519.SH -> equity.
 	symbolUpper := strings.ToUpper(symbol)
 	if strings.HasSuffix(symbolUpper, ".CSI") || strings.HasSuffix(symbolUpper, ".SZ") || strings.HasSuffix(symbolUpper, ".SH") || strings.HasSuffix(symbolUpper, ".BJ") {
-		tsCode := symbolUpper
-		return provider.getIndexPrices(tsCode, start, end)
+		if inferTushareAssetType(symbolUpper) == "I" {
+			return provider.getIndexPrices(symbolUpper, start, end)
+		}
 	}
 	tsCode := normalizeTushareCode(symbol)
 	if tsCode == "" {
@@ -786,7 +788,7 @@ func (provider LiveProvider) getFrankfurterRates(pair string, start string, end 
 func dedupeAssets(assets []Asset) []Asset {
 	seen := map[string]Asset{}
 	for _, asset := range assets {
-		key := strings.ToUpper(asset.Symbol + "|" + asset.Market)
+		key := assetDedupKey(asset)
 		if _, exists := seen[key]; !exists {
 			seen[key] = asset
 		}
@@ -796,6 +798,15 @@ func dedupeAssets(assets []Asset) []Asset {
 		result = append(result, asset)
 	}
 	return result
+}
+
+func assetDedupKey(asset Asset) string {
+	if asset.Metadata != nil {
+		if tsCode, ok := asset.Metadata["tsCode"].(string); ok && strings.TrimSpace(tsCode) != "" {
+			return strings.ToUpper(strings.TrimSpace(tsCode) + "|" + normalizeMarket(asset.Market))
+		}
+	}
+	return strings.ToUpper(asset.Symbol + "|" + normalizeMarket(asset.Market))
 }
 
 // filterByAssetClass returns assets matching the specified assetClass.

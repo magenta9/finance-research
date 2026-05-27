@@ -19,6 +19,7 @@ description: 分析两个指数、ETF 或基金之间的轮动三棱镜相对强
 - 比值方向严格使用用户输入顺序:`ratio = asset_a / asset_b`。
 - Agent 最终报告使用中文 Markdown,不输出 JSON。
 - 最终报告必须逐字使用 `docs/output-format.md` 中的七个 `##` 二级标题,不要改名、不要编号、不要额外添加顶层标题、不要把章节降级为 `###`。
+- 七个 `##` 标题必须全部出现;即使某一节没有证据,也必须保留该节并明确写“无”或“未触发”。
 - 报告中的所有结论必须能追溯到 `scripts/analyze.py` 返回的脚本 JSON 字段。
 - 解析成功后，直接运行脚本输出报告，不需要向用户确认。
 
@@ -97,7 +98,7 @@ uv run python -m unittest discover -s tests -p 'test_*.py'
 Agent 冒烟测试单独运行:
 
 ```bash
-uv run python tests/agent_smoke_test.py
+uv run python tests/test_agent_smoke.py
 ```
 
-该测试使用 `pi --skill <skill-dir> --no-session -p <prompt>` 发起一次真实非交互调用,并将报告直通输出到终端;检查输出是否符合七段式契约时,以终端输出为准。
+该测试使用 `pi --skill <skill-dir> --no-session -p <prompt>` 发起一次真实非交互调用,并将报告直通输出到终端;脚本会直接校验终端输出是否符合七段式契约。

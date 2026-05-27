@@ -17,86 +17,86 @@ import "strings"
 // To update, run: make refresh-index-aliases
 var knownIndexAliases = map[string]string{
 	// === 宽基 ===
-	"沪深300":      "000300.SH",  // 注: .CSI 只有 20 天，用 .SH 获取完整历史
-	"中证500":      "000905.SH",  // 同上
-	"中证1000":     "000852.SH",  // 同上
-	"中证红利":     "000922.CSI",  // .SH 无数据，.CSI 有完整历史
-	"红利低波":     "h30269.CSI",  // 红利低波净收益；.SH 无数据，h30269 有完整历史
-	"红利指数":     "000015.SH",  // 上证红利指数（000922 是中证红利）
-	"创业板指":     "399006.SZ",
-	"创业板50":     "399673.SZ",
-	"科创50":       "000688.SH",
-	"科创100":      "000689.CSI",
-	"上证50":       "000016.SH",
-	"上证指数":     "000001.SH",
-	"深证成指":     "399001.SZ",
-	"北证50":       "899050.BJ",
-	"基本面50":     "000925.CSI",  // 中证基本面 50
-	"中证A股":      "930903.CSI",  // 中证 A 股指数
+	"沪深300":  "000300.SH",  // 注: .CSI 只有 20 天，用 .SH 获取完整历史
+	"中证500":  "000905.SH",  // 同上
+	"中证1000": "000852.SH",  // 同上
+	"中证红利":   "000922.CSI", // .SH 无数据，.CSI 有完整历史
+	"红利低波":   "h30269.CSI", // 红利低波净收益；.SH 无数据，h30269 有完整历史
+	"红利指数":   "000015.SH",  // 上证红利指数（000922 是中证红利）
+	"创业板指":   "399006.SZ",
+	"创业板50":  "399673.SZ",
+	"科创50":   "000688.SH",
+	"科创100":  "000689.CSI",
+	"上证50":   "000016.SH",
+	"上证指数":   "000001.SH",
+	"深证成指":   "399001.SZ",
+	"北证50":   "899050.BJ",
+	"基本面50":  "000925.CSI", // 中证基本面 50
+	"中证A股":   "930903.CSI", // 中证 A 股指数
 	// === 红利/低波 ===
-	"300红利":      "000821.CSI",
+	"300红利":  "000821.CSI",
 	"中证红利质量": "932315.CSI",
 	// === 消费 ===
-	"中证消费":     "399932.SZ",
-	"全指消费":     "000990.CSI",
-	"主要消费":     "000932.CSI",
-	"可选消费":     "000989.CSI",
-	"消费服务":     "000806.CSI",
+	"中证消费": "399932.SZ",
+	"全指消费": "000990.CSI",
+	"主要消费": "000932.CSI",
+	"可选消费": "000989.CSI",
+	"消费服务": "000806.CSI",
 	// === 医药 ===
-	"中证医药":     "000933.SH",   // 注: .CSI 只有 20 天，用 .SH 获取完整历史
-	"全指医药":     "000991.CSI",
-	"300医药":      "000913.CSI",
-	"中证医疗":     "399395.SZ",
+	"中证医药":  "000933.SH", // 注: .CSI 只有 20 天，用 .SH 获取完整历史
+	"全指医药":  "000991.CSI",
+	"300医药": "000913.CSI",
+	"中证医疗":  "399395.SZ",
 	// === 金融 ===
-	"中证银行":     "399986.SZ",
-	"300银行":      "000951.CSI",
-	"中证证券":     "399975.SZ",
-	"中证保险":     "399809.SZ",
+	"中证银行":  "399986.SZ",
+	"300银行": "000951.CSI",
+	"中证证券":  "399975.SZ",
+	"中证保险":  "399809.SZ",
 	// === 科技/制造 ===
-	"中证军工":     "399967.SZ",
-	"中证电子":     "930652.CSI",
-	"中证半导体":   "931087.CSI",
-	"中证计算机":   "000986.CSI",
-	"中证通信":     "000993.CSI",
-	"中证汽车":     "930607.CSI",
-	"中证钢铁":     "930606.CSI",
+	"中证军工":  "399967.SZ",
+	"中证电子":  "930652.CSI",
+	"中证半导体": "931087.CSI",
+	"中证计算机": "000986.CSI",
+	"中证通信":  "000993.CSI",
+	"中证汽车":  "930607.CSI",
+	"中证钢铁":  "930606.CSI",
 	// === 能源/原材料 ===
-	"中证煤炭":     "399998.SZ",
+	"中证煤炭":   "399998.SZ",
 	"中证有色金属": "000819.CSI",
-	"中证能源":     "000928.CSI",
+	"中证能源":   "000928.CSI",
 	// === 消费细分 ===
-	"中证白酒":     "399997.SZ",
+	"中证白酒":   "399997.SZ",
 	"中证食品饮料": "000396.CSI",
 	// === 房地产/基建 ===
-	"中证房地产":   "399393.SZ",
-	"中证基建":     "399965.SZ",
+	"中证房地产":  "399393.SZ",
+	"中证基建":   "399965.SZ",
 	"中证建筑材料": "399995.SZ",
 	// === 风格 ===
-	"中证价值":     "000920.CSI",
-	"中证成长":     "000921.CSI",
-	"300价值":      "000919.CSI",
-	"300成长":      "000918.CSI",
-	"500价值":      "000515.CSI",
-	"500成长":      "000516.CSI",
-	"1000价值":     "000062.CSI",
-	"1000成长":     "000063.CSI",
+	"中证价值":   "000920.CSI",
+	"中证成长":   "000921.CSI",
+	"300价值":  "000919.CSI",
+	"300成长":  "000918.CSI",
+	"500价值":  "000515.CSI",
+	"500成长":  "000516.CSI",
+	"1000价值": "000062.CSI",
+	"1000成长": "000063.CSI",
 	// === 债券 ===
 	// === 其他 ===
-	"中证新能源":   "000941.CSI",
+	"中证新能源": "000941.CSI",
 	// "中证家电":   // 无对应 index_basic 条目；tushare 中 000903 = 中证A100
-	"中证传媒":     "000971.CSI",
+	"中证传媒":   "000971.CSI",
 	"中证农林牧渔": "000949.CSI",
 	"中证电力设备": "931932.CSI",
 	// === 港股/海外（^前缀 = tushare index_global API）===
-	"恒生指数":    "^HSI",        // Hang Seng Index（tushare name 为英文，无中文别名）
-	"恒生科技":    "^HSTECH",     // Hang Seng TECH Index（tushare name 为英文）
+	"恒生指数": "^HSI",    // Hang Seng Index（tushare name 为英文，无中文别名）
+	"恒生科技": "^HSTECH", // Hang Seng TECH Index（tushare name 为英文）
 	// === 港股通（A-H 轮动分析用，tushare 93xxx 系列，CNY 计价）===
-	"港股通科技":   "931573",      // 港股通科技（不含 HKD 汇率转换）
-	"港股通消费":   "930964",      // 港股通消费 C（不含 HKD 汇率转换）
-	"港股通医疗":   "931966",      // 港股通医疗商业（不含 HKD 汇率转换）
-	"港股通金融":   "930966",      // 港股通金融 C（不含 HKD 汇率转换）
-	"港股通能源":   "930960",      // 港股通能源 C（不含 HKD 汇率转换）
-	"港股通地产":   "931025",      // 港股通地产（不含 HKD 汇率转换）
+	"港股通科技": "931573", // 港股通科技（不含 HKD 汇率转换）
+	"港股通消费": "930964", // 港股通消费 C（不含 HKD 汇率转换）
+	"港股通医疗": "931966", // 港股通医疗商业（不含 HKD 汇率转换）
+	"港股通金融": "930966", // 港股通金融 C（不含 HKD 汇率转换）
+	"港股通能源": "930960", // 港股通能源 C（不含 HKD 汇率转换）
+	"港股通地产": "931025", // 港股通地产（不含 HKD 汇率转换）
 }
 
 func resolveKnownIndexAlias(query string) (string, bool) {
@@ -196,13 +196,13 @@ func inferTushareAsset(query string) (Asset, bool) {
 		}
 		return Asset{
 			Symbol:     "^" + upper,
-			Name:      name,
-			Market:    "HK",
+			Name:       name,
+			Market:     "HK",
 			AssetClass: "index",
-			Currency:  "HKD",
-			Exchange:  "HKEX",
-			Source:    tushareSource,
-			Metadata:  map[string]any{"provider": tushareSource, "tsCode": tsCode, "tsCodeAsset": "I"},
+			Currency:   "HKD",
+			Exchange:   "HKEX",
+			Source:     tushareSource,
+			Metadata:   map[string]any{"provider": tushareSource, "tsCode": tsCode, "tsCodeAsset": "I"},
 		}, true
 	}
 	// If query uses .CSI tsCode suffix, treat it as index regardless of numeric code
@@ -210,23 +210,19 @@ func inferTushareAsset(query string) (Asset, bool) {
 	if strings.HasSuffix(queryUpper, ".CSI") {
 		return Asset{
 			Symbol:     queryUpper,
-			Name:      queryUpper,
-			Market:    "A",
+			Name:       queryUpper,
+			Market:     "A",
 			AssetClass: "index",
-			Currency:  "CNY",
-			Exchange:  "CSI",
-			Source:    tushareSource,
-			Metadata:  map[string]any{"provider": tushareSource, "tsCode": queryUpper, "tsCodeAsset": "I"},
+			Currency:   "CNY",
+			Exchange:   "CSI",
+			Source:     tushareSource,
+			Metadata:   map[string]any{"provider": tushareSource, "tsCode": queryUpper, "tsCodeAsset": "I"},
 		}, true
 	}
-	// .SZ/.SH/.BJ suffix also indicates a specific A-market tsCode
+	// .SZ/.SH/.BJ suffix also indicates a specific A-market tsCode.
+	// Unlike .CSI, the suffix alone does not force the asset to be an index:
+	// 600519.SH is an equity, 510300.SH is a fund, 000016.SH is an index.
 	if strings.HasSuffix(queryUpper, ".SZ") || strings.HasSuffix(queryUpper, ".SH") || strings.HasSuffix(queryUpper, ".BJ") {
-		exchange := "SZ"
-		if strings.HasSuffix(queryUpper, ".SH") {
-			exchange = "SH"
-		} else if strings.HasSuffix(queryUpper, ".BJ") {
-			exchange = "BJ"
-		}
 		assetType := inferTushareAssetType(queryUpper)
 		assetClass := "equity"
 		if assetType == "FD" {
@@ -236,13 +232,13 @@ func inferTushareAsset(query string) (Asset, bool) {
 		}
 		return Asset{
 			Symbol:     queryUpper,
-			Name:      queryUpper,
-			Market:    "A",
+			Name:       queryUpper,
+			Market:     marketFromTushareCode(queryUpper),
 			AssetClass: assetClass,
-			Currency:  "CNY",
-			Exchange:  exchange,
-			Source:    tushareSource,
-			Metadata:  map[string]any{"provider": tushareSource, "tsCode": queryUpper, "tsCodeAsset": assetType},
+			Currency:   "CNY",
+			Exchange:   exchangeFromTushareCode(queryUpper),
+			Source:     tushareSource,
+			Metadata:   map[string]any{"provider": tushareSource, "tsCode": queryUpper, "tsCodeAsset": assetType},
 		}, true
 	}
 	tsCode := normalizeTushareCode(query)
@@ -298,7 +294,7 @@ func normalizeTushareCode(symbol string) string {
 	if code := normalizeSixDigit(symbol); strings.HasPrefix(code, "93") {
 		return code + ".CSI"
 	}
-	if strings.HasSuffix(symbol, ".SH") || strings.HasSuffix(symbol, ".SZ") || strings.HasSuffix(symbol, ".CSI") {
+	if strings.HasSuffix(symbol, ".SH") || strings.HasSuffix(symbol, ".SZ") || strings.HasSuffix(symbol, ".CSI") || strings.HasSuffix(symbol, ".BJ") {
 		return symbol
 	}
 	code := normalizeSixDigit(symbol)
@@ -307,6 +303,9 @@ func normalizeTushareCode(symbol string) string {
 	}
 	if strings.HasPrefix(code, "93") {
 		return code + ".CSI"
+	}
+	if strings.HasPrefix(code, "4") || strings.HasPrefix(code, "8") {
+		return code + ".BJ"
 	}
 	if strings.HasPrefix(code, "5") || strings.HasPrefix(code, "6") || strings.HasPrefix(code, "9") {
 		return code + ".SH"
@@ -398,11 +397,11 @@ func normalizeSixDigit(symbol string) string {
 }
 
 func inferTushareAssetType(tsCode string) string {
-	// .CSI/.SZ/.SH/.BJ suffix always means index, regardless of numeric code
-	if strings.HasSuffix(tsCode, ".CSI") || strings.HasSuffix(tsCode, ".SZ") || strings.HasSuffix(tsCode, ".SH") || strings.HasSuffix(tsCode, ".BJ") {
+	upper := strings.ToUpper(strings.TrimSpace(tsCode))
+	if strings.HasSuffix(upper, ".CSI") {
 		return "I"
 	}
-	code := normalizeSixDigit(tsCode)
+	code := normalizeSixDigit(upper)
 	if code == "" {
 		return "E"
 	}
@@ -411,11 +410,13 @@ func inferTushareAssetType(tsCode string) string {
 			return "FD"
 		}
 	}
-	// Below checks are now covered by the suffix check above, kept for clarity
-	if strings.HasPrefix(tsCode, "000") && strings.HasSuffix(tsCode, ".SH") {
+	if strings.HasPrefix(code, "000") && strings.HasSuffix(upper, ".SH") {
 		return "I"
 	}
-	if strings.HasPrefix(tsCode, "399") && strings.HasSuffix(tsCode, ".SZ") {
+	if strings.HasPrefix(code, "399") && strings.HasSuffix(upper, ".SZ") {
+		return "I"
+	}
+	if strings.HasPrefix(code, "899") && strings.HasSuffix(upper, ".BJ") {
 		return "I"
 	}
 	return "E"
@@ -436,7 +437,7 @@ func isDigits(value string) bool {
 
 func marketFromTushareCode(tsCode string) string {
 	upper := strings.ToUpper(tsCode)
-	if strings.HasSuffix(upper, ".SH") || strings.HasSuffix(upper, ".SZ") || strings.HasSuffix(upper, ".CSI") {
+	if strings.HasSuffix(upper, ".SH") || strings.HasSuffix(upper, ".SZ") || strings.HasSuffix(upper, ".CSI") || strings.HasSuffix(upper, ".BJ") {
 		return "A"
 	}
 	return "US"
@@ -453,11 +454,14 @@ func exchangeFromTushareCode(tsCode string) string {
 	if strings.HasSuffix(upper, ".SZ") {
 		return "SZSE"
 	}
+	if strings.HasSuffix(upper, ".BJ") {
+		return "BJ"
+	}
 	return ""
 }
 
 func publicSymbolFromTushareCode(tsCode string) string {
-	return strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(tsCode, ".CSI"), ".SH"), ".SZ")
+	return strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(tsCode, ".CSI"), ".SH"), ".SZ"), ".BJ")
 }
 
 func marketFromYahooSymbol(symbol string) string {

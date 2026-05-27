@@ -108,6 +108,14 @@ def strict_iso_date(date_text: str) -> date:
     return date.fromisoformat(date_text)
 
 
+def calendar_days_for_trading_days(trading_days: int) -> int:
+    return max(trading_days, math.ceil(trading_days * 7 / 5) + 30)
+
+
+def default_start_for_lookback(end: str, lookback_days: int) -> str:
+    return shift_days(end, -calendar_days_for_trading_days(lookback_days))
+
+
 def rolling_mean(values: list[float | None], period: int) -> list[float | None]:
     result: list[float | None] = []
     for index in range(len(values)):
@@ -192,11 +200,62 @@ def ratio_rsi(values: list[float], period: int) -> list[float | None]:
 def normalize_price_rows(rows: list[dict[str, Any]]) -> list[PricePoint]:
     points: list[PricePoint] = []
     for row in rows:
-        close = finite_number(row.get("calculationClose"))
+        # tushare returns "close"; calculationClose is never populated by quant-data providers
+        close = finite_number(row.get("calculationClose") or row.get("close"))
         if not row.get("date") or close is None:
             continue
         points.append(PricePoint(date=str(row["date"]), close=close))
     return sorted(points, key=lambda item: item.date)
+
+
+def normalize_fx_rows(rows: list[dict[str, Any]]) -> dict[str, float]:
+    rates: dict[str, float] = {}
+    for row in rows:
+        date_text = str(row.get("date") or "").strip()
+        rate = finite_number(row.get("rate"))
+        if not date_text or rate is None or rate <= 0:
+            continue
+        rates[date_text] = rate
+    return rates
+
+
+def convert_price_points_with_fx(
+    rows: list[PricePoint],
+    *,
+    fx_rates: dict[str, float],
+    pair: str,
+    asset_label: str,
+) -> tuple[list[PricePoint], list[dict[str, str]]]:
+    converted: list[PricePoint] = []
+    missing_dates = 0
+    for row in rows:
+        rate = fx_rates.get(row.date)
+        if rate is None:
+            missing_dates += 1
+            continue
+        converted.append(PricePoint(date=row.date, close=row.close * rate))
+    if not converted:
+        return [], [
+            {
+                "code": "fx_rates_empty",
+                "message": f"{asset_label} 缺少可用汇率：{pair}。",
+            }
+        ]
+    warnings: list[dict[str, str]] = []
+    if missing_dates:
+        warnings.append(
+            {
+                "code": "fx_alignment_partial",
+                "message": f"{asset_label} 有 {missing_dates} 个交易日缺少汇率 {pair}，已按交集继续分析。",
+            }
+        )
+    return converted, warnings
+
+
+def preferred_analysis_currency(currency_a: str, currency_b: str) -> str:
+    if currency_a == "CNY" or currency_b == "CNY":
+        return "CNY"
+    return currency_a
 
 
 def align_price_points(
@@ -335,13 +394,20 @@ def analyze_price_points(
     rows_a: list[PricePoint],
     rows_b: list[PricePoint],
     params: Params,
+    data_gap_warnings: list[dict[str, str]] | None = None,
+    limit_bars: int | None = None,
 ) -> dict[str, Any]:
     aligned_a, aligned_b, data_gaps = align_price_points(rows_a, rows_b)
+    if limit_bars is not None and limit_bars > 0 and len(aligned_a) > limit_bars:
+        aligned_a = aligned_a[-limit_bars:]
+        aligned_b = aligned_b[-limit_bars:]
     minimum_bars = max(
         params.ma_period + params.return_diff_window, params.rsi_period + 1
     )
     critical_gaps = [g for g in data_gaps if g["code"] != "date_alignment_partial"]
-    warnings = [g for g in data_gaps if g["code"] == "date_alignment_partial"]
+    warnings = list(data_gap_warnings or []) + [
+        g for g in data_gaps if g["code"] == "date_alignment_partial"
+    ]
     if critical_gaps or len(aligned_a) < minimum_bars:
         gaps = critical_gaps or [
             {
@@ -632,6 +698,12 @@ def envelope_error_gap(
 
 
 def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
+    return check_quant_data_methods(args, {"search-assets", "get-price-series"})
+
+
+def check_quant_data_methods(
+    args: argparse.Namespace, required: set[str]
+) -> list[dict[str, str]]:
     command = [args.quant_data, *args.quant_data_arg, "help", "--json"]
     timeout_seconds = quant_data_timeout_seconds(args)
     env = os.environ.copy()
@@ -695,7 +767,6 @@ def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
         for item in methods or []
         if isinstance(item, dict) and item.get("name")
     }
-    required = {"search-assets", "get-price-series"}
     missing = sorted(required - method_names)
     if missing:
         return [
@@ -705,6 +776,137 @@ def check_quant_data(args: argparse.Namespace) -> list[dict[str, str]]:
             }
         ]
     return []
+
+
+def fetch_fx_rates(
+    args: argparse.Namespace, pair: str, start: str, end: str
+) -> tuple[dict[str, float], list[dict[str, str]]]:
+    envelope = run_quant_data(
+        args, "get-fx-rates", {"pair": pair, "start": start, "end": end}
+    )
+    if not envelope.get("ok"):
+        return {}, [
+            envelope_error_gap(envelope, "fx_fetch_failed", f"汇率获取失败：{pair}。")
+        ]
+    data = envelope.get("data")
+    if data is None:
+        data = {}
+    if not isinstance(data, dict):
+        return {}, [
+            {
+                "code": "fx_fetch_invalid_response",
+                "message": "quant-data get-fx-rates 返回的 data 必须是对象。",
+            }
+        ]
+    fx_rows = data.get("rates")
+    if fx_rows is None:
+        fx_rows = []
+    if not isinstance(fx_rows, list) or any(
+        not isinstance(row, dict) for row in fx_rows
+    ):
+        return {}, [
+            {
+                "code": "fx_fetch_invalid_response",
+                "message": "quant-data get-fx-rates 返回的 rates 必须是数组。",
+            }
+        ]
+    rates = normalize_fx_rows(fx_rows)
+    if not rates:
+        return {}, [{"code": "fx_rates_empty", "message": f"未获取到汇率：{pair}。"}]
+    return rates, []
+
+
+def fetch_conversion_rates(
+    args: argparse.Namespace,
+    source_currency: str,
+    target_currency: str,
+    start: str,
+    end: str,
+) -> tuple[dict[str, float], list[dict[str, str]]]:
+    direct_pair = f"{source_currency}/{target_currency}"
+    rates, gaps = fetch_fx_rates(args, direct_pair, start, end)
+    if rates:
+        return rates, []
+    inverse_pair = f"{target_currency}/{source_currency}"
+    inverse_rates, inverse_gaps = fetch_fx_rates(args, inverse_pair, start, end)
+    if inverse_rates:
+        return {
+            date_text: 1 / rate for date_text, rate in inverse_rates.items() if rate > 0
+        }, []
+    return {}, gaps or inverse_gaps or [
+        {
+            "code": "fx_rates_empty",
+            "message": f"无法获取 {source_currency}->{target_currency} 汇率（已尝试 {direct_pair} 与 {inverse_pair}）。",
+        }
+    ]
+
+
+def normalize_cross_currency_prices(
+    args: argparse.Namespace,
+    asset_a: dict[str, Any],
+    asset_b: dict[str, Any],
+    rows_a: list[PricePoint],
+    rows_b: list[PricePoint],
+    start: str,
+    end: str,
+) -> tuple[
+    list[PricePoint], list[PricePoint], list[dict[str, str]], list[dict[str, str]]
+]:
+    currency_a = str(asset_a.get("currency") or "").upper()
+    currency_b = str(asset_b.get("currency") or "").upper()
+    if not currency_a or not currency_b:
+        return (
+            [],
+            [],
+            [],
+            [
+                {
+                    "code": "asset_currency_missing",
+                    "message": "标的缺少 currency 字段，无法做跨币种比值归一化。",
+                }
+            ],
+        )
+    if currency_a == currency_b:
+        return rows_a, rows_b, [], []
+
+    target_currency = preferred_analysis_currency(currency_a, currency_b)
+    warnings: list[dict[str, str]] = []
+    normalized_a = rows_a
+    normalized_b = rows_b
+
+    if currency_a != target_currency:
+        fx_rates, gaps = fetch_conversion_rates(
+            args, currency_a, target_currency, start, end
+        )
+        if gaps:
+            return [], [], [], gaps
+        normalized_a, fx_warnings = convert_price_points_with_fx(
+            rows_a,
+            fx_rates=fx_rates,
+            pair=f"{currency_a}/{target_currency}",
+            asset_label="asset_a",
+        )
+        if not normalized_a:
+            return [], [], [], fx_warnings
+        warnings.extend(fx_warnings)
+
+    if currency_b != target_currency:
+        fx_rates, gaps = fetch_conversion_rates(
+            args, currency_b, target_currency, start, end
+        )
+        if gaps:
+            return [], [], [], gaps
+        normalized_b, fx_warnings = convert_price_points_with_fx(
+            rows_b,
+            fx_rates=fx_rates,
+            pair=f"{currency_b}/{target_currency}",
+            asset_label="asset_b",
+        )
+        if not normalized_b:
+            return [], [], [], fx_warnings
+        warnings.extend(fx_warnings)
+
+    return normalized_a, normalized_b, warnings, []
 
 
 def resolve_asset(
@@ -815,7 +1017,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
             data_gaps=input_gaps,
             params=params,
         )
-    start = args.start or shift_days(args.end, -args.lookback_days)
+    start = args.start or default_start_for_lookback(args.end, args.lookback_days)
     cli_gaps = check_quant_data(args)
     if cli_gaps:
         return unavailable_result(
@@ -834,6 +1036,18 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
                 data_gaps=[*gaps_a, *gaps_b],
                 params=params,
             )
+        if (
+            str(asset_a.get("currency") or "").upper()
+            != str(asset_b.get("currency") or "").upper()
+        ):
+            fx_method_gaps = check_quant_data_methods(args, {"get-fx-rates"})
+            if fx_method_gaps:
+                return unavailable_result(
+                    asset_a=asset_a,
+                    asset_b=asset_b,
+                    data_gaps=fx_method_gaps,
+                    params=params,
+                )
         rows_a, price_gaps_a = fetch_prices(args, asset_a, start, args.end)
         rows_b, price_gaps_b = fetch_prices(args, asset_b, start, args.end)
     except RuntimeError as error:
@@ -851,8 +1065,24 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
             data_gaps=[*price_gaps_a, *price_gaps_b],
             params=params,
         )
+    rows_a, rows_b, fx_warnings, fx_gaps = normalize_cross_currency_prices(
+        args, asset_a, asset_b, rows_a, rows_b, start, args.end
+    )
+    if fx_gaps:
+        return unavailable_result(
+            asset_a=asset_a,
+            asset_b=asset_b,
+            data_gaps=fx_gaps,
+            params=params,
+        )
     return analyze_price_points(
-        asset_a=asset_a, asset_b=asset_b, rows_a=rows_a, rows_b=rows_b, params=params
+        asset_a=asset_a,
+        asset_b=asset_b,
+        rows_a=rows_a,
+        rows_b=rows_b,
+        params=params,
+        data_gap_warnings=fx_warnings,
+        limit_bars=params.lookback_days if not args.start else None,
     )
 
 

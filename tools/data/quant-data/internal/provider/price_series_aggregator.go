@@ -6,7 +6,6 @@ import (
 )
 
 func aggregatePriceSeries(symbol string, market string, order []string, backends map[string]marketBackend, policy Policy, start string, end string) PriceSeriesResult {
-	rowsByDate := map[string]PriceRow{}
 	attempted := []string{}
 	warnings := []string{}
 
@@ -19,26 +18,29 @@ func aggregatePriceSeries(symbol string, market string, order []string, backends
 		result, providerWarnings := backend.GetPriceSeries(symbol, market, start, end)
 		warnings = append(warnings, providerWarnings...)
 		warnings = append(warnings, result.Warnings...)
+		if len(result.Prices) == 0 {
+			continue
+		}
+		rows := make([]PriceRow, 0, len(result.Prices))
 		for _, row := range result.Prices {
-			row = withCalculationClose(row)
-			existing, exists := rowsByDate[row.Date]
-			if !exists || shouldReplacePrice(policy, existing, row, market) {
-				rowsByDate[row.Date] = row
-				continue
-			}
-			rowsByDate[row.Date] = fillPriceGaps(existing, row)
+			rows = append(rows, withCalculationClose(row))
+		}
+		sort.SliceStable(rows, func(i, j int) bool { return rows[i].Date < rows[j].Date })
+		selectedSymbol := result.Symbol
+		if strings.TrimSpace(selectedSymbol) == "" {
+			selectedSymbol = symbol
+		}
+		return PriceSeriesResult{
+			AttemptedSources: attempted,
+			Prices:           rows,
+			Symbol:           selectedSymbol,
+			Warnings:         dedupeStrings(warnings),
 		}
 	}
 
-	rows := make([]PriceRow, 0, len(rowsByDate))
-	for _, row := range rowsByDate {
-		rows = append(rows, row)
-	}
-	sort.SliceStable(rows, func(i, j int) bool { return rows[i].Date < rows[j].Date })
-
 	return PriceSeriesResult{
 		AttemptedSources: attempted,
-		Prices:           rows,
+		Prices:           []PriceRow{},
 		Symbol:           symbol,
 		Warnings:         dedupeStrings(warnings),
 	}
