@@ -1,6 +1,7 @@
 import type { PriceAnalogPathPoint, PriceAnalogWindow, StoredAsset } from '@quantdesk/shared';
 
 import { resolveAssetSeries } from '../asset-series';
+import { shiftIsoDateByMonths } from '../date-alignment';
 import type { AnalogSeries, WindowSnapshot } from './types';
 
 export const minimumWindowPoints: Record<PriceAnalogWindow, number> = {
@@ -37,22 +38,16 @@ const standardDeviation = (values: number[]) => {
     return Math.sqrt(Math.max(variance, 0));
 };
 
-export const shiftMonths = (endDate: string, months: number) => {
-    const cursor = new Date(`${endDate}T00:00:00Z`);
-    cursor.setUTCMonth(cursor.getUTCMonth() - months);
-    return cursor.toISOString().slice(0, 10);
-};
-
 export const windowStartDateFromEnd = (window: PriceAnalogWindow, endDate: string) => {
     if (window === '3M') {
-        return shiftMonths(endDate, 3);
+        return shiftIsoDateByMonths(endDate, 3);
     }
 
     if (window === '6M') {
-        return shiftMonths(endDate, 6);
+        return shiftIsoDateByMonths(endDate, 6);
     }
 
-    return shiftMonths(endDate, 12);
+    return shiftIsoDateByMonths(endDate, 12);
 };
 
 export const buildAnalogSeries = (

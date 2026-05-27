@@ -15,6 +15,7 @@ import type {
 
 import { annualizationFactor } from './analytics-constants';
 import { resolveAssetSeries, type AssetSeriesInputPrice, type ResolvedAssetSeriesPoint } from './asset-series';
+import { shiftIsoDateByMonths } from './date-alignment';
 
 export interface ComputeAssetSeriesAnalyticsInput {
     prices: AssetSeriesInputPrice[];
@@ -52,14 +53,6 @@ const normalizeVolWindow = (value: RollingVolWindow) => {
     return 60;
 };
 
-const formatDate = (date: Date) => date.toISOString().slice(0, 10);
-
-const shiftMonths = (endDate: string, months: number) => {
-    const cursor = new Date(`${endDate}T00:00:00Z`);
-    cursor.setUTCMonth(cursor.getUTCMonth() - months);
-    return formatDate(cursor);
-};
-
 const buildRegressionStartDate = (
     regressionWindow: RegressionWindow,
     displayStartDate: string,
@@ -70,15 +63,15 @@ const buildRegressionStartDate = (
     }
 
     if (regressionWindow === '1Y') {
-        return shiftMonths(displayEndDate, 12);
+        return shiftIsoDateByMonths(displayEndDate, 12);
     }
 
     if (regressionWindow === '3Y') {
-        return shiftMonths(displayEndDate, 36);
+        return shiftIsoDateByMonths(displayEndDate, 36);
     }
 
     if (regressionWindow === '5Y') {
-        return shiftMonths(displayEndDate, 60);
+        return shiftIsoDateByMonths(displayEndDate, 60);
     }
 
     return null;
