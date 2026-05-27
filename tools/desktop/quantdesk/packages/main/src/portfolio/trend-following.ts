@@ -13,6 +13,7 @@ import {
     type EwmacFamilyForecast,
     type NormalizedEwmacRule,
 } from './ewmac';
+import { minimumPortfolioTradeWeight } from './portfolio-constants';
 import {
     buildPortfolioPathFromDailyReturns,
     computePortfolioMetricsFromDailyReturns,
@@ -67,7 +68,6 @@ export interface CombinedSleeveSimulationResult {
 
 const defaultForecastCap = 20;
 const defaultVolatilitySpan = 32;
-const minimumTradeWeight = 0.0001;
 
 const normalizeAssetIds = (assetIds?: string[]) => {
     if (!assetIds) {
@@ -188,7 +188,7 @@ const buildTrendTrades = ({
             const toWeight = weight * sleeveWeight;
             const weightChange = toWeight - fromWeight;
 
-            if (Math.abs(weightChange) < minimumTradeWeight) {
+            if (Math.abs(weightChange) < minimumPortfolioTradeWeight) {
                 return;
             }
 

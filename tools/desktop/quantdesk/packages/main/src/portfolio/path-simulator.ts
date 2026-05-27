@@ -1,5 +1,6 @@
 import type { AllocationTrade, PortfolioMetrics, PortfolioPathPoint, RebalanceCadence } from '@quantdesk/shared';
 
+import { minimumPortfolioTradeWeight } from './portfolio-constants';
 import { computePortfolioMetricsFromDailyReturns } from './portfolio-performance';
 import { isPortfolioCadenceRebalanceDay } from './rebalance-calendar';
 
@@ -22,8 +23,6 @@ export interface PathSimulationResult {
     rebalanceEventCount: number;
     trades: AllocationTrade[];
 }
-
-const minimumTradeWeight = 0.0001;
 
 const resolveAllocationTradeAction = (fromWeight: number, toWeight: number): AllocationTrade['action'] => {
     if (toWeight > fromWeight) {
@@ -61,7 +60,7 @@ export const simulatePortfolioPath = ({
     const portfolioEquity = [1];
     const portfolioPath: PortfolioPathPoint[] = [{ date: alignedDates[0] ?? '', equity: 1 }];
     const trades: AllocationTrade[] = targetWeights.flatMap((weight, assetIndex) => {
-        if (Math.abs(weight) < minimumTradeWeight) {
+        if (Math.abs(weight) < minimumPortfolioTradeWeight) {
             return [];
         }
 
@@ -104,7 +103,7 @@ export const simulatePortfolioPath = ({
                 const fromWeight = currentWeights[assetIndex] ?? 0;
                 const weightChange = targetWeight - fromWeight;
 
-                if (Math.abs(weightChange) < minimumTradeWeight) {
+                if (Math.abs(weightChange) < minimumPortfolioTradeWeight) {
                     return;
                 }
 

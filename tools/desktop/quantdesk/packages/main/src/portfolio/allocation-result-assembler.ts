@@ -10,6 +10,7 @@ import type {
 
 import type { PreparedAllocationData } from './preprocessor';
 import { simulatePortfolioPath } from './path-simulator';
+import { minimumPortfolioTradeWeight } from './portfolio-constants';
 import { buildScenarioAnalysis } from './scenarios';
 import { computeRiskContributions, correlationMatrix } from './statistics';
 import type {
@@ -86,7 +87,7 @@ export const assembleAllocationResult = ({
     const trades = [
         ...pathSimulation.trades.map((trade) => scaleTrade(trade, allocationSleeveWeight)),
         ...(trendFollowing?.trades ?? []),
-    ].filter((trade) => Math.abs(trade.weightChange) >= 0.0001);
+    ].filter((trade) => Math.abs(trade.weightChange) >= minimumPortfolioTradeWeight);
     const hasStrategyMix = trendFollowing != null || allocationAssetIds != null;
     const contributions = computeRiskContributions(effectiveWeights, covariance);
     const allocations = prepared.series.map((entry, index) => ({

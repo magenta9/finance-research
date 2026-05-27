@@ -1,5 +1,6 @@
 import type { ActiveDualMomentumDiagnostics, ActiveDualMomentumStrategyConfig } from '@quantdesk/shared';
 
+import { minimumPortfolioTradeWeight } from './portfolio-constants';
 import type { PreparedAllocationData } from './preprocessor';
 
 export interface NormalizedActiveDualMomentumConfig {
@@ -28,8 +29,6 @@ export interface ActiveDualMomentumSleeveSelection {
 }
 
 export const activeDualMomentumTradingDaysPerWeek = 5;
-
-export const activeDualMomentumMinimumTradeWeight = 0.0001;
 
 export const normalizeActiveDualMomentumConfig = (
     config?: ActiveDualMomentumStrategyConfig,
@@ -163,5 +162,5 @@ export const mergeActiveDualMomentumSleeves = (
         existing.longMomentum = existing.longMomentum ?? position.longMomentum;
     });
 
-    return [...merged.values()].filter((position) => position.weight >= activeDualMomentumMinimumTradeWeight);
+    return [...merged.values()].filter((position) => position.weight >= minimumPortfolioTradeWeight);
 };

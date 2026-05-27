@@ -11,7 +11,6 @@ import type {
 import type { PreparedAllocationData } from './preprocessor';
 import { buildScenarioAnalysis } from './scenarios';
 import {
-    activeDualMomentumMinimumTradeWeight,
     activeDualMomentumTradingDaysPerWeek,
     mergeActiveDualMomentumSleeves,
     normalizeActiveDualMomentumConfig,
@@ -19,6 +18,7 @@ import {
     signedActiveDualMomentumWeight,
     type ActiveDualMomentumPosition,
 } from './active-dual-momentum-rules';
+import { minimumPortfolioTradeWeight } from './portfolio-constants';
 import {
     buildPortfolioPathFromDailyReturns,
     computePortfolioCalmarRatio,
@@ -63,7 +63,7 @@ const buildTrades = ({
     const toSigned = next ? signedActiveDualMomentumWeight(next) : 0;
     const weightChange = toSigned - fromSigned;
 
-    if (Math.abs(weightChange) < activeDualMomentumMinimumTradeWeight) {
+    if (Math.abs(weightChange) < minimumPortfolioTradeWeight) {
         return [];
     }
 
