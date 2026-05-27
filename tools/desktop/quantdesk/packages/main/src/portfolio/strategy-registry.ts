@@ -9,25 +9,18 @@ import type {
     RebalanceCadence,
 } from '@quantdesk/shared';
 
-import {
-    assembleAllocationResult,
-    buildAllocationErrorResult,
-} from './allocation-result-assembler';
-import {
-    mergeAllocationConstraints,
-    validateAllocationAssetSelection,
-    validateAllocationConstraints,
-    validateAllocationStrategyMix,
-} from './allocation-validator';
+import { assembleAllocationResult } from './allocation-result-assembler';
+import { validateAllocationStrategyMix } from './allocation-validator';
 import { runActiveDualMomentumBacktest } from './active-dual-momentum';
+import { createConfigurationStrategyHandler } from './configuration-strategy-handler';
 import {
     getPreparedAssetIds,
     getPreparedAssetNames,
     getPreparedAssetSymbols,
     getPreparedPriceSeries,
-    resolvePreparedAssetIndexes,
 } from './prepared-allocation-context';
 import type { PreparedAllocationData } from './preprocessor';
+import { buildStrategyErrorResult } from './strategy-error-result';
 import { simulateTrendFollowingSleeve } from './trend-following';
 
 export interface StrategyAnalysisInput {
@@ -82,137 +75,6 @@ export interface AllocationStrategyHandler {
 }
 
 export type AllocationStrategyRegistry = Record<AllocationStrategy, AllocationStrategyHandler>;
-
-const buildStrategyErrorResult = ({
-    baseCurrency,
-    error,
-    mode,
-    prepared,
-    rebalanceCadence,
-    strategy,
-}: {
-    baseCurrency: Currency;
-    error: NonNullable<AllocationResult['error']>;
-    mode: AllocationType;
-    prepared: PreparedAllocationData;
-    rebalanceCadence: RebalanceCadence;
-    strategy: AllocationStrategy;
-}) => buildAllocationErrorResult({
-    baseCurrency,
-    effectiveDateRange: {
-        endDate: prepared.alignedDates.at(-1) ?? '',
-        startDate: prepared.alignedDates[0] ?? '',
-    },
-    error,
-    mode,
-    prepared,
-    rebalanceCadence,
-    strategy,
-});
-
-const expandWeights = (weights: number[], assetIndexes: number[], assetCount: number) => {
-    const expandedWeights = Array.from({ length: assetCount }, () => 0);
-
-    assetIndexes.forEach((assetIndex, localIndex) => {
-        expandedWeights[assetIndex] = weights[localIndex] ?? 0;
-    });
-
-    return expandedWeights;
-};
-
-const createConfigurationStrategyHandler = (strategy: AllocationType): AllocationStrategyHandler => ({
-    run: async ({
-        analysisInput,
-        baseCurrency,
-        calculationDateRange,
-        constraints,
-        optimize,
-        prepared,
-        rebalanceCadence,
-    }) => {
-        const mergedConstraints = mergeAllocationConstraints(constraints);
-        const constraintError = validateAllocationConstraints(mergedConstraints);
-
-        if (constraintError) {
-            return {
-                optimizerPath: null,
-                result: buildStrategyErrorResult({
-                    baseCurrency,
-                    error: constraintError,
-                    mode: strategy,
-                    prepared,
-                    rebalanceCadence,
-                    strategy,
-                }),
-                stage: 'constraint_failed',
-            };
-        }
-
-        const allocationAssetIndexes = resolvePreparedAssetIndexes(prepared);
-        const allocationAssetError = validateAllocationAssetSelection(allocationAssetIndexes);
-
-        if (allocationAssetError) {
-            return {
-                optimizerPath: null,
-                result: buildStrategyErrorResult({
-                    baseCurrency,
-                    error: allocationAssetError,
-                    mode: strategy,
-                    prepared,
-                    rebalanceCadence,
-                    strategy,
-                }),
-                stage: 'constraint_failed',
-            };
-        }
-
-        const optimization = await optimize({
-            annualizedAssetVolatility: analysisInput.annualizedAssetVolatility,
-            assetIndexes: allocationAssetIndexes,
-            constraints: mergedConstraints,
-            covariance: analysisInput.shrunkCovariance,
-            mode: strategy,
-            prepared,
-        });
-
-        if (!optimization.ok) {
-            return {
-                optimizerPath: optimization.optimizerPath,
-                result: buildStrategyErrorResult({
-                    baseCurrency,
-                    error: optimization.error,
-                    mode: strategy,
-                    prepared,
-                    rebalanceCadence,
-                    strategy,
-                }),
-                stage: 'optimization_failed',
-            };
-        }
-
-        return {
-            optimizerPath: optimization.optimizer,
-            result: assembleAllocationResult({
-                allocationAssetIds: undefined,
-                annualizedAssetVolatility: analysisInput.annualizedAssetVolatility,
-                annualizedMeanReturns: analysisInput.annualizedMeanReturns,
-                baseCurrency,
-                calculationDateRange,
-                covariance: analysisInput.shrunkCovariance,
-                diversificationRatio: optimization.diversificationRatio,
-                mode: strategy,
-                optimizer: optimization.optimizer,
-                optimizerDiagnostics: optimization.diagnostics,
-                prepared,
-                rebalanceCadence,
-                strategy,
-                trendFollowing: null,
-                weights: expandWeights(optimization.weights, allocationAssetIndexes, prepared.series.length),
-            }),
-            stage: 'completed',
-        };
-    },
-});
 
 const ewmacTrendFollowingHandler: AllocationStrategyHandler = {
     run: async ({
