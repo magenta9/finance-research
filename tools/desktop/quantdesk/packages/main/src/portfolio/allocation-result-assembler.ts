@@ -11,13 +11,12 @@ import type { PreparedAllocationData } from './preprocessor';
 import { buildAllocationDiagnostics } from './allocation-diagnostics';
 import { buildAllocationRecords } from './allocation-records';
 import { buildAllocationRiskMetrics } from './allocation-risk-metrics';
+import { composeAllocationStrategyMix } from './allocation-strategy-mix-composer';
 import { simulatePortfolioPath } from './path-simulator';
 import { buildScenarioAnalysis } from './scenarios';
-import { blendAllocationSleeves } from './sleeve-blender';
 import type {
     TrendFollowingSimulationResult,
 } from './trend-following';
-import { combineSleeveReturns } from './trend-following';
 
 export interface AssembleAllocationResultInput {
     allocationAssetIds?: string[];
@@ -66,20 +65,16 @@ export const assembleAllocationResult = ({
         rebalanceCadence,
         targetWeights: weights,
     });
-    const combinedSleeveSimulation = trendFollowing
-        ? combineSleeveReturns({
-            alignedDates: prepared.alignedDates,
-            allocationEquity: pathSimulation.portfolioEquity,
-            trendFollowing,
-        })
-        : null;
-    const sleeveBlend = blendAllocationSleeves({
-        allocationSleeveWeight: combinedSleeveSimulation?.allocationSleeveWeight,
+    const strategyMixComposition = composeAllocationStrategyMix({
+        alignedDates: prepared.alignedDates,
+        allocationEquity: pathSimulation.portfolioEquity,
+        allocationMetrics: pathSimulation.metrics,
+        allocationPath: pathSimulation.portfolioPath,
         allocationTrades: pathSimulation.trades,
         trendFollowing,
         weights,
     });
-    const { allocationSleeveWeight, effectiveWeights, trades } = sleeveBlend;
+    const { allocationSleeveWeight, effectiveWeights, trades } = strategyMixComposition;
     const riskMetrics = buildAllocationRiskMetrics({
         covariance,
         effectiveWeights,
@@ -114,8 +109,8 @@ export const assembleAllocationResult = ({
         generatedAt: new Date().toISOString(),
         strategy,
         mode,
-        portfolioMetrics: combinedSleeveSimulation?.metrics ?? pathSimulation.metrics,
-        portfolioPath: combinedSleeveSimulation?.path ?? pathSimulation.portfolioPath,
+        portfolioMetrics: strategyMixComposition.metrics,
+        portfolioPath: strategyMixComposition.path,
         rebalanceCadence,
         riskContributions: riskMetrics.riskContributions,
         scenarioAnalysis: buildScenarioAnalysis(records.allocations),
