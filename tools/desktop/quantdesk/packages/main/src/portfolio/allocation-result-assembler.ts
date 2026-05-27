@@ -8,6 +8,7 @@ import type {
 } from '@quantdesk/shared';
 
 import type { PreparedAllocationData } from './preprocessor';
+import { buildAllocationDiagnostics } from './allocation-diagnostics';
 import { buildAllocationRecords } from './allocation-records';
 import { buildAllocationRiskMetrics } from './allocation-risk-metrics';
 import { simulatePortfolioPath } from './path-simulator';
@@ -79,7 +80,6 @@ export const assembleAllocationResult = ({
         weights,
     });
     const { allocationSleeveWeight, effectiveWeights, trades } = sleeveBlend;
-    const hasStrategyMix = trendFollowing != null || allocationAssetIds != null;
     const riskMetrics = buildAllocationRiskMetrics({
         covariance,
         effectiveWeights,
@@ -92,48 +92,24 @@ export const assembleAllocationResult = ({
         prepared,
         riskContributions: riskMetrics.contributions,
     });
+    const diagnostics = buildAllocationDiagnostics({
+        allocationAssetIds,
+        allocationSleeveWeight,
+        calculationDateRange,
+        optimizer,
+        optimizerDiagnostics,
+        prepared,
+        rebalanceEventCount: pathSimulation.rebalanceEventCount,
+        strategy,
+        trades,
+        trendFollowing,
+    });
 
     return {
         allocations: records.allocations,
         baseCurrency,
         correlationMatrix: riskMetrics.correlationMatrix,
-        diagnostics: {
-            alignedDates: prepared.alignedDates.length,
-            strategy,
-            assetDateCoverage: prepared.assetDateCoverage,
-            dateRange: {
-                endDate: calculationDateRange.endDate,
-                startDate: calculationDateRange.startDate,
-            },
-            excludedAssets: prepared.excludedAssets,
-            metricComputation: 'portfolio_path_simulation',
-            optimizer,
-            rebalanceEventCount: pathSimulation.rebalanceEventCount,
-            warnings: [...prepared.warnings, ...(optimizerDiagnostics.warnings ?? [])],
-            solverPath: optimizer,
-            fallbackUsed: optimizerDiagnostics.fallbackUsed,
-            fallbackReason: optimizerDiagnostics.fallbackReason,
-            fallbackEquivalentMode: optimizerDiagnostics.fallbackEquivalentMode,
-            erc: optimizerDiagnostics.erc,
-            trades,
-            strategyMix: hasStrategyMix ? {
-                allocationSleeveWeight,
-                allocation: allocationAssetIds ? { assetIds: allocationAssetIds } : undefined,
-                trendFollowing: trendFollowing ? {
-                    allowShort: trendFollowing.allowShort,
-                    assetIds: trendFollowing.assetIds,
-                    enabled: true,
-                    forecastCap: trendFollowing.forecastCap,
-                    forecastDiversificationMultiplier: trendFollowing.forecastDiversificationMultiplier,
-                    ruleSlotCount: trendFollowing.ruleSlotCount,
-                    rules: trendFollowing.rules,
-                    sleeveWeight: trendFollowing.sleeveWeight,
-                } : undefined,
-            } : undefined,
-            trendFollowing: trendFollowing ? {
-                assets: trendFollowing.assetDiagnostics,
-            } : undefined,
-        },
+        diagnostics,
         diversificationRatio,
         generatedAt: new Date().toISOString(),
         strategy,
