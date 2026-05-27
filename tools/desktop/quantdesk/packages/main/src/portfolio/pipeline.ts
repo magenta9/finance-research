@@ -8,7 +8,7 @@ import type {
     RebalanceCadence,
 } from '@quantdesk/shared';
 
-import type { PreparedAllocationData } from './preprocessor';
+import { buildAllocationAnalysisInput } from './allocation-analysis-input';
 import {
     DefaultAllocationOptimizerAdapter,
     type AllocationOptimizerAdapter,
@@ -17,19 +17,11 @@ import {
     buildAllocationErrorResult,
 } from './allocation-result-assembler';
 import type { AllocationPreparationService } from './preparation-service';
-import { getPreparedPriceSeries } from './prepared-allocation-context';
 import {
     defaultAllocationStrategyRegistry,
     type AllocationStrategyHandler,
     type AllocationStrategyRegistry,
 } from './strategy-registry';
-import {
-    annualizedReturns,
-    annualizedVolatility,
-    computeLogReturns,
-    covarianceMatrix,
-    shrinkCovarianceMatrix,
-} from './statistics';
 import type { SidecarRpc } from '../sidecar/runtime-types';
 
 export interface PortfolioAllocationCommand {
@@ -136,9 +128,9 @@ export class PortfolioAllocationPipeline {
             });
         }
 
-        const analysisInput = this.buildAnalysisInput(prepared);
+        const analysisInputResult = buildAllocationAnalysisInput(prepared);
 
-        if (analysisInput.error) {
+        if (!analysisInputResult.ok) {
             return this.buildOutcome({
                 calculationDateRange,
                 effectiveDateRange,
@@ -146,7 +138,7 @@ export class PortfolioAllocationPipeline {
                 result: buildAllocationErrorResult({
                     baseCurrency,
                     effectiveDateRange: calculationDateRange,
-                    error: analysisInput.error,
+                    error: analysisInputResult.error,
                     mode,
                     prepared,
                     rebalanceCadence,
@@ -156,6 +148,7 @@ export class PortfolioAllocationPipeline {
                 warnings: prepared.warnings,
             });
         }
+        const { analysisInput } = analysisInputResult;
 
         const strategyHandler = this.resolveStrategyHandler(strategy);
 
@@ -274,27 +267,5 @@ export class PortfolioAllocationPipeline {
         };
     }
 
-    private buildAnalysisInput(prepared: PreparedAllocationData) {
-        const priceSeries = getPreparedPriceSeries(prepared);
-        const returns = computeLogReturns(priceSeries);
-
-        if (returns[0]?.length < 60) {
-            return {
-                error: {
-                    code: 'INSUFFICIENT_HISTORY' as const,
-                    message: '已选标的在当前窗口内的共同覆盖不足 61 个交易日。',
-                    suggestions: ['缩短时间窗口。', '减少已选标的数量。'],
-                },
-            };
-        }
-
-        const sampleCovariance = covarianceMatrix(returns);
-        const shrunkCovariance = shrinkCovarianceMatrix(sampleCovariance);
-        return {
-            annualizedAssetVolatility: annualizedVolatility(shrunkCovariance),
-            annualizedMeanReturns: annualizedReturns(returns),
-            shrunkCovariance,
-        };
-    }
 
 }

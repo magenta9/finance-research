@@ -9,6 +9,7 @@ import type {
     RebalanceCadence,
 } from '@quantdesk/shared';
 
+import type { AllocationAnalysisInput } from './allocation-analysis-input';
 import { assembleAllocationResult } from './allocation-result-assembler';
 import { validateAllocationStrategyMix } from './allocation-validator';
 import { runActiveDualMomentumBacktest } from './active-dual-momentum';
@@ -23,11 +24,7 @@ import type { PreparedAllocationData } from './preprocessor';
 import { buildStrategyErrorResult } from './strategy-error-result';
 import { simulateTrendFollowingSleeve } from './trend-following';
 
-export interface StrategyAnalysisInput {
-    annualizedAssetVolatility: number[];
-    annualizedMeanReturns: number[];
-    shrunkCovariance: number[][];
-}
+export type StrategyAnalysisInput = AllocationAnalysisInput;
 
 export interface StrategyOptimizationRequest {
     annualizedAssetVolatility: number[];
