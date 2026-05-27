@@ -3,12 +3,16 @@ import type {
     Currency,
     SyncTaskPriority,
 } from '@quantdesk/shared';
-import { formatUtcDate, normalizeIsoDateString, shiftUtcDateByDays } from '@quantdesk/shared/date-utils';
 
 import {
     prepareAllocationData,
     type PreparedAllocationData,
 } from './preprocessor';
+import {
+    resolveAllocationPreparationDateRange,
+    resolvePreparedCalculationDateRange,
+    type AllocationPreparationDateRange,
+} from './preparation-date-range';
 import { AllocationPreparationError, isAllocationPreparationError } from './preparation-errors';
 import type { AllocationPreparationReader } from './preparation-repository-adapter';
 
@@ -19,11 +23,6 @@ const emptyPreparedAllocationData: PreparedAllocationData = {
     series: [],
     warnings: [],
 };
-
-export interface AllocationPreparationDateRange {
-    endDate: string;
-    startDate: string;
-}
 
 export type AllocationPreparationOutcome =
     | {
@@ -52,51 +51,6 @@ export interface AllocationPreparationServiceDeps {
     clock?: () => Date;
     shouldSkipInteractiveSync?: () => boolean;
 }
-
-const resolveEffectiveDateRange = ({
-    clock,
-    endDate,
-    startDate,
-}: {
-    clock: () => Date;
-    startDate?: string;
-    endDate?: string;
-}): AllocationPreparationDateRange => {
-    const today = clock();
-    const todayStr = formatUtcDate(today);
-    const defaultStartDate = shiftUtcDateByDays(today, -365);
-    const minStartDate = shiftUtcDateByDays(today, -1825);
-
-    let effectiveEndDate = normalizeIsoDateString(endDate) ?? todayStr;
-    if (effectiveEndDate > todayStr) {
-        effectiveEndDate = todayStr;
-    }
-
-    let effectiveStartDate = normalizeIsoDateString(startDate) ?? defaultStartDate;
-    if (effectiveStartDate < minStartDate) {
-        effectiveStartDate = minStartDate;
-    }
-
-    if (effectiveStartDate >= effectiveEndDate) {
-        return {
-            endDate: todayStr,
-            startDate: defaultStartDate,
-        };
-    }
-
-    return {
-        endDate: effectiveEndDate,
-        startDate: effectiveStartDate,
-    };
-};
-
-const resolveActualDateRange = (
-    prepared: PreparedAllocationData,
-    fallbackRange: AllocationPreparationDateRange,
-): AllocationPreparationDateRange => ({
-    endDate: prepared.alignedDates.at(-1) ?? fallbackRange.endDate,
-    startDate: prepared.alignedDates[0] ?? fallbackRange.startDate,
-});
 
 const classifyPreparationError = (
     error: unknown,
@@ -154,7 +108,7 @@ export class AllocationPreparationService {
         endDate?: string;
         startDate?: string;
     }): Promise<AllocationPreparationOutcome> {
-        const effectiveDateRange = resolveEffectiveDateRange({
+        const effectiveDateRange = resolveAllocationPreparationDateRange({
             clock: this.clock,
             endDate,
             startDate,
@@ -196,14 +150,14 @@ export class AllocationPreparationService {
             };
 
             return {
-                calculationDateRange: resolveActualDateRange(prepared, effectiveDateRange),
+                calculationDateRange: resolvePreparedCalculationDateRange(prepared, effectiveDateRange),
                 effectiveDateRange,
                 ok: true,
                 prepared,
             };
         } catch (error) {
             return {
-                calculationDateRange: resolveActualDateRange(prepared, effectiveDateRange),
+                calculationDateRange: resolvePreparedCalculationDateRange(prepared, effectiveDateRange),
                 error: classifyPreparationError(error),
                 ok: false,
                 prepared,
