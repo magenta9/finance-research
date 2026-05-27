@@ -34,6 +34,13 @@ const asStringArray = (value: unknown) => (
 
 const asOptionalStringArray = (value: unknown) => asStringArray(value) ?? [];
 
+const allocationStrategyLabels: Record<string, string> = {
+  erc: '等风险贡献',
+  ewmac_trend_following: 'EWMAC 趋势跟随',
+  inverse_volatility: '反波动率加权',
+  max_diversification: '最大分散化',
+};
+
 const asOptionalIsoDate = (value: unknown) => {
   const text = asString(value);
 
@@ -527,7 +534,7 @@ export const createFinanceHandlers = (runtime: FinanceCapabilityContext) => {
           }],
         summary: result.error
           ? `配置运行失败：${result.error.message}`
-          : `已生成 ${result.mode} 方案，预期收益 ${(result.portfolioMetrics.expectedReturn * 100).toFixed(1)}%，波动 ${(result.portfolioMetrics.volatility * 100).toFixed(1)}%。`,
+          : `已生成 ${allocationStrategyLabels[result.strategy ?? result.mode] ?? result.mode} 方案，预期收益 ${(result.portfolioMetrics.expectedReturn * 100).toFixed(1)}%，波动 ${(result.portfolioMetrics.volatility * 100).toFixed(1)}%。`,
       });
     },
     async explain_risk() {

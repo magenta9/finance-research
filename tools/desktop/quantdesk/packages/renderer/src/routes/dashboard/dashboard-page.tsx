@@ -27,6 +27,13 @@ const cadenceLabelMap = {
     quarterly: '季度调仓',
 } as const;
 
+const strategyLabelMap = {
+    erc: '等风险贡献',
+    inverse_volatility: '反波动率加权',
+    max_diversification: '最大分散化',
+    ewmac_trend_following: 'EWMAC 趋势跟随',
+} as const;
+
 export const DashboardPage = () => {
     const [state, setState] = useState<DashboardState>({
         activePlan: null,
@@ -338,7 +345,7 @@ export const DashboardPage = () => {
             )}
 
             <div className="grid gap-3 md:grid-cols-4">
-                <DashboardMetricCard detail={state.activePlan ? `${state.activePlan.mode} · ${state.activePlan.assets.length} 个标的 · ${cadenceLabelMap[state.activePlan.rebalanceCadence ?? 'none']}` : '尚未保存配置方案'} label="活跃方案" value={state.activePlan?.name ?? '未建立'} />
+                <DashboardMetricCard detail={state.activePlan ? `${strategyLabelMap[state.activePlan.strategy ?? state.activePlan.mode]} · ${state.activePlan.assets.length} 个标的 · ${cadenceLabelMap[state.activePlan.rebalanceCadence ?? 'none']}` : '尚未保存配置方案'} label="活跃方案" value={state.activePlan?.name ?? '未建立'} />
                 <DashboardMetricCard detail="含手动录入与 CSV 导入持仓。" label="持仓数" value={String(state.positions.length)} />
                 <DashboardMetricCard detail="偏离阈值按 5% 权重差计算。" label="风险警报" value={String(driftAlerts.length)} />
                 <DashboardMetricCard detail="通过 quant-data 按需读取本地或 provider 行情。" label="价格快照" value={String(Object.keys(state.latestPriceByAssetId).length)} />

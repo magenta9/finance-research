@@ -115,7 +115,7 @@ describe('AllocationPage', () => {
         vi.restoreAllMocks();
     });
 
-    test('移除说明段与步骤卡，但保留资产选择、运行参数和模式说明联动', async () => {
+    test('按策略、标的、运行参数的顺序组织配置方案流程', async () => {
         const user = userEvent.setup();
 
         render(<AllocationPage />);
@@ -127,56 +127,34 @@ describe('AllocationPage', () => {
 
         expect(await screen.findByTestId('allocation-page')).toBeInTheDocument();
         expect(await screen.findByTestId('allocation-asset-toggle-SPY')).toBeInTheDocument();
-        expect(screen.getByText('从资产池里挑选参与配置的标的')).toBeInTheDocument();
-        expect(screen.getByText('约束、基准货币与策略组合')).toBeInTheDocument();
+        expect(screen.getByTestId('allocation-strategy-panel')).toBeInTheDocument();
+        expect(screen.getByTestId('allocation-strategy-inverse_volatility')).toBeInTheDocument();
+        expect(screen.getByTestId('allocation-strategy-ewmac_trend_following')).toBeInTheDocument();
+        expect(screen.getByText('从资产池里挑选参与计算的标的')).toBeInTheDocument();
+        expect(screen.getByText('反波动率加权 参数')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-asset-list')).toBeInTheDocument();
-        expect(screen.getByTestId('allocation-sleeve-asset-list')).toBeInTheDocument();
-        expect(screen.getByTestId('allocation-sleeve-asset-SPY')).toBeInTheDocument();
-        expect(screen.getByTestId('allocation-trend-asset-list')).toBeInTheDocument();
-        expect(screen.getByTestId('allocation-trend-asset-SPY')).toBeInTheDocument();
-        expect(screen.getByTestId('allocation-sleeve-clear')).toBeEnabled();
-        expect(screen.getByTestId('allocation-sleeve-select-all')).toBeDisabled();
         expect(screen.getByTestId('allocation-run-button')).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: /配置结果总览与历史方案库/i })).not.toBeInTheDocument();
         expect(screen.queryByText('保存与回放')).not.toBeInTheDocument();
         expect(await screen.findByText('还没有保存过方案。先运行一次配置，再把结果归档到历史列表。')).toBeInTheDocument();
-        expect(screen.getByTestId('allocation-mode-description')).toHaveTextContent('低波动资产权重更高，不强制等风险贡献');
+        expect(screen.getByTestId('allocation-mode-description')).toHaveTextContent('低波动资产权重更高');
+        expect(screen.queryByTestId('allocation-sleeve-asset-list')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('allocation-trend-asset-list')).not.toBeInTheDocument();
 
-        await user.selectOptions(screen.getByTestId('allocation-mode-select'), 'erc');
+        await user.click(screen.getByTestId('allocation-strategy-erc'));
         expect(screen.getByTestId('allocation-mode-description')).toHaveTextContent('追求风险贡献更均衡');
+        expect(screen.getByTestId('allocation-current-strategy')).toHaveTextContent('erc');
 
-        await user.selectOptions(screen.getByTestId('allocation-mode-select'), 'max_diversification');
+        await user.click(screen.getByTestId('allocation-strategy-max_diversification'));
         expect(screen.getByTestId('allocation-mode-description')).toHaveTextContent('最大化组合分散化效率');
 
-        await user.click(screen.getByTestId('allocation-sleeve-clear'));
-        expect(screen.getByTestId('allocation-sleeve-asset-SPY')).not.toBeChecked();
-        expect(screen.getByTestId('allocation-sleeve-asset-511010')).not.toBeChecked();
-        expect(screen.getByTestId('allocation-sleeve-asset-GLD')).not.toBeChecked();
-        expect(screen.getByTestId('allocation-sleeve-clear')).toBeDisabled();
-        expect(screen.getByTestId('allocation-sleeve-select-all')).toBeEnabled();
+        await user.click(screen.getByTestId('allocation-strategy-ewmac_trend_following'));
+        expect(screen.getByTestId('allocation-current-strategy')).toHaveTextContent('ewmac_trend_following');
+        expect(screen.getByTestId('allocation-mode-description')).toHaveTextContent('用 EWMAC 长短线规则生成趋势暴露');
+        expect(screen.getByTestId('allocation-ewmac-rule-2-8')).toBeChecked();
+        expect(screen.queryByTestId('allocation-max-single-input')).not.toBeInTheDocument();
 
-        await user.click(screen.getByTestId('allocation-sleeve-select-all'));
-        expect(screen.getByTestId('allocation-sleeve-asset-SPY')).toBeChecked();
-        expect(screen.getByTestId('allocation-sleeve-asset-511010')).toBeChecked();
-        expect(screen.getByTestId('allocation-sleeve-asset-GLD')).toBeChecked();
-
-        expect(screen.getByTestId('allocation-trend-clear')).toBeDisabled();
-        expect(screen.getByTestId('allocation-trend-select-all')).toBeDisabled();
-
-        await user.click(screen.getByTestId('allocation-trend-following-enabled'));
-        expect(screen.getByTestId('allocation-trend-clear')).toBeEnabled();
-        expect(screen.getByTestId('allocation-trend-select-all')).toBeDisabled();
-
-        await user.click(screen.getByTestId('allocation-trend-clear'));
-        expect(screen.getByTestId('allocation-trend-asset-SPY')).not.toBeChecked();
-        expect(screen.getByTestId('allocation-trend-asset-511010')).not.toBeChecked();
-        expect(screen.getByTestId('allocation-trend-asset-GLD')).not.toBeChecked();
-        expect(screen.getByTestId('allocation-trend-clear')).toBeDisabled();
-        expect(screen.getByTestId('allocation-trend-select-all')).toBeEnabled();
-
-        await user.click(screen.getByTestId('allocation-trend-select-all'));
-        expect(screen.getByTestId('allocation-trend-asset-SPY')).toBeChecked();
-        expect(screen.getByTestId('allocation-trend-asset-511010')).toBeChecked();
-        expect(screen.getByTestId('allocation-trend-asset-GLD')).toBeChecked();
+        await user.click(screen.getByTestId('allocation-ewmac-rule-2-8'));
+        expect(screen.getByTestId('allocation-ewmac-rule-2-8')).not.toBeChecked();
     });
 });

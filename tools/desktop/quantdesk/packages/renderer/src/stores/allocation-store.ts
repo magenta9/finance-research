@@ -4,6 +4,7 @@ import type {
     AllocationConstraints,
     AllocationPlanRecord,
     AllocationResult,
+    AllocationStrategy,
     AllocationStrategyMix,
     RebalanceCadence,
     AllocationType,
@@ -31,6 +32,7 @@ export interface AllocationStoreState {
     result: AllocationResult | null;
     selectedAssetIds: string[];
     startDate: string;
+    strategy: AllocationStrategy;
     strategyMix: AllocationStrategyMix;
 }
 
@@ -48,6 +50,7 @@ interface AllocationStoreActions {
     setFilterQuery: (filterQuery: string) => void;
     setMaxSingleWeight: (value: number) => void;
     setMode: (mode: AllocationType) => void;
+    setStrategy: (strategy: AllocationStrategy) => void;
     setRebalanceCadence: (cadence: RebalanceCadence) => void;
     setTrendFollowingAssetEnabled: (assetId: string, enabled: boolean) => void;
     setTrendFollowingAssetSelection: (assetIds: string[]) => void;
@@ -82,6 +85,15 @@ const createDefaultTrendFollowingConfig = (): TrendFollowingStrategyConfig => ({
 const createDefaultStrategyMix = (): AllocationStrategyMix => ({
     trendFollowing: createDefaultTrendFollowingConfig(),
 });
+
+const isConfigurationStrategy = (strategy: AllocationStrategy): strategy is AllocationType =>
+    strategy === 'erc' || strategy === 'inverse_volatility' || strategy === 'max_diversification';
+
+const getModeForStrategy = (strategy: AllocationStrategy): AllocationType =>
+    isConfigurationStrategy(strategy) ? strategy : 'inverse_volatility';
+
+const resolvePlanStrategy = (plan: AllocationPlanRecord): AllocationStrategy =>
+    plan.strategy ?? plan.result?.strategy ?? plan.mode;
 
 const restoreStrategyMixFromPlan = (plan: AllocationPlanRecord): AllocationStrategyMix => {
     const allocation = plan.result?.diagnostics.strategyMix?.allocation;
@@ -171,16 +183,26 @@ const filterStrategyAssetIds = (
 };
 
 const buildRunnableStrategyMix = (
+    strategy: AllocationStrategy,
     strategyMix: AllocationStrategyMix,
-    selectedAssetIds: string[],
 ) => {
-    const filteredStrategyMix = filterStrategyAssetIds(strategyMix, selectedAssetIds);
-
-    if (!filteredStrategyMix.trendFollowing?.enabled && !filteredStrategyMix.allocation?.assetIds) {
+    if (strategy !== 'ewmac_trend_following') {
         return undefined;
     }
 
-    return cloneJson(filteredStrategyMix);
+    const defaultTrendFollowing = createDefaultTrendFollowingConfig();
+    const configuredTrendFollowing = strategyMix.trendFollowing;
+
+    return cloneJson({
+        trendFollowing: {
+            enabled: true,
+            forecastCap: configuredTrendFollowing?.forecastCap,
+            forecastDiversificationMultiplier: configuredTrendFollowing?.forecastDiversificationMultiplier,
+            rules: configuredTrendFollowing?.rules ?? defaultTrendFollowing.rules,
+            sleeveWeight: 1,
+            volatilitySpan: configuredTrendFollowing?.volatilitySpan,
+        },
+    });
 };
 
 const createInitialState = (): AllocationStoreState => {
@@ -201,6 +223,7 @@ const createInitialState = (): AllocationStoreState => {
         result: null,
         selectedAssetIds: [],
         startDate: defaultDateRange.startDate,
+        strategy: 'inverse_volatility',
         strategyMix: createDefaultStrategyMix(),
     };
 };
@@ -245,6 +268,7 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
             result: plan.result ? cloneJson(plan.result) : null,
             selectedAssetIds: [...plan.assets],
             startDate: dateRange.startDate,
+            strategy: resolvePlanStrategy(plan),
             strategyMix: restoreStrategyMixFromPlan(plan),
         });
     },
@@ -289,7 +313,7 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
         }
     },
     async runAllocation() {
-        const { baseCurrency, constraints, endDate, mode, rebalanceCadence, selectedAssetIds, startDate, strategyMix } = get();
+        const { baseCurrency, constraints, endDate, mode, rebalanceCadence, selectedAssetIds, startDate, strategy, strategyMix } = get();
 
         if (selectedAssetIds.length < 2) {
             set({ errorMessage: '至少选择两个标的后才能运行配置。' });
@@ -308,7 +332,8 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
                 mode,
                 rebalanceCadence,
                 startDate,
-                strategyMix: buildRunnableStrategyMix(strategyMix, selectedAssetIds),
+                strategy,
+                strategyMix: buildRunnableStrategyMix(strategy, strategyMix),
             });
 
             set({
@@ -408,7 +433,13 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
         });
     },
     setMode(mode) {
-        set({ mode });
+        set({ mode, strategy: mode });
+    },
+    setStrategy(strategy) {
+        set({
+            mode: getModeForStrategy(strategy),
+            strategy,
+        });
     },
     setRebalanceCadence(rebalanceCadence) {
         set({ rebalanceCadence });

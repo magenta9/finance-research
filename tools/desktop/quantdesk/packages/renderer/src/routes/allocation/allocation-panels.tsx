@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 
-import type { AllocationConstraints, AllocationStrategyMix, RebalanceCadence, StoredAsset } from '@quantdesk/shared';
+import type { AllocationConstraints, AllocationStrategy, AllocationStrategyMix, RebalanceCadence, StoredAsset } from '@quantdesk/shared';
 
 import { AllocationVisualizationPanel } from '../../components/allocation/visualization-panel';
 import { Badge } from '../../components/badge';
@@ -23,6 +23,21 @@ const cadenceLabelMap: Record<RebalanceCadence, string> = {
     quarterly: '季度调仓',
 };
 
+const strategyOptions: Array<{ description: string; label: string; value: AllocationStrategy }> = [
+    { description: '追求风险贡献更均衡', label: '等风险贡献', value: 'erc' },
+    { description: '低波动资产权重更高', label: '反波动率加权', value: 'inverse_volatility' },
+    { description: '最大化组合分散化效率', label: '最大分散化', value: 'max_diversification' },
+    { description: '用 EWMAC 长短线规则生成趋势暴露', label: 'EWMAC 趋势跟随', value: 'ewmac_trend_following' },
+];
+
+const strategyLabelMap: Record<AllocationStrategy, string> = Object.fromEntries(
+    strategyOptions.map((option) => [option.value, option.label]),
+) as Record<AllocationStrategy, string>;
+
+const strategyDescriptionMap: Record<AllocationStrategy, string> = Object.fromEntries(
+    strategyOptions.map((option) => [option.value, option.description]),
+) as Record<AllocationStrategy, string>;
+
 const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
 
 const formatAssetLabel = (asset: Pick<StoredAsset, 'name' | 'symbol'>) => `${asset.symbol}（${asset.name}）`;
@@ -41,8 +56,6 @@ const resolveTrendFollowingConfig = (strategyMix: AllocationStrategyMix) => {
     const configuredRulesByFast = new Map(configuredRules.map((rule) => [rule.fast, rule]));
 
     return {
-        assetIds: strategyMix.trendFollowing?.assetIds,
-        enabled: strategyMix.trendFollowing?.enabled ?? false,
         rules: defaultEwmacRuleControls.map((rule) => {
             const configuredRule = configuredRulesByFast.get(rule.fast);
 
@@ -51,7 +64,6 @@ const resolveTrendFollowingConfig = (strategyMix: AllocationStrategyMix) => {
                 enabled: configuredRule?.enabled ?? rule.enabled,
             };
         }),
-        sleeveWeight: strategyMix.trendFollowing?.sleeveWeight ?? 0.3,
     };
 };
 
@@ -68,6 +80,51 @@ const formatResultDateRange = (range?: { startDate: string; endDate: string } | 
 
     return `${range.startDate} ~ ${range.endDate}`;
 };
+
+export const AllocationStrategyPanel = ({
+    onSetStrategy,
+    strategy,
+}: {
+    onSetStrategy: (value: AllocationStrategy) => void;
+    strategy: AllocationStrategy;
+}) => (
+    <section className="rounded-[20px] border border-[color:var(--color-border)] bg-[rgba(255,252,248,0.78)] p-4 shadow-[0_12px_32px_rgba(61,43,31,0.05)]" data-testid="allocation-strategy-panel">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">配置策略</p>
+                <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">选择一个策略</h2>
+            </div>
+            <Badge tone="accent">{strategyLabelMap[strategy]}</Badge>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-4" data-testid="allocation-strategy-options">
+            {strategyOptions.map((option) => {
+                const isSelected = option.value === strategy;
+
+                return (
+                    <Button
+                        className={[
+                            'h-auto min-h-[86px] justify-start rounded-[14px] border px-4 py-3 text-left',
+                            isSelected
+                                ? 'border-[var(--color-highlight-soft)] bg-[rgba(156,98,55,0.12)] text-[var(--color-foreground)]'
+                                : 'border-[color:var(--color-border)] bg-white/80 text-[var(--color-copy)]',
+                        ].join(' ')}
+                        data-testid={`allocation-strategy-${option.value}`}
+                        key={option.value}
+                        onClick={() => {
+                            onSetStrategy(option.value);
+                        }}
+                        tone="ghost"
+                        type="button"
+                    >
+                        <span className="block font-display text-xl">{option.label}</span>
+                        <span className="mt-2 block text-sm leading-5 text-[var(--color-muted)]">{option.description}</span>
+                    </Button>
+                );
+            })}
+        </div>
+    </section>
+);
 
 export const AssetSelectionPanel = ({
     filterQuery,
@@ -96,12 +153,12 @@ export const AssetSelectionPanel = ({
         <section className="rounded-[20px] border border-[color:var(--color-border)] bg-[rgba(255,252,248,0.78)] p-4 shadow-[0_12px_32px_rgba(61,43,31,0.05)]">
             <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">资产选择</p>
-                    <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">从资产池里挑选参与配置的标的</h2>
+                    <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">标的选择</p>
+                    <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">从资产池里挑选参与计算的标的</h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Badge tone="accent">可见 {visibleAssets.length}</Badge>
-                    <Badge tone="muted">点击资产卡打开详情</Badge>
+                    <Badge tone="muted">已选 {selectedAssetIds.length}</Badge>
                 </div>
             </div>
 
@@ -204,23 +261,16 @@ export const AllocationControlsPanel = ({
     endDate,
     isRunning,
     latestEndDate,
-    mode,
     onRunAllocation,
-    onSetAllocationAssetEnabled,
-    onSetAllocationAssetSelection,
     onSetBaseCurrency,
     onSetDateRange,
     onSetMaxSingleWeight,
-    onSetMode,
     onSetRebalanceCadence,
-    onSetTrendFollowingAssetEnabled,
-    onSetTrendFollowingAssetSelection,
-    onSetTrendFollowingEnabled,
     onSetTrendFollowingRuleEnabled,
-    onSetTrendFollowingSleeveWeight,
     rebalanceCadence,
     selectedAssets,
     startDate,
+    strategy,
     strategyMix,
 }: {
     baseCurrency: string;
@@ -229,60 +279,33 @@ export const AllocationControlsPanel = ({
     endDate: string;
     isRunning: boolean;
     latestEndDate: string;
-    mode: string;
     onRunAllocation: () => void;
-    onSetAllocationAssetEnabled: (assetId: string, value: boolean) => void;
-    onSetAllocationAssetSelection: (assetIds: string[]) => void;
     onSetBaseCurrency: (value: string) => void;
     onSetDateRange: (startDate: string, endDate: string) => void;
     onSetMaxSingleWeight: (value: number) => void;
-    onSetMode: (value: string) => void;
     onSetRebalanceCadence: (value: RebalanceCadence) => void;
-    onSetTrendFollowingAssetEnabled: (assetId: string, value: boolean) => void;
-    onSetTrendFollowingAssetSelection: (assetIds: string[]) => void;
-    onSetTrendFollowingEnabled: (value: boolean) => void;
     onSetTrendFollowingRuleEnabled: (fast: number, value: boolean) => void;
-    onSetTrendFollowingSleeveWeight: (value: number) => void;
     rebalanceCadence: RebalanceCadence;
     selectedAssets: StoredAsset[];
     startDate: string;
+    strategy: AllocationStrategy;
     strategyMix: AllocationStrategyMix;
 }) => {
     const trendConfig = resolveTrendFollowingConfig(strategyMix);
-    const selectedAllocationAssetIds = new Set(strategyMix.allocation?.assetIds ?? selectedAssets.map((asset) => asset.id));
-    const enabledAllocationAssetCount = selectedAssets.filter((asset) => selectedAllocationAssetIds.has(asset.id)).length;
     const enabledTrendRuleCount = trendConfig.rules.filter((rule) => rule.enabled).length;
-    const selectedTrendAssetIds = new Set(trendConfig.assetIds ?? selectedAssets.map((asset) => asset.id));
-    const enabledTrendAssetCount = selectedAssets.filter((asset) => selectedTrendAssetIds.has(asset.id)).length;
-    const selectedAssetIdList = selectedAssets.map((asset) => asset.id);
+    const isEwmacStrategy = strategy === 'ewmac_trend_following';
 
     return (
         <section className="rounded-[20px] border border-[color:var(--color-border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,243,235,0.82))] p-4 shadow-[0_12px_32px_rgba(61,43,31,0.05)]">
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">运行参数</p>
-                    <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">约束、基准货币与策略组合</h2>
+                    <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">{strategyLabelMap[strategy]} 参数</h2>
                 </div>
-                <Badge tone="accent">{mode}</Badge>
+                <Badge tone="accent">{strategyLabelMap[strategy]}</Badge>
             </div>
 
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <label className="space-y-2 text-sm text-[var(--color-copy)]">
-                    <span className="text-xs uppercase tracking-[0.24em] text-[var(--color-muted)]">配置模式</span>
-                    <Select
-                        className="h-10 w-full rounded-[12px] border border-[color:var(--color-border)] bg-white/80 px-3 text-sm text-[var(--color-foreground)]"
-                        data-testid="allocation-mode-select"
-                        onChange={(event) => {
-                            onSetMode(event.currentTarget.value);
-                        }}
-                        value={mode}
-                    >
-                        <option value="erc">等风险贡献</option>
-                        <option value="inverse_volatility">反波动率加权</option>
-                        <option value="max_diversification">最大分散化</option>
-                    </Select>
-                </label>
-
                 <label className="space-y-2 text-sm text-[var(--color-copy)]">
                     <span className="text-xs uppercase tracking-[0.24em] text-[var(--color-muted)]">基准货币</span>
                     <Select
@@ -298,21 +321,23 @@ export const AllocationControlsPanel = ({
                     </Select>
                 </label>
 
-                <label className="space-y-2 text-sm text-[var(--color-copy)]">
-                    <span className="text-xs uppercase tracking-[0.24em] text-[var(--color-muted)]">单标的上限</span>
-                    <Input
-                        className="h-10 w-full rounded-[12px] border border-[color:var(--color-border)] bg-white/80 px-3 text-sm text-[var(--color-foreground)]"
-                        data-testid="allocation-max-single-input"
-                        max="0.8"
-                        min="0.1"
-                        onChange={(event) => {
-                            onSetMaxSingleWeight(Number(event.currentTarget.value));
-                        }}
-                        step="0.01"
-                        type="number"
-                        value={constraints.maxSingleWeight}
-                    />
-                </label>
+                {!isEwmacStrategy && (
+                    <label className="space-y-2 text-sm text-[var(--color-copy)]">
+                        <span className="text-xs uppercase tracking-[0.24em] text-[var(--color-muted)]">单标的上限</span>
+                        <Input
+                            className="h-10 w-full rounded-[12px] border border-[color:var(--color-border)] bg-white/80 px-3 text-sm text-[var(--color-foreground)]"
+                            data-testid="allocation-max-single-input"
+                            max="0.8"
+                            min="0.1"
+                            onChange={(event) => {
+                                onSetMaxSingleWeight(Number(event.currentTarget.value));
+                            }}
+                            step="0.01"
+                            type="number"
+                            value={constraints.maxSingleWeight}
+                        />
+                    </label>
+                )}
 
                 <label className="space-y-2 text-sm text-[var(--color-copy)]">
                     <span className="text-xs uppercase tracking-[0.24em] text-[var(--color-muted)]">调仓频率</span>
@@ -389,160 +414,35 @@ export const AllocationControlsPanel = ({
                 <div className="space-y-2 text-sm text-[var(--color-copy)]">
                     <span className="text-xs uppercase tracking-[0.24em] text-[var(--color-muted)]">模式说明</span>
                     <div className="flex h-10 items-center rounded-[12px] border border-[color:var(--color-border)] bg-white/80 px-3 text-sm text-[var(--color-copy)]" data-testid="allocation-mode-description">
-                        {mode === 'erc' && '追求风险贡献更均衡'}
-                        {mode === 'inverse_volatility' && '低波动资产权重更高，不强制等风险贡献'}
-                        {mode === 'max_diversification' && '最大化组合分散化效率'}
+                        {strategyDescriptionMap[strategy]}
                     </div>
                 </div>
 
-                <div className="rounded-[18px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.48)] p-4 md:col-span-2">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">配置标的</span>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Badge tone="accent">{enabledAllocationAssetCount} 个配置标的</Badge>
-                            <Button
-                                data-testid="allocation-sleeve-select-all"
-                                disabled={selectedAssets.length === 0 || enabledAllocationAssetCount === selectedAssets.length}
-                                onClick={() => {
-                                    onSetAllocationAssetSelection(selectedAssetIdList);
-                                }}
-                                size="sm"
-                                tone="ghost"
-                            >
-                                全选
-                            </Button>
-                            <Button
-                                data-testid="allocation-sleeve-clear"
-                                disabled={selectedAssets.length === 0 || enabledAllocationAssetCount === 0}
-                                onClick={() => {
-                                    onSetAllocationAssetSelection([]);
-                                }}
-                                size="sm"
-                                tone="ghost"
-                            >
-                                清空
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="allocation-sleeve-asset-list">
-                        {selectedAssets.length === 0 ? (
-                            <span className="text-sm text-[var(--color-muted)]">尚未选择资产。</span>
-                        ) : selectedAssets.map((asset) => (
-                            <Checkbox
-                                checked={selectedAllocationAssetIds.has(asset.id)}
-                                data-testid={`allocation-sleeve-asset-${asset.symbol}`}
-                                key={asset.id}
-                                onChange={(event) => {
-                                    onSetAllocationAssetEnabled(asset.id, event.currentTarget.checked);
-                                }}
-                            >
-                                {formatAssetLabel(asset)}
-                            </Checkbox>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="rounded-[18px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.48)] p-4 md:col-span-2">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <Checkbox
-                            checked={trendConfig.enabled}
-                            data-testid="allocation-trend-following-enabled"
-                            onChange={(event) => {
-                                onSetTrendFollowingEnabled(event.currentTarget.checked);
-                            }}
-                        >
-                            趋势跟随仓位
-                        </Checkbox>
-                        <div className="flex flex-wrap gap-2">
-                            <Badge>配置 {formatPercent(trendConfig.enabled ? 1 - trendConfig.sleeveWeight : 1)}</Badge>
-                            <Badge tone="accent">趋势 {formatPercent(trendConfig.enabled ? trendConfig.sleeveWeight : 0)}</Badge>
-                            {trendConfig.enabled && <Badge tone="muted">{enabledTrendAssetCount} 个趋势标的</Badge>}
-                            {trendConfig.enabled && <Badge tone="muted">{enabledTrendRuleCount} 条规则</Badge>}
-                        </div>
-                    </div>
-                    <div className="mt-3 grid gap-3 md:grid-cols-2">
-                        <label className="space-y-2 text-sm text-[var(--color-copy)]">
-                            <span className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">趋势仓位</span>
-                            <Input
-                                className="h-10 w-full rounded-[12px] border border-[color:var(--color-border)] bg-white/80 px-3 text-sm text-[var(--color-foreground)] disabled:opacity-55"
-                                data-testid="allocation-trend-sleeve-input"
-                                disabled={!trendConfig.enabled}
-                                max="1"
-                                min="0"
-                                onChange={(event) => {
-                                    onSetTrendFollowingSleeveWeight(Number(event.currentTarget.value));
-                                }}
-                                step="0.05"
-                                type="number"
-                                value={trendConfig.sleeveWeight}
-                            />
-                        </label>
-                        <div className="space-y-2 text-sm text-[var(--color-copy)] md:col-span-2">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">趋势标的</span>
-                                <div className="flex flex-wrap gap-2">
-                                    <Button
-                                        data-testid="allocation-trend-select-all"
-                                        disabled={!trendConfig.enabled || selectedAssets.length === 0 || enabledTrendAssetCount === selectedAssets.length}
-                                        onClick={() => {
-                                            onSetTrendFollowingAssetSelection(selectedAssetIdList);
-                                        }}
-                                        size="sm"
-                                        tone="ghost"
-                                    >
-                                        全选
-                                    </Button>
-                                    <Button
-                                        data-testid="allocation-trend-clear"
-                                        disabled={!trendConfig.enabled || selectedAssets.length === 0 || enabledTrendAssetCount === 0}
-                                        onClick={() => {
-                                            onSetTrendFollowingAssetSelection([]);
-                                        }}
-                                        size="sm"
-                                        tone="ghost"
-                                    >
-                                        清空
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="allocation-trend-asset-list">
-                                {selectedAssets.length === 0 ? (
-                                    <span className="text-[var(--color-muted)]">尚未选择资产。</span>
-                                ) : selectedAssets.map((asset) => (
-                                    <Checkbox
-                                        checked={selectedTrendAssetIds.has(asset.id)}
-                                        data-testid={`allocation-trend-asset-${asset.symbol}`}
-                                        disabled={!trendConfig.enabled}
-                                        key={asset.id}
-                                        onChange={(event) => {
-                                            onSetTrendFollowingAssetEnabled(asset.id, event.currentTarget.checked);
-                                        }}
-                                    >
-                                        {formatAssetLabel(asset)}
-                                    </Checkbox>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="space-y-2 text-sm text-[var(--color-copy)] md:col-span-2">
+                {isEwmacStrategy && (
+                    <div className="rounded-[18px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.48)] p-4 md:col-span-2">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                             <span className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">EWMAC 规则</span>
-                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                {trendConfig.rules.map((rule) => (
-                                    <Checkbox
-                                        checked={rule.enabled}
-                                        data-testid={`allocation-ewmac-rule-${rule.fast}-${rule.slow}`}
-                                        disabled={!trendConfig.enabled}
-                                        key={`${rule.fast}-${rule.slow}`}
-                                        onChange={(event) => {
-                                            onSetTrendFollowingRuleEnabled(rule.fast, event.currentTarget.checked);
-                                        }}
-                                    >
-                                        EWMAC {rule.fast}/{rule.slow}
-                                    </Checkbox>
-                                ))}
+                            <div className="flex flex-wrap gap-2">
+                                <Badge tone="accent">{enabledTrendRuleCount} 条规则</Badge>
+                                <Badge tone="muted">100% 趋势策略</Badge>
                             </div>
                         </div>
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {trendConfig.rules.map((rule) => (
+                                <Checkbox
+                                    checked={rule.enabled}
+                                    data-testid={`allocation-ewmac-rule-${rule.fast}-${rule.slow}`}
+                                    key={`${rule.fast}-${rule.slow}`}
+                                    onChange={(event) => {
+                                        onSetTrendFollowingRuleEnabled(rule.fast, event.currentTarget.checked);
+                                    }}
+                                >
+                                    EWMAC {rule.fast}/{rule.slow}
+                                </Checkbox>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -555,9 +455,9 @@ export const AllocationControlsPanel = ({
                     {isRunning ? '计算中...' : '运行配置'}
                 </Button>
                 <Badge>{selectedAssets.length} 个标的</Badge>
-                <Badge>{formatPercent(constraints.maxSingleWeight)} 单标的上限</Badge>
+                {!isEwmacStrategy && <Badge>{formatPercent(constraints.maxSingleWeight)} 单标的上限</Badge>}
                 <Badge>{cadenceLabelMap[rebalanceCadence]}</Badge>
-                {trendConfig.enabled && <Badge tone="accent">趋势 {formatPercent(trendConfig.sleeveWeight)}</Badge>}
+                {isEwmacStrategy && <Badge tone="accent">EWMAC {enabledTrendRuleCount} 条规则</Badge>}
                 <Badge>{startDate} ~ {endDate}</Badge>
             </div>
 

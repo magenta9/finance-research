@@ -2,6 +2,7 @@ import type {
     AllocationConstraints,
     AllocationDiagnostics,
     AllocationResult,
+    AllocationStrategy,
     AllocationStrategyMix,
     AllocationType,
     Currency,
@@ -41,6 +42,7 @@ export interface PortfolioAllocationCommand {
     mode: AllocationType;
     rebalanceCadence?: RebalanceCadence;
     startDate?: string;
+    strategy?: AllocationStrategy;
     strategyMix?: AllocationStrategyMix;
 }
 
@@ -78,6 +80,7 @@ export class PortfolioAllocationPipeline {
         endDate,
         startDate,
         rebalanceCadence = 'none',
+        strategy = mode,
         strategyMix,
     }: PortfolioAllocationCommand): Promise<PortfolioAllocationOutcome> {
         const preparation = await this.preparationService.prepare({
@@ -98,6 +101,7 @@ export class PortfolioAllocationPipeline {
                     mode,
                     prepared: preparation.prepared,
                     rebalanceCadence,
+                    strategy,
                 }),
                 stage: 'preparation_failed',
                 warnings: preparation.prepared.warnings,
@@ -105,6 +109,30 @@ export class PortfolioAllocationPipeline {
         }
 
         const { calculationDateRange, effectiveDateRange, prepared } = preparation;
+
+        if (prepared.series.length < 2) {
+            return this.buildOutcome({
+                calculationDateRange,
+                effectiveDateRange,
+                optimizerPath: null,
+                result: buildAllocationErrorResult({
+                    baseCurrency,
+                    effectiveDateRange: calculationDateRange,
+                    error: {
+                        code: 'INSUFFICIENT_ASSETS',
+                        message: '至少选择两个标的后才能运行配置。',
+                        suggestions: ['从资产池补充至少两个可用标的后重新运行。'],
+                    },
+                    mode,
+                    prepared,
+                    rebalanceCadence,
+                    strategy,
+                }),
+                stage: 'preparation_failed',
+                warnings: prepared.warnings,
+            });
+        }
+
         const analysisInput = this.buildAnalysisInput(prepared);
 
         if (analysisInput.error) {
@@ -119,14 +147,16 @@ export class PortfolioAllocationPipeline {
                     mode,
                     prepared,
                     rebalanceCadence,
+                    strategy,
                 }),
                 stage: 'preparation_failed',
                 warnings: prepared.warnings,
             });
         }
 
+        const isTrendStrategy = strategy === 'ewmac_trend_following';
         const mergedConstraints = this.mergeConstraints(constraints);
-        const constraintError = this.validateConstraints(mergedConstraints);
+        const constraintError = isTrendStrategy ? null : this.validateConstraints(mergedConstraints);
 
         if (constraintError) {
             return this.buildOutcome({
@@ -140,13 +170,15 @@ export class PortfolioAllocationPipeline {
                     mode,
                     prepared,
                     rebalanceCadence,
+                    strategy,
                 }),
                 stage: 'constraint_failed',
                 warnings: prepared.warnings,
             });
         }
 
-        const strategyMixError = this.validateStrategyMix(strategyMix);
+        const runnableStrategyMix = this.buildRunnableStrategyMix(strategy, strategyMix);
+        const strategyMixError = this.validateStrategyMix(runnableStrategyMix);
 
         if (strategyMixError) {
             return this.buildOutcome({
@@ -160,14 +192,15 @@ export class PortfolioAllocationPipeline {
                     mode,
                     prepared,
                     rebalanceCadence,
+                    strategy,
                 }),
                 stage: 'constraint_failed',
                 warnings: prepared.warnings,
             });
         }
 
-        const allocationAssetIndexes = this.resolveAllocationAssetIndexes(prepared, strategyMix?.allocation?.assetIds);
-        const allocationAssetError = this.validateAllocationAssetSelection(allocationAssetIndexes);
+        const allocationAssetIndexes = this.resolveAllocationAssetIndexes(prepared, runnableStrategyMix?.allocation?.assetIds);
+        const allocationAssetError = isTrendStrategy ? null : this.validateAllocationAssetSelection(allocationAssetIndexes);
 
         if (allocationAssetError) {
             return this.buildOutcome({
@@ -181,20 +214,28 @@ export class PortfolioAllocationPipeline {
                     mode,
                     prepared,
                     rebalanceCadence,
+                    strategy,
                 }),
                 stage: 'constraint_failed',
                 warnings: prepared.warnings,
             });
         }
 
-        const optimization = await this.optimize({
-            annualizedAssetVolatility: analysisInput.annualizedAssetVolatility,
-            assetIndexes: allocationAssetIndexes,
-            constraints: mergedConstraints,
-            covariance: analysisInput.shrunkCovariance,
-            mode,
-            prepared,
-        });
+        const optimization = isTrendStrategy
+            ? {
+                diagnostics: {},
+                ok: true as const,
+                optimizer: 'js' as const,
+                weights: Array.from({ length: prepared.series.length }, () => 0),
+            }
+            : await this.optimize({
+                annualizedAssetVolatility: analysisInput.annualizedAssetVolatility,
+                assetIndexes: allocationAssetIndexes,
+                constraints: mergedConstraints,
+                covariance: analysisInput.shrunkCovariance,
+                mode,
+                prepared,
+            });
 
         if (!optimization.ok) {
             return this.buildOutcome({
@@ -208,6 +249,7 @@ export class PortfolioAllocationPipeline {
                     mode,
                     prepared,
                     rebalanceCadence,
+                    strategy,
                 }),
                 stage: 'optimization_failed',
                 warnings: prepared.warnings,
@@ -230,15 +272,16 @@ export class PortfolioAllocationPipeline {
                 optimizerDiagnostics: optimization.diagnostics,
                 prepared,
                 rebalanceCadence,
+                strategy,
                 trendFollowing: simulateTrendFollowingSleeve({
                     alignedDates: prepared.alignedDates,
                     assetIds: prepared.series.map((entry) => entry.asset.id),
                     assetNames: prepared.series.map((entry) => entry.asset.name),
                     priceSeries: prepared.series.map((entry) => entry.prices),
-                    strategyMix,
+                    strategyMix: runnableStrategyMix,
                     symbols: prepared.series.map((entry) => entry.asset.symbol),
                 }),
-                allocationAssetIds: strategyMix?.allocation?.assetIds
+                allocationAssetIds: runnableStrategyMix?.allocation?.assetIds
                     ? allocationAssetIndexes.map((index) => prepared.series[index].asset.id)
                     : undefined,
                 weights: this.expandWeights(optimization.weights, allocationAssetIndexes, prepared.series.length),
@@ -412,6 +455,20 @@ export class PortfolioAllocationPipeline {
         }
 
         return null;
+    }
+
+    private buildRunnableStrategyMix(strategy: AllocationStrategy, strategyMix?: AllocationStrategyMix): AllocationStrategyMix | undefined {
+        if (strategy !== 'ewmac_trend_following') {
+            return undefined;
+        }
+
+        return {
+            trendFollowing: {
+                ...strategyMix?.trendFollowing,
+                enabled: true,
+                sleeveWeight: 1,
+            },
+        };
     }
 
     private async optimize({

@@ -1,6 +1,7 @@
 import type {
     AllocationConstraints,
     AllocationResult,
+    AllocationStrategy,
     AllocationType,
     Currency,
     RebalanceCadence,
@@ -9,6 +10,7 @@ import type {
 export interface AllocationPlanInput {
     id: string;
     name: string;
+    strategy?: AllocationStrategy;
     mode: AllocationType;
     assets: string[];
     constraints: AllocationConstraints;

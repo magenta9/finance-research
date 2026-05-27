@@ -12,6 +12,11 @@ const modeLabelMap = {
     max_diversification: '最大分散化',
 } as const;
 
+const strategyLabelMap = {
+    ...modeLabelMap,
+    ewmac_trend_following: 'EWMAC 趋势跟随',
+} as const;
+
 const cadenceLabelMap = {
     monthly: '月度',
     none: '持有',
@@ -115,7 +120,7 @@ const PlanLibraryComponent = ({
                                         <Badge>{cadenceLabelMap[plan.rebalanceCadence ?? 'none']}</Badge>
                                     </div>
                                     <p className="mt-2 text-sm leading-6 text-[var(--color-copy)]">
-                                        {modeLabelMap[plan.mode]} · {plan.assets.length} 个标的 · 保存于 {plan.updatedAt.slice(0, 16).replace('T', ' ')}
+                                        {strategyLabelMap[plan.strategy ?? plan.mode]} · {plan.assets.length} 个标的 · 保存于 {plan.updatedAt.slice(0, 16).replace('T', ' ')}
                                     </p>
                                 </div>
                                 <div className="flex flex-wrap gap-2">

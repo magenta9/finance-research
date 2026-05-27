@@ -6,6 +6,7 @@ import { parseJson, stringifyJson } from '../json';
 interface AllocationPlanRow {
   id: string;
   name: string;
+  strategy: AllocationPlanRecord['strategy'] | null;
   mode: AllocationPlanRecord['mode'];
   assets: string;
   constraints: string;
@@ -29,6 +30,7 @@ const normalizeRebalanceCadence = (value: string | null | undefined): RebalanceC
 const mapAllocationPlanRow = (row: AllocationPlanRow): AllocationPlanRecord => ({
   id: row.id,
   name: row.name,
+  strategy: row.strategy ?? row.mode,
   mode: row.mode,
   assets: parseJson<string[]>(row.assets),
   constraints: parseJson<AllocationPlanRecord['constraints']>(row.constraints),
@@ -64,13 +66,14 @@ export const createAllocationPlanRepository = (
         .prepare(
           `
             INSERT INTO allocation_plans (
-              id, name, mode, assets, constraints, result, base_currency, start_date, end_date, rebalance_cadence
+              id, name, strategy, mode, assets, constraints, result, base_currency, start_date, end_date, rebalance_cadence
             )
             VALUES (
-              @id, @name, @mode, @assets, @constraints, @result, @baseCurrency, @startDate, @endDate, @rebalanceCadence
+              @id, @name, @strategy, @mode, @assets, @constraints, @result, @baseCurrency, @startDate, @endDate, @rebalanceCadence
             )
             ON CONFLICT(id) DO UPDATE SET
               name = excluded.name,
+              strategy = excluded.strategy,
               mode = excluded.mode,
               assets = excluded.assets,
               constraints = excluded.constraints,
@@ -85,6 +88,7 @@ export const createAllocationPlanRepository = (
         .run({
           id: input.id,
           name: input.name,
+          strategy: input.strategy ?? input.mode,
           mode: input.mode,
           assets: stringifyJson(input.assets),
           constraints: stringifyJson(input.constraints),

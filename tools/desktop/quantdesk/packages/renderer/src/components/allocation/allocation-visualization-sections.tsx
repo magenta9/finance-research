@@ -34,6 +34,11 @@ const modeLabelMap = {
     max_diversification: '最大分散化',
 } as const;
 
+const strategyLabelMap = {
+    ...modeLabelMap,
+    ewmac_trend_following: 'EWMAC 趋势跟随',
+} as const;
+
 const cadenceLabelMap = {
     monthly: '月度调仓',
     none: '买入持有',
@@ -427,7 +432,7 @@ export const AllocationVisualizationSections = ({
                         <ChartCard title="组合诊断">
                             <div className="grid gap-3 md:grid-cols-2">
                                 <div className="rounded-[20px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.48)] p-4 text-sm leading-6 text-[var(--color-copy)]">
-                                    <p>模式：{modeLabelMap[result.mode]}</p>
+                                    <p>策略：{strategyLabelMap[result.strategy ?? result.mode]}</p>
                                     <p>调仓频率：{cadenceLabelMap[result.rebalanceCadence]}</p>
                                     <p>基准货币：{result.baseCurrency}</p>
                                     <p>对齐交易日：{result.diagnostics.alignedDates}</p>

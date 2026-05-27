@@ -11,6 +11,7 @@ import { selectVisibleAllocationAssets } from '../stores/allocation-store';
 import {
     AllocationControlsPanel,
     AllocationResultPanel,
+    AllocationStrategyPanel,
     AssetSelectionPanel,
 } from './allocation/allocation-panels';
 import { useAllocationPageState } from './allocation/use-allocation-page-state';
@@ -68,22 +69,17 @@ export const AllocationPage = () => {
         saveDetailTags,
         selectedAssetIds,
         selectFirstAssets,
-        setAllocationAssetEnabled,
-        setAllocationAssetSelection,
         setBaseCurrency,
         setDateRange,
         setFilterQuery,
         setMaxSingleWeight,
-        setMode,
         setPlanNameDraft,
         setRebalanceCadence,
-        setTrendFollowingAssetEnabled,
-        setTrendFollowingAssetSelection,
-        setTrendFollowingEnabled,
         setTrendFollowingRuleEnabled,
-        setTrendFollowingSleeveWeight,
+        setStrategy,
         stageExport,
         startDate,
+        strategy,
         strategyMix,
         toggleSelectedAsset,
     } = useAllocationPageState();
@@ -160,8 +156,9 @@ export const AllocationPage = () => {
             rebalanceCadence,
             result,
             startDate,
+            strategy,
         });
-    }, [baseCurrency, canSaveCurrentPlan, constraints, endDate, mode, planNameDraft, rebalanceCadence, result, savePlan, selectedAssetIds, startDate]);
+    }, [baseCurrency, canSaveCurrentPlan, constraints, endDate, mode, planNameDraft, rebalanceCadence, result, savePlan, selectedAssetIds, startDate, strategy]);
 
     const handleLoadPlan = useCallback((plan: AllocationPlanRecord) => {
         applyPlan(plan);
@@ -218,6 +215,8 @@ export const AllocationPage = () => {
                 <MetricCard hint="最近一次结果来自哪一侧优化器。" label="执行侧" value={result?.diagnostics.optimizer ?? '待运行'} />
             </div>
 
+            <AllocationStrategyPanel onSetStrategy={setStrategy} strategy={strategy} />
+
             <div className="grid gap-4 2xl:grid-cols-[1.08fr_0.92fr]">
                 <AssetSelectionPanel
                     filterQuery={filterQuery}
@@ -238,27 +237,18 @@ export const AllocationPage = () => {
                     endDate={endDate}
                     isRunning={isRunning}
                     latestEndDate={latestEndDate}
-                    mode={mode}
                     onRunAllocation={handleRunAllocation}
-                    onSetAllocationAssetEnabled={setAllocationAssetEnabled}
-                    onSetAllocationAssetSelection={setAllocationAssetSelection}
                     onSetBaseCurrency={(value) => {
                         setBaseCurrency(value as typeof baseCurrency);
                     }}
                     onSetDateRange={setDateRange}
                     onSetMaxSingleWeight={setMaxSingleWeight}
-                    onSetMode={(value) => {
-                        setMode(value as typeof mode);
-                    }}
                     onSetRebalanceCadence={setRebalanceCadence}
-                    onSetTrendFollowingEnabled={setTrendFollowingEnabled}
-                    onSetTrendFollowingAssetEnabled={setTrendFollowingAssetEnabled}
-                    onSetTrendFollowingAssetSelection={setTrendFollowingAssetSelection}
                     onSetTrendFollowingRuleEnabled={setTrendFollowingRuleEnabled}
-                    onSetTrendFollowingSleeveWeight={setTrendFollowingSleeveWeight}
                     rebalanceCadence={rebalanceCadence}
                     selectedAssets={selectedAssets}
                     startDate={startDate}
+                    strategy={strategy}
                     strategyMix={strategyMix}
                 />
             </div>
@@ -295,6 +285,7 @@ export const AllocationPage = () => {
             />
 
             <div className="sr-only" data-testid="allocation-current-mode">{mode}</div>
+            <div className="sr-only" data-testid="allocation-current-strategy">{strategy}</div>
             <div className="sr-only" data-testid="allocation-duration-ms">{lastDurationMs ?? 0}</div>
             <div className="sr-only" data-testid="allocation-selected-count">{selectedAssetIds.length}</div>
         </section>

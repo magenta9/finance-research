@@ -83,9 +83,11 @@ var buildProbeScript = () => `
     return {
       artifactTypes,
       contextHasDataSources: Array.isArray(contextArtifact?.payload?.dataSources) && contextArtifact.payload.dataSources.length > 0,
+      hasPreflight: Boolean(completed.preflight),
       hasReport: Boolean(report),
       hasToolEvidenceSection: Boolean(reportToolSection && !reportToolSection.body.includes('\u6CA1\u6709\u8BB0\u5F55\u5DE5\u5177\u6267\u884C\u8BC1\u636E')),
       historyProjectionRuntimePi: history.items.some((item) => item.id === request.id && item.projection?.runtimeMode === 'pi'),
+      preflightStatus: completed.preflight?.status ?? null,
       requestRuntimeMode: completed.runtimeMode,
       reviewGateCount: artifacts.filter((artifact) => artifact.artifactType === 'review_gate').length,
       status: completed.status,

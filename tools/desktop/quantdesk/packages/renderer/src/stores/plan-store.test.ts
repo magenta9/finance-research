@@ -181,12 +181,14 @@ describe('usePlanStore', () => {
             rebalanceCadence: 'quarterly',
             result: createPlanRecord().result,
             startDate: '2025-04-11',
+            strategy: 'inverse_volatility',
         });
 
         expect(saved?.name).toBe('全天候试算 v2');
         expect(saved?.startDate).toBe('2025-04-11');
         expect(saved?.endDate).toBe('2026-04-11');
         expect(saved?.rebalanceCadence).toBe('quarterly');
+        expect(saved?.strategy).toBe('inverse_volatility');
         expect(usePlanStore.getState().plans[0]?.name).toBe('全天候试算 v2');
 
         const exported = usePlanStore.getState().stageExport(saved!);

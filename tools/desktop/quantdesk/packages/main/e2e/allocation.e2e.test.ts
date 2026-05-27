@@ -20,11 +20,13 @@ interface ProbePayload {
     exportFilename: string;
     exportedPlanAssetCount: number;
     exportedPlanMode: string;
+    exportedPlanStrategy: string;
     firstScenarioCount: number;
     maxWeightForFive: number;
     maxWeightForTwenty: number;
     maxWeightForTwentyOne: number;
     modeAfterSwitch: string;
+    strategyAfterSwitch: string;
     optimizerForTwenty: string;
     optimizerForTwentyOne: string;
     planCountAfterSave: number;
@@ -87,11 +89,13 @@ describe('allocation electron e2e', () => {
         expect(parsed.payload.savedPlanName).toBe('Phase 6 E2E Plan');
         expect(parsed.payload.planNames).toContain('Phase 6 E2E Plan');
         expect(parsed.payload.modeAfterSwitch).toBe('max_diversification');
+        expect(parsed.payload.strategyAfterSwitch).toBe('max_diversification');
         expect(parsed.payload.expectedReturnAfterModeSwitch).not.toBeCloseTo(parsed.payload.expectedReturnForFive, 6);
         expect(parsed.payload.activePlanNameAfterLoad).toBe('Phase 6 E2E Plan');
         expect(parsed.payload.expectedReturnAfterPlanLoad).toBeCloseTo(parsed.payload.expectedReturnForFive, 6);
         expect(parsed.payload.exportFilename).toContain('.json');
         expect(parsed.payload.exportedPlanMode).toBe('inverse_volatility');
+        expect(parsed.payload.exportedPlanStrategy).toBe('inverse_volatility');
         expect(parsed.payload.exportedPlanAssetCount).toBe(5);
         expect(parsed.payload.resultCountForTwenty).toBe(20);
         expect(parsed.payload.optimizerForTwenty).toBe('js');

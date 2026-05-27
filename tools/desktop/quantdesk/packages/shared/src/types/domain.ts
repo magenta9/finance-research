@@ -11,6 +11,8 @@ export type AssetClass =
 
 export type AllocationType = 'erc' | 'inverse_volatility' | 'max_diversification';
 
+export type AllocationStrategy = AllocationType | 'ewmac_trend_following';
+
 export type RebalanceCadence = 'none' | 'monthly' | 'quarterly';
 
 export interface EwmacRuleConfig {
@@ -139,6 +141,7 @@ export interface AssetDateCoverage {
 }
 
 export interface AllocationDiagnostics {
+  strategy?: AllocationStrategy;
   optimizer: 'js' | 'python';
   alignedDates: number;
   excludedAssets: string[];
@@ -192,6 +195,7 @@ export interface AllocationError {
 }
 
 export interface AllocationResult {
+  strategy?: AllocationStrategy;
   mode: AllocationType;
   rebalanceCadence: RebalanceCadence;
   baseCurrency: Currency;

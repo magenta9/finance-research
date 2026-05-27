@@ -263,6 +263,67 @@ describe('database layer', () => {
     }
   });
 
+  test('migration 013 backfills allocation strategy identity from mode', () => {
+    const database = new Database(':memory:');
+
+    try {
+      database.exec(
+        fs.readFileSync(
+          path.join(migrationsDir, '001_initial_schema.sql'),
+          'utf8',
+        ),
+      );
+      database.exec(
+        fs.readFileSync(
+          path.join(migrationsDir, '002_allocation_mode_refactor.sql'),
+          'utf8',
+        ),
+      );
+      database.exec(
+        fs.readFileSync(
+          path.join(migrationsDir, '003_allocation_plan_cadence.sql'),
+          'utf8',
+        ),
+      );
+      database.exec('PRAGMA user_version = 12');
+      database
+        .prepare(
+          `
+            INSERT INTO allocation_plans (id, name, mode, assets, constraints, result, base_currency)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `,
+        )
+        .run(
+          'plan-before-strategy',
+          'Pre Strategy Plan',
+          'max_diversification',
+          '[]',
+          '{}',
+          null,
+          'CNY',
+        );
+
+      runMigrations(database, { migrationsDir });
+
+      const row = database
+        .prepare(
+          `
+            SELECT mode, strategy
+            FROM allocation_plans
+            WHERE id = 'plan-before-strategy'
+          `,
+        )
+        .get() as { mode: string; strategy: string };
+
+      expect(row).toEqual({
+        mode: 'max_diversification',
+        strategy: 'max_diversification',
+      });
+    } finally {
+      database.close();
+    }
+  });
+
   test('rolls back the full pending migration batch when a later migration fails', () => {
     const database = new Database(':memory:');
     const migrationsDir = fs.mkdtempSync(

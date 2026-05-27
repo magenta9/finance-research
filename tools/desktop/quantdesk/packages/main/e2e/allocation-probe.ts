@@ -16,11 +16,13 @@ interface AllocationProbePayload {
   exportFilename: string;
   exportedPlanAssetCount: number;
   exportedPlanMode: string;
+  exportedPlanStrategy: string;
   firstScenarioCount: number;
   maxWeightForFive: number;
   maxWeightForTwenty: number;
   maxWeightForTwentyOne: number;
   modeAfterSwitch: string;
+  strategyAfterSwitch: string;
   optimizerForTwenty: string;
   optimizerForTwentyOne: string;
   planCountAfterSave: number;
@@ -113,6 +115,10 @@ const buildFxSeries = (pair: string, baseRate: number, length = 430): FxRateInpu
 
 const seedAllocationProbeData = (services: DataServices) => {
   const assets = buildFixtureAssets();
+
+  for (const existingAsset of services.repositories.assetRepository.list()) {
+    services.repositories.assetRepository.delete(existingAsset.id);
+  }
 
   for (const asset of assets) {
     services.repositories.assetRepository.create(asset);
@@ -227,23 +233,25 @@ const buildProbeScript = () => `
     const planNames = getPlanNames();
     const savedPlanName = planNames[0] ?? '';
 
-    inputValue('[data-testid="allocation-mode-select"]', 'max_diversification');
+    click('[data-testid="allocation-strategy-max_diversification"]');
     click('[data-testid="allocation-run-button"]');
 
     await waitFor(() => {
       const nextExpectedReturn = getNumber('[data-testid="allocation-expected-return-value"]');
-      return getText('[data-testid="allocation-current-mode"]') === 'max_diversification' && Math.abs(nextExpectedReturn - expectedReturnForFive) > 0.000001;
+      return getText('[data-testid="allocation-current-strategy"]') === 'max_diversification' && Math.abs(nextExpectedReturn - expectedReturnForFive) > 0.000001;
     });
 
     const modeAfterSwitch = getText('[data-testid="allocation-current-mode"]');
+    const strategyAfterSwitch = getText('[data-testid="allocation-current-strategy"]');
     const expectedReturnAfterModeSwitch = getNumber('[data-testid="allocation-expected-return-value"]');
 
     clickFirst('[data-testid^="allocation-load-plan-"]');
 
     await waitFor(() => {
       const restoredMode = getText('[data-testid="allocation-current-mode"]');
+      const restoredStrategy = getText('[data-testid="allocation-current-strategy"]');
       const restoredExpectedReturn = getNumber('[data-testid="allocation-expected-return-value"]');
-      return restoredMode === 'inverse_volatility' && Math.abs(restoredExpectedReturn - expectedReturnForFive) <= 0.000001;
+      return restoredMode === 'inverse_volatility' && restoredStrategy === 'inverse_volatility' && Math.abs(restoredExpectedReturn - expectedReturnForFive) <= 0.000001;
     });
 
     const activePlanNameAfterLoad = getText('[data-testid="allocation-active-plan-name"]');
@@ -256,6 +264,7 @@ const buildProbeScript = () => `
     const exportFilename = getText('[data-testid="allocation-export-filename"]');
     const exportedPayload = JSON.parse(getText('[data-testid="allocation-export-payload"]'));
     const exportedPlanMode = exportedPayload.plan?.mode ?? '';
+    const exportedPlanStrategy = exportedPayload.plan?.strategy ?? '';
     const exportedPlanAssetCount = exportedPayload.plan?.assets?.length ?? 0;
 
     click('[data-testid="allocation-select-first-20"]');
@@ -318,11 +327,13 @@ const buildProbeScript = () => `
       exportFilename,
       exportedPlanAssetCount,
       exportedPlanMode,
+      exportedPlanStrategy,
       firstScenarioCount,
       maxWeightForFive,
       maxWeightForTwenty,
       maxWeightForTwentyOne,
       modeAfterSwitch,
+      strategyAfterSwitch,
       optimizerForTwenty,
       optimizerForTwentyOne,
       planCountAfterSave,

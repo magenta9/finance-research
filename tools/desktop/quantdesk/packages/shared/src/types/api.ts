@@ -11,6 +11,7 @@ import type {
 } from './market';
 import type {
   AllocationConstraints,
+  AllocationStrategy,
   AllocationStrategyMix,
   RebalanceCadence,
   AllocationResult,
@@ -131,6 +132,7 @@ export interface QuantdeskApi {
   portfolio: {
     runAllocation: (request: {
       assetIds: string[];
+      strategy?: AllocationStrategy;
       mode: AllocationType;
       constraints: AllocationConstraints;
       baseCurrency?: string;

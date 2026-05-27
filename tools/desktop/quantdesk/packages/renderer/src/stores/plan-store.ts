@@ -4,6 +4,7 @@ import type {
     AllocationConstraints,
     AllocationPlanRecord,
     AllocationResult,
+    AllocationStrategy,
     AllocationType,
     Currency,
     RebalanceCadence,
@@ -21,6 +22,7 @@ interface SavePlanInput {
     rebalanceCadence: RebalanceCadence;
     result: AllocationResult | null;
     startDate?: string;
+    strategy: AllocationStrategy;
 }
 
 interface PlanStoreState {
@@ -53,6 +55,11 @@ const modeLabelMap: Record<AllocationType, string> = {
     max_diversification: '最大分散化',
 };
 
+const strategyLabelMap: Record<AllocationStrategy, string> = {
+    ...modeLabelMap,
+    ewmac_trend_following: 'EWMAC 趋势跟随',
+};
+
 const normalizeError = (error: unknown) =>
     error instanceof Error ? error.message : '发生未知错误。';
 
@@ -61,9 +68,9 @@ const sortPlans = (plans: AllocationPlanRecord[]) =>
 
 const cloneSerializable = <T,>(value: T): T => structuredClone(value);
 
-const buildDefaultPlanName = (mode: AllocationType) => {
+const buildDefaultPlanName = (strategy: AllocationStrategy) => {
     const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
-    return `${modeLabelMap[mode]} · ${timestamp}`;
+    return `${strategyLabelMap[strategy]} · ${timestamp}`;
 };
 
 const buildExportFilename = (plan: AllocationPlanRecord) => `quantdesk-plan-${plan.id}.json`;
@@ -147,10 +154,11 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
                 endDate: input.endDate,
                 id: crypto.randomUUID(),
                 mode: input.mode,
-                name: input.name?.trim() || buildDefaultPlanName(input.mode),
+                name: input.name?.trim() || buildDefaultPlanName(input.strategy),
                 rebalanceCadence: input.rebalanceCadence,
                 result: input.result ? cloneSerializable(input.result) : null,
                 startDate: input.startDate,
+                strategy: input.strategy,
             });
 
             set({

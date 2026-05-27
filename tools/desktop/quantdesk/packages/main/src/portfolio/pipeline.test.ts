@@ -125,7 +125,7 @@ describe('portfolio allocation pipeline', () => {
         expect(outcome.dateWindow.calculation).toEqual(outcome.dateWindow.effective);
     });
 
-    test('adds a trend-following sleeve when strategyMix enables EWMAC', async () => {
+    test('runs EWMAC as a top-level full trend-following strategy', async () => {
         const assets = [
             buildAsset('asset-a', 'SPY', 'equity'),
             buildAsset('asset-b', 'AGG', 'fixed_income'),
@@ -139,6 +139,7 @@ describe('portfolio allocation pipeline', () => {
             baseCurrency: 'USD',
             constraints: baseConstraints,
             mode: 'inverse_volatility',
+            strategy: 'ewmac_trend_following',
             strategyMix: {
                 trendFollowing: {
                     enabled: true,
@@ -148,7 +149,9 @@ describe('portfolio allocation pipeline', () => {
         });
 
         expect(outcome.meta.stage).toBe('completed');
-        expect(outcome.result.diagnostics.strategyMix?.allocationSleeveWeight).toBe(0.75);
+        expect(outcome.result.strategy).toBe('ewmac_trend_following');
+        expect(outcome.result.diagnostics.strategyMix?.allocationSleeveWeight).toBe(0);
+        expect(outcome.result.diagnostics.strategyMix?.trendFollowing?.sleeveWeight).toBe(1);
         expect(outcome.result.diagnostics.strategyMix?.trendFollowing?.rules).toHaveLength(6);
         expect(outcome.result.diagnostics.strategyMix?.trendFollowing?.ruleSlotCount).toBe(12);
         expect(outcome.result.diagnostics.trendFollowing?.assets).toHaveLength(2);
@@ -158,7 +161,7 @@ describe('portfolio allocation pipeline', () => {
         }));
     });
 
-    test('optimizes only the configured allocation sleeve assets', async () => {
+    test('configuration strategies ignore legacy allocation sleeve subsets', async () => {
         const assets = [
             buildAsset('asset-a', 'SPY', 'equity'),
             buildAsset('asset-b', 'AGG', 'fixed_income'),
@@ -181,8 +184,8 @@ describe('portfolio allocation pipeline', () => {
         });
 
         expect(outcome.meta.stage).toBe('completed');
-        expect(outcome.result.diagnostics.strategyMix?.allocation?.assetIds).toEqual(['asset-a', 'asset-b']);
-        expect(outcome.result.weights['asset-c']).toBe(0);
+        expect(outcome.result.diagnostics.strategyMix).toBeUndefined();
+        expect(outcome.result.weights['asset-c']).toBeGreaterThan(0);
         expect(outcome.result.weights['asset-a']).toBeGreaterThan(0);
         expect(outcome.result.weights['asset-b']).toBeGreaterThan(0);
     });

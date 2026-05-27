@@ -40,6 +40,7 @@ const mockResult: AllocationResult = {
     rebalanceCadence: 'none',
     riskContributions: {},
     scenarioAnalysis: [],
+    strategy: 'inverse_volatility',
     weights: {},
 };
 
@@ -60,6 +61,7 @@ const createPlan = (overrides: Partial<AllocationPlanRecord> = {}): AllocationPl
     rebalanceCadence: overrides.rebalanceCadence ?? 'monthly',
     result: overrides.result ?? mockResult,
     startDate: overrides.startDate,
+    strategy: overrides.strategy ?? 'inverse_volatility',
     updatedAt: overrides.updatedAt ?? '2026-04-15T12:00:00.000Z',
 });
 
@@ -165,7 +167,7 @@ describe('useAllocationStore', () => {
         expect(useAllocationStore.getState().rebalanceCadence).toBe('monthly');
     });
 
-    test('sends enabled trend-following strategy mix in allocation requests', async () => {
+    test('does not send mixed trend-following sleeves for configuration strategies', async () => {
         useAllocationStore.setState({ selectedAssetIds: ['spy', 'agg'] });
         useAllocationStore.getState().setTrendFollowingEnabled(true);
         useAllocationStore.getState().setTrendFollowingSleeveWeight(0.4);
@@ -175,39 +177,55 @@ describe('useAllocationStore', () => {
 
         expect(mockApi.portfolio.runAllocation).toHaveBeenCalledWith(
             expect.objectContaining({
+                strategy: 'inverse_volatility',
+                strategyMix: undefined,
+            }),
+        );
+    });
+
+    test('sends EWMAC as a top-level strategy with a full trend-following sleeve', async () => {
+        useAllocationStore.setState({ selectedAssetIds: ['spy', 'agg'] });
+        useAllocationStore.getState().setStrategy('ewmac_trend_following');
+        useAllocationStore.getState().setTrendFollowingRuleEnabled(2, false);
+
+        await useAllocationStore.getState().runAllocation();
+
+        expect(mockApi.portfolio.runAllocation).toHaveBeenCalledWith(
+            expect.objectContaining({
+                mode: 'inverse_volatility',
+                strategy: 'ewmac_trend_following',
                 strategyMix: {
                     trendFollowing: expect.objectContaining({
                         enabled: true,
                         rules: expect.arrayContaining([
                             expect.objectContaining({ enabled: false, fast: 2, slow: 8 }),
                         ]),
-                        sleeveWeight: 0.4,
+                        sleeveWeight: 1,
                     }),
                 },
             }),
         );
     });
 
-    test('limits trend-following sleeve to explicitly selected trend assets', async () => {
+    test('does not send trend-following asset subsets for EWMAC requests', async () => {
         useAllocationStore.setState({ selectedAssetIds: ['spy', 'agg'] });
-        useAllocationStore.getState().setTrendFollowingEnabled(true);
+        useAllocationStore.getState().setStrategy('ewmac_trend_following');
         useAllocationStore.getState().setTrendFollowingAssetEnabled('agg', false);
 
         await useAllocationStore.getState().runAllocation();
 
-        expect(mockApi.portfolio.runAllocation).toHaveBeenCalledWith(
-            expect.objectContaining({
-                strategyMix: {
-                    trendFollowing: expect.objectContaining({
-                        assetIds: ['spy'],
-                        enabled: true,
-                    }),
-                },
-            }),
-        );
+        const request = vi.mocked(mockApi.portfolio.runAllocation).mock.calls[0]?.[0];
+
+        expect(request).toEqual(expect.objectContaining({
+            assetIds: ['spy', 'agg'],
+            strategy: 'ewmac_trend_following',
+        }));
+        expect(request?.strategyMix?.trendFollowing).toEqual(expect.not.objectContaining({
+            assetIds: expect.any(Array),
+        }));
     });
 
-    test('sends explicitly selected allocation sleeve assets in allocation requests', async () => {
+    test('does not send allocation sleeve subsets in allocation requests', async () => {
         useAllocationStore.setState({ selectedAssetIds: ['spy', 'agg', 'gld'] });
         useAllocationStore.getState().setAllocationAssetEnabled('gld', false);
 
@@ -215,12 +233,8 @@ describe('useAllocationStore', () => {
 
         expect(mockApi.portfolio.runAllocation).toHaveBeenCalledWith(
             expect.objectContaining({
-                strategyMix: {
-                    allocation: {
-                        assetIds: ['spy', 'agg'],
-                    },
-                    trendFollowing: expect.objectContaining({ enabled: false }),
-                },
+                assetIds: ['spy', 'agg', 'gld'],
+                strategyMix: undefined,
             }),
         );
     });

@@ -33,10 +33,12 @@ type AllocationPageAllocationState = Pick<AllocationStore,
     | 'setFilterQuery'
     | 'setMaxSingleWeight'
     | 'setMode'
+    | 'setStrategy'
     | 'setRebalanceCadence'
     | 'setTrendFollowingAssetEnabled'
     | 'setTrendFollowingAssetSelection'
     | 'startDate'
+    | 'strategy'
     | 'strategyMix'
     | 'setTrendFollowingEnabled'
     | 'setTrendFollowingRuleEnabled'
@@ -101,10 +103,12 @@ export const useAllocationPageState = (): AllocationPageState => {
         setFilterQuery: state.setFilterQuery,
         setMaxSingleWeight: state.setMaxSingleWeight,
         setMode: state.setMode,
+        setStrategy: state.setStrategy,
         setRebalanceCadence: state.setRebalanceCadence,
         setTrendFollowingAssetEnabled: state.setTrendFollowingAssetEnabled,
         setTrendFollowingAssetSelection: state.setTrendFollowingAssetSelection,
         startDate: state.startDate,
+        strategy: state.strategy,
         strategyMix: state.strategyMix,
         setTrendFollowingEnabled: state.setTrendFollowingEnabled,
         setTrendFollowingRuleEnabled: state.setTrendFollowingRuleEnabled,

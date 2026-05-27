@@ -5,6 +5,13 @@ import type { AllocationPlanRecord, RuntimeStatusResponse, SyncStatus } from '@q
 import { Badge } from '../../components/badge';
 import { formatPercent, type PositionOverviewRow } from './dashboard-utils';
 
+const strategyLabelMap = {
+    erc: '等风险贡献',
+    inverse_volatility: '反波动率加权',
+    max_diversification: '最大分散化',
+    ewmac_trend_following: 'EWMAC 趋势跟随',
+} as const;
+
 export const OfflineStateBanner = ({
     hasPriceSnapshot,
     runtimeStatus,
@@ -53,7 +60,7 @@ export const EmptyStateGuide = () => (
             </Link>
             <Link className="rounded-[14px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.46)] p-4 transition hover:border-[var(--color-highlight-soft)]" to="/allocation">
                 <p className="text-sm uppercase tracking-[0.24em] text-[var(--color-highlight)]">02 生成方案</p>
-                <p className="mt-2 text-sm leading-6">运行一次风险平价或最大夏普，把结果保存到方案库。</p>
+                <p className="mt-2 text-sm leading-6">运行一次配置策略或趋势策略，把结果保存到方案库。</p>
             </Link>
             <Link className="rounded-[14px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.46)] p-4 transition hover:border-[var(--color-highlight-soft)]" to="/pi-agent">
                 <p className="text-sm uppercase tracking-[0.24em] text-[var(--color-highlight)]">03 打开 Agent</p>
@@ -78,7 +85,7 @@ export const ActivePlanPanel = ({
             </div>
             {activePlan && (
                 <div className="flex flex-wrap gap-2">
-                    <Badge tone="accent">{activePlan.mode}</Badge>
+                    <Badge tone="accent">{strategyLabelMap[activePlan.strategy ?? activePlan.mode]}</Badge>
                     <Badge>{cadenceLabelMap[activePlan.rebalanceCadence ?? 'none']}</Badge>
                 </div>
             )}

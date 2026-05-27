@@ -1,6 +1,7 @@
 import type {
     AllocationDiagnostics,
     AllocationResult,
+    AllocationStrategy,
     AllocationTrade,
     AllocationType,
     Currency,
@@ -36,6 +37,7 @@ export interface AssembleAllocationResultInput {
     optimizerDiagnostics: Partial<AllocationDiagnostics>;
     prepared: PreparedAllocationData;
     rebalanceCadence: RebalanceCadence;
+    strategy: AllocationStrategy;
     trendFollowing?: TrendFollowingSimulationResult | null;
     weights: number[];
 }
@@ -53,6 +55,7 @@ export const assembleAllocationResult = ({
     optimizerDiagnostics,
     prepared,
     rebalanceCadence,
+    strategy,
     trendFollowing,
     weights,
 }: AssembleAllocationResultInput): AllocationResult => {
@@ -108,6 +111,7 @@ export const assembleAllocationResult = ({
         },
         diagnostics: {
             alignedDates: prepared.alignedDates.length,
+            strategy,
             assetDateCoverage: prepared.assetDateCoverage,
             dateRange: {
                 endDate: calculationDateRange.endDate,
@@ -143,6 +147,7 @@ export const assembleAllocationResult = ({
         },
         diversificationRatio,
         generatedAt: new Date().toISOString(),
+        strategy,
         mode,
         portfolioMetrics: combinedSleeveSimulation?.metrics ?? pathSimulation.metrics,
         portfolioPath: combinedSleeveSimulation?.path ?? pathSimulation.portfolioPath,
@@ -164,6 +169,7 @@ export const buildAllocationErrorResult = ({
     mode,
     prepared,
     rebalanceCadence,
+    strategy,
 }: {
     baseCurrency: Currency;
     effectiveDateRange: { startDate: string; endDate: string };
@@ -171,6 +177,7 @@ export const buildAllocationErrorResult = ({
     mode: AllocationType;
     prepared: PreparedAllocationData;
     rebalanceCadence: RebalanceCadence;
+    strategy: AllocationStrategy;
 }): AllocationResult => ({
     allocations: [],
     baseCurrency,
@@ -180,6 +187,7 @@ export const buildAllocationErrorResult = ({
     },
     diagnostics: {
         alignedDates: prepared.alignedDates.length,
+        strategy,
         assetDateCoverage: prepared.assetDateCoverage,
         dateRange: {
             endDate: effectiveDateRange.endDate,
@@ -191,6 +199,7 @@ export const buildAllocationErrorResult = ({
     },
     error,
     generatedAt: new Date().toISOString(),
+    strategy,
     mode,
     portfolioMetrics: {
         expectedReturn: 0,

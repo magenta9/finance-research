@@ -1,6 +1,7 @@
 import type {
     AllocationConstraints,
     AllocationResult,
+    AllocationStrategy,
     AllocationStrategyMix,
     AllocationType,
     AllocationPlanInput,
@@ -46,12 +47,14 @@ export class PortfolioEngine {
         endDate,
         startDate,
         rebalanceCadence = 'none',
+        strategy = mode,
         strategyMix,
     }: {
         assetIds: string[];
         baseCurrency?: Currency;
         constraints: AllocationConstraints;
         mode: AllocationType;
+        strategy?: AllocationStrategy;
         startDate?: string;
         endDate?: string;
         rebalanceCadence?: RebalanceCadence;
@@ -65,6 +68,7 @@ export class PortfolioEngine {
             mode,
             rebalanceCadence,
             startDate,
+            strategy,
             strategyMix,
         });
 

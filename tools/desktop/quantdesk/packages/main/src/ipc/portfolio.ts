@@ -1,6 +1,7 @@
 import type {
     AllocationConstraints,
     AllocationPlanInput,
+    AllocationStrategy,
     AllocationStrategyMix,
     AllocationType,
 } from '@quantdesk/shared';
@@ -13,6 +14,7 @@ export const createPortfolioHandlers = (portfolioEngine: PortfolioEngine) => ({
     getPlans: () => portfolioEngine.listPlans(),
     runAllocation: (request: {
         assetIds: string[];
+        strategy?: AllocationStrategy;
         mode: AllocationType;
         constraints: AllocationConstraints;
         baseCurrency?: string;
