@@ -230,6 +230,51 @@ describe('PiWrapperRuntime.getDiagnostics', () => {
         }
     });
 
+    test('lists production repo skills from configured skill paths', async () => {
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'quantdesk-pi-configured-skills-'));
+        const workspaceDir = path.join(tempDir, 'workspace');
+        const configuredSkillDir = path.join(tempDir, 'repo', '.agents', 'skills');
+        const agentDir = path.join(tempDir, 'config');
+        const previousSkillPaths = process.env.QUANTDESK_PI_SKILL_PATHS;
+        fs.mkdirSync(path.join(configuredSkillDir, 'futures-trend-observation'), { recursive: true });
+        fs.mkdirSync(agentDir, { recursive: true });
+        fs.mkdirSync(workspaceDir, { recursive: true });
+        fs.writeFileSync(path.join(configuredSkillDir, 'futures-trend-observation', 'SKILL.md'), [
+            '---',
+            'name: futures-trend-observation',
+            'description: Analyze futures trend observation setups.',
+            '---',
+            'Use quant-data evidence.',
+        ].join('\n'));
+        process.env.QUANTDESK_PI_SKILL_PATHS = configuredSkillDir;
+
+        try {
+            const runtime = createPrivateRuntimeHarness({
+                directories: {
+                    agentDir,
+                    sessionDir: path.join(tempDir, 'sessions'),
+                    toolInvocationDir: path.join(tempDir, 'tool-invocations'),
+                    workspaceDir,
+                },
+                emitEvent: () => undefined,
+                requestHost: vi.fn(),
+            });
+            runtime.sdk = {};
+
+            await expect(runtime.listSkills()).resolves.toContainEqual(expect.objectContaining({
+                description: 'Analyze futures trend observation setups.',
+                name: 'futures-trend-observation',
+            }));
+        } finally {
+            if (previousSkillPaths === undefined) {
+                delete process.env.QUANTDESK_PI_SKILL_PATHS;
+            } else {
+                process.env.QUANTDESK_PI_SKILL_PATHS = previousSkillPaths;
+            }
+            fs.rmSync(tempDir, { force: true, recursive: true });
+        }
+    });
+
     test('reports ready when the wrapper process is healthy but no session runtime has been initialized yet', async () => {
         const runtime = createRuntimeHarness({
             directories: {

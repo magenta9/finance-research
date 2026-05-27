@@ -14,6 +14,7 @@ vi.mock('node:fs', () => ({
 
 import {
     ensurePiRuntimeDirectories,
+    resolveProductionSkillPaths,
     resolvePiRuntimeDirectories,
     resolvePiWrapperEntryFile,
     resolveSidecarPythonCommand,
@@ -98,5 +99,11 @@ describe('resolveSidecarPythonCommand', () => {
         expect(mkdirSyncMock).toHaveBeenNthCalledWith(2, directories.sessionDir, { recursive: true });
         expect(mkdirSyncMock).toHaveBeenNthCalledWith(3, directories.toolInvocationDir, { recursive: true });
         expect(mkdirSyncMock).toHaveBeenNthCalledWith(4, directories.workspaceDir, { recursive: true });
+    });
+
+    test('points Pi wrapper at the current repo production skills in development', () => {
+        expect(resolveProductionSkillPaths({ isPackaged: false })).toEqual([
+            path.resolve(process.cwd(), '../../..', '.agents', 'skills'),
+        ]);
     });
 });

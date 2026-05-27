@@ -19,6 +19,8 @@ extraResources:
     to: db/migrations
   - from: .pi
     to: .pi
+  - from: ../../../.agents/skills
+    to: .agents/skills
   - from: build/sidecar-package
     to: sidecar
 extraMetadata:

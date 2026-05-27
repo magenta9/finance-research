@@ -60,6 +60,7 @@ interface PiRuntimeModel {
 const piSkillDirectoryRelativePath = path.join('.pi', 'skills');
 const agentsSkillDirectoryRelativePath = path.join('.agents', 'skills');
 const skillFileName = 'SKILL.md';
+const piSkillPathsEnvKey = 'QUANTDESK_PI_SKILL_PATHS';
 
 interface PiWrapperRuntimeOptions {
   directories: PiRuntimeDirectories;
@@ -168,6 +169,13 @@ export class PiWrapperRuntime {
     }
   }
 
+  private getConfiguredSkillResourcePaths() {
+    return (process.env[piSkillPathsEnvKey] ?? '')
+      .split(path.delimiter)
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+  }
+
   private getPiSkillResourcePaths(cwd: string) {
     const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
     const homeDir = os.homedir();
@@ -175,6 +183,7 @@ export class PiWrapperRuntime {
       path.join(this.options.directories.agentDir, 'skills'),
       path.join(homeDir, '.pi', 'agent', 'skills'),
       path.join(homeDir, '.agents', 'skills'),
+      ...this.getConfiguredSkillResourcePaths(),
       ...this.findSkillDirectories(cwd, piSkillDirectoryRelativePath),
       ...this.findSkillDirectories(cwd, agentsSkillDirectoryRelativePath),
       ...this.findSkillDirectories(process.cwd(), piSkillDirectoryRelativePath),

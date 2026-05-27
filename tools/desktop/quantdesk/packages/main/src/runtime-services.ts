@@ -50,6 +50,16 @@ export const ensurePiRuntimeDirectories = (directories: ReturnType<typeof resolv
     }
 };
 
+export const resolveProductionSkillPaths = ({ isPackaged }: { isPackaged: boolean }) => {
+    const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
+
+    return [
+        isPackaged && resourcesPath
+            ? path.join(resourcesPath, '.agents', 'skills')
+            : path.resolve(process.cwd(), '../../..', '.agents', 'skills'),
+    ];
+};
+
 export const createRuntimeServices = ({
     dataServices,
     isPackaged,
@@ -106,6 +116,7 @@ export const createRuntimeServices = ({
                 ELECTRON_RUN_AS_NODE: '1',
                 QUANTDESK_PI_AGENT_DIR: piDirectories.agentDir,
                 QUANTDESK_PI_SESSION_DIR: piDirectories.sessionDir,
+                QUANTDESK_PI_SKILL_PATHS: resolveProductionSkillPaths({ isPackaged }).join(path.delimiter),
                 QUANTDESK_PI_TOOL_INVOCATION_DIR: piDirectories.toolInvocationDir,
                 QUANTDESK_PI_WORKSPACE_DIR: piDirectories.workspaceDir,
             },
