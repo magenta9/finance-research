@@ -9,6 +9,7 @@ import {
     prepareAllocationData,
     type PreparedAllocationData,
 } from './preprocessor';
+import { AllocationPreparationError, isAllocationPreparationError } from './preparation-errors';
 import type { AllocationPreparationReader } from './preparation-repository-adapter';
 
 const emptyPreparedAllocationData: PreparedAllocationData = {
@@ -100,6 +101,10 @@ const resolveActualDateRange = (
 const classifyPreparationError = (
     error: unknown,
 ): NonNullable<AllocationResult['error']> => {
+    if (isAllocationPreparationError(error)) {
+        return error.toAllocationError();
+    }
+
     if (error instanceof Error && 'code' in error && error.code === 'MARKET_DATA_UNAVAILABLE') {
         return {
             code: 'MARKET_DATA_UNAVAILABLE',
@@ -117,22 +122,6 @@ const classifyPreparationError = (
     }
 
     const message = error instanceof Error ? error.message : String(error);
-
-    if (message.includes('60') || message.includes('history') || message.includes('共同覆盖')) {
-        return {
-            code: 'INSUFFICIENT_HISTORY',
-            message,
-            suggestions: ['缩短时间窗口。', '减少已选标的数量。'],
-        };
-    }
-
-    if (message.includes('FX rate')) {
-        return {
-            code: 'FX_RATE_MISSING',
-            message,
-            suggestions: ['Synchronize FX rates before running allocation.', 'Switch the base currency to match cached assets.'],
-        };
-    }
 
     return {
         code: 'ALLOCATION_PREPARATION_FAILED',
@@ -229,6 +218,10 @@ export class AllocationPreparationService {
 
         const foundIds = new Set(assets.map((asset) => asset.id));
         const missing = assetIds.filter((assetId) => !foundIds.has(assetId));
-        throw new Error(`Missing assets for allocation: ${missing.join(', ')}`);
+        throw new AllocationPreparationError({
+            code: 'MISSING_ASSETS',
+            message: `Missing assets for allocation: ${missing.join(', ')}`,
+            suggestions: ['Reload the asset pool and select assets that still exist.'],
+        });
     }
 }

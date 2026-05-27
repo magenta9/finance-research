@@ -1,5 +1,6 @@
 import type { AssetDateCoverage, Currency, StoredAsset } from '@quantdesk/shared';
 
+import { AllocationPreparationError } from './preparation-errors';
 import type { AllocationPreparationReader } from './preparation-repository-adapter';
 
 export interface PreparedAssetSeries {
@@ -39,7 +40,11 @@ const resolveFxRate = (
         return fxRate.rate;
     }
 
-    throw new Error(`Missing FX rate for ${assetCurrency}/${baseCurrency} on or before ${date}.`);
+    throw new AllocationPreparationError({
+        code: 'FX_RATE_MISSING',
+        message: `Missing FX rate for ${assetCurrency}/${baseCurrency} on or before ${date}.`,
+        suggestions: ['Synchronize FX rates before running allocation.', 'Switch the base currency to match cached assets.'],
+    });
 };
 
 export const prepareAllocationData = ({
@@ -116,9 +121,13 @@ export const prepareAllocationData = ({
     );
 
     if (validAssetMaps.length < 2) {
-        throw new Error(startDate && endDate
-            ? insufficientCoverageMessage
-            : 'At least two assets with sufficient history are required to run allocation.');
+        throw new AllocationPreparationError({
+            code: 'INSUFFICIENT_HISTORY',
+            message: startDate && endDate
+                ? insufficientCoverageMessage
+                : 'At least two assets with sufficient history are required to run allocation.',
+            suggestions: ['缩短时间窗口。', '减少已选标的数量。'],
+        });
     }
 
     const sortedDates = [...new Set(validAssetMaps.flatMap((entry) => [...entry.priceMap.keys()]))].sort();
@@ -152,7 +161,11 @@ export const prepareAllocationData = ({
     }
 
     if (alignedDates.length < MIN_REQUIRED_TRADING_DAYS) {
-        throw new Error(insufficientCoverageMessage);
+        throw new AllocationPreparationError({
+            code: 'INSUFFICIENT_HISTORY',
+            message: insufficientCoverageMessage,
+            suggestions: ['缩短时间窗口。', '减少已选标的数量。'],
+        });
     }
 
     const series = validAssetMaps.map((entry, index) => ({

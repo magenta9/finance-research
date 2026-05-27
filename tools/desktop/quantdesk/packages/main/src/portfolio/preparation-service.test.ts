@@ -194,6 +194,65 @@ describe('allocation preparation service', () => {
         );
     });
 
+    test('returns a typed missing asset error', async () => {
+        const service = new AllocationPreparationService({
+            marketDataOrchestrator: {
+                ensure: vi.fn().mockResolvedValue({ warnings: [] }),
+            },
+            reader: createReader({
+                assets: [buildAsset('asset-a', 'SPY', 'equity')],
+                priceRowsByAsset: {
+                    'asset-a': buildPriceRows({ assetId: 'asset-a', basePrice: 100, length: 90, startDate: '2025-04-15' }),
+                },
+            }),
+        });
+
+        const result = await service.prepare({
+            assetIds: ['asset-a', 'missing-asset'],
+            baseCurrency: 'USD',
+        });
+
+        expect(result.ok).toBe(false);
+
+        if (result.ok) {
+            throw new Error('Expected preparation to fail.');
+        }
+
+        expect(result.error).toEqual(expect.objectContaining({ code: 'MISSING_ASSETS' }));
+    });
+
+    test('returns a typed missing FX rate error', async () => {
+        const assets = [
+            buildAsset('asset-hk', '2800', 'equity', { currency: 'HKD', market: 'HK' }),
+            buildAsset('asset-us', 'SPY', 'equity', { currency: 'USD', market: 'US' }),
+        ];
+        const service = new AllocationPreparationService({
+            marketDataOrchestrator: {
+                ensure: vi.fn().mockResolvedValue({ warnings: [] }),
+            },
+            reader: createReader({
+                assets,
+                priceRowsByAsset: {
+                    'asset-hk': buildPriceRows({ assetId: 'asset-hk', basePrice: 100, length: 90, startDate: '2025-04-15' }),
+                    'asset-us': buildPriceRows({ assetId: 'asset-us', basePrice: 80, length: 90, startDate: '2025-04-15' }),
+                },
+            }),
+        });
+
+        const result = await service.prepare({
+            assetIds: ['asset-hk', 'asset-us'],
+            baseCurrency: 'USD',
+        });
+
+        expect(result.ok).toBe(false);
+
+        if (result.ok) {
+            throw new Error('Expected preparation to fail.');
+        }
+
+        expect(result.error).toEqual(expect.objectContaining({ code: 'FX_RATE_MISSING' }));
+    });
+
     test('merges sync warnings with preparation warnings', async () => {
         const assets = [
             buildAsset('asset-a', 'SPY', 'equity'),
