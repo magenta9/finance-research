@@ -155,6 +155,7 @@ describe('PriceSyncService', () => {
         });
 
         expect(fetchPrices).toHaveBeenCalledWith(expect.objectContaining({
+            assetId: 'asset-rb-main',
             assetMetadata: {
                 contractType: 'dominant_continuous',
                 instrumentType: 'futures',

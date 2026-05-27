@@ -170,6 +170,82 @@ describe('createDataHandlers', () => {
         expect(localGetRange).not.toHaveBeenCalled();
     });
 
+    test('falls back to local price history when quant-data range is empty', async () => {
+        const getRange = vi.fn(() => []);
+        const localGetRange = vi.fn(() => [{
+            adjustedClose: 100,
+            assetId: 'asset-510300',
+            close: 99,
+            date: '2025-01-01',
+            fetchedAt: '2026-04-15T00:00:00.000Z',
+            high: null,
+            low: null,
+            open: null,
+            source: 'tushare',
+            volume: null,
+        }]);
+        const handlers = createDataHandlers({
+            assetRepository: {
+                create: vi.fn(),
+                delete: vi.fn(),
+                list: vi.fn(() => [{
+                    assetClass: 'equity',
+                    createdAt: '2026-04-15T00:00:00.000Z',
+                    currency: 'CNY',
+                    id: 'asset-510300',
+                    market: 'A',
+                    metadata: {},
+                    name: '沪深300ETF',
+                    symbol: '510300',
+                    tags: [],
+                    updatedAt: '2026-04-15T00:00:00.000Z',
+                } satisfies StoredAsset]),
+                search: vi.fn(() => []),
+                update: vi.fn(),
+            },
+            fxRateRepository: {
+                clearAll: vi.fn(),
+                count: vi.fn(() => 0),
+            },
+            positionRepository: {
+                delete: vi.fn(),
+                listByPortfolio: vi.fn(() => []),
+                save: vi.fn(),
+            },
+            priceReadService: {
+                getRange,
+                listByAsset: vi.fn(() => []),
+            },
+            priceRepository: {
+                clearAll: vi.fn(),
+                count: vi.fn(() => 0),
+                getLatestFetchedAt: vi.fn(() => null),
+                getRange: localGetRange,
+                listByAsset: vi.fn(() => []),
+            },
+        });
+
+        await expect(handlers.getAssetMetrics({
+            assetId: 'asset-510300',
+            endDate: '2025-01-31',
+            startDate: '2025-01-01',
+        })).resolves.toMatchObject({
+            analyticsAvailability: 'ok',
+            dataSource: 'tushare',
+            latestValue: 99,
+        });
+        expect(getRange).toHaveBeenCalledWith({
+            assetId: 'asset-510300',
+            endDate: '2025-01-31',
+            startDate: '2025-01-01',
+        });
+        expect(localGetRange).toHaveBeenCalledWith({
+            assetId: 'asset-510300',
+            endDate: '2025-01-31',
+            startDate: '2025-01-01',
+        });
+    });
+
     test('returns asset series analytics from quant-data prices and logs skipped non-positive regression samples', async () => {
         const dates = buildDates(40);
         const listByAsset = vi.fn(() => Array.from({ length: 40 }, (_, index) => ({

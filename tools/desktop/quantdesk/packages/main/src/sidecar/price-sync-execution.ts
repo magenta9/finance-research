@@ -139,6 +139,7 @@ export const performPriceTask = async ({
     const assetMetadata = buildPriceAssetMetadata(asset.metadata);
     const response = await marketDataPort.fetchPrices({
         ...(assetMetadata === undefined ? {} : { assetMetadata }),
+        assetId: asset.id,
         enabledSources: attemptedSources,
         end: endDate,
         market: asset.market,

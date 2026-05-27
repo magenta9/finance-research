@@ -20,7 +20,7 @@ interface AllocationPlanRow {
 }
 
 const normalizeRebalanceCadence = (value: string | null | undefined): RebalanceCadence => {
-  if (value === 'monthly' || value === 'quarterly') {
+  if (value === 'weekly' || value === 'monthly' || value === 'quarterly') {
     return value;
   }
 

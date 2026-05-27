@@ -54,8 +54,14 @@ export const createDataHandlers = ({
   priceRepository,
   priceSyncService,
 }: CreateDataHandlersOptions) => {
-  const getPriceRange = async (query: PriceRangeQuery) => await (priceReadService?.getRange(query) ?? priceRepository.getRange(query));
-  const listPricesByAsset = async (assetId: string) => await (priceReadService?.listByAsset(assetId) ?? priceRepository.listByAsset(assetId));
+  const getPriceRange = async (query: PriceRangeQuery) => {
+    const externalPrices = await priceReadService?.getRange(query);
+    return externalPrices && externalPrices.length > 0 ? externalPrices : priceRepository.getRange(query);
+  };
+  const listPricesByAsset = async (assetId: string) => {
+    const externalPrices = await priceReadService?.listByAsset(assetId);
+    return externalPrices && externalPrices.length > 0 ? externalPrices : priceRepository.listByAsset(assetId);
+  };
 
   return {
     getAssets: () => assetRepository.list(),

@@ -44,6 +44,21 @@ describe('simulatePortfolioPath', () => {
         expect(result.portfolioEquity).toEqual([1, 1.5, 2.25]);
     });
 
+    test('rebalances on the last available trading day of a week', () => {
+        const result = simulatePortfolioPath({
+            alignedDates: ['2026-01-08', '2026-01-09', '2026-01-12'],
+            priceSeries: [
+                [100, 200, 200],
+                [100, 100, 200],
+            ],
+            rebalanceCadence: 'weekly',
+            targetWeights: [0.5, 0.5],
+        });
+
+        expect(result.rebalanceEventCount).toBe(1);
+        expect(result.portfolioEquity).toEqual([1, 1.5, 2.25]);
+    });
+
     test('rebalances on the last available trading day of a quarter', () => {
         const result = simulatePortfolioPath({
             alignedDates: ['2026-03-30', '2026-03-31', '2026-04-01'],

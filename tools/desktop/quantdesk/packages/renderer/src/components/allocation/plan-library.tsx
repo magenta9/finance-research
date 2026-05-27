@@ -21,6 +21,7 @@ const cadenceLabelMap = {
     monthly: '月度',
     none: '持有',
     quarterly: '季度',
+    weekly: '周度',
 } as const;
 
 const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;

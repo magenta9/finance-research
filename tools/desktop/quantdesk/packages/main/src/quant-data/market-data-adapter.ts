@@ -123,6 +123,7 @@ export class QuantDataMarketDataAdapter {
 
     async fetchPrices(request: FetchPricesRequest): Promise<MarketDataPriceFetchResult> {
         const envelope = await this.client.run<QuantDataPriceSeriesResult>('get-price-series', {
+            ...(request.assetId === undefined ? {} : { assetId: request.assetId }),
             end: request.end,
             ...(request.market === undefined ? {} : { market: request.market }),
             start: request.start,

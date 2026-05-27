@@ -13,7 +13,7 @@ export type AllocationType = 'erc' | 'inverse_volatility' | 'max_diversification
 
 export type AllocationStrategy = AllocationType | 'ewmac_trend_following';
 
-export type RebalanceCadence = 'none' | 'monthly' | 'quarterly';
+export type RebalanceCadence = 'none' | 'weekly' | 'monthly' | 'quarterly';
 
 export interface EwmacRuleConfig {
   enabled?: boolean;

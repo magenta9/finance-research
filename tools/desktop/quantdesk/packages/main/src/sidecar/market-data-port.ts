@@ -230,6 +230,7 @@ export interface SearchAssetsRequest {
 }
 
 export interface FetchPricesRequest {
+    assetId?: string;
     symbol: string;
     start: string;
     end: string;

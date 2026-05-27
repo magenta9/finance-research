@@ -288,9 +288,13 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
                 ? Number.NaN
                 : Number(maxSingleWeightPreference);
             const assetIds = new Set(assets.map((asset) => asset.id));
-            const selectedAssetIds = get().selectedAssetIds.length > 0
-                ? get().selectedAssetIds.filter((id) => assetIds.has(id))
-                : assets.slice(0, Math.min(5, assets.length)).map((asset) => asset.id);
+            const currentSelectedAssetIds = get().selectedAssetIds;
+            const shouldUseDefaultSelection = get().assets.length === 0 && currentSelectedAssetIds.length === 0;
+            const selectedAssetIds = currentSelectedAssetIds.length > 0
+                ? currentSelectedAssetIds.filter((id) => assetIds.has(id))
+                : shouldUseDefaultSelection
+                    ? assets.slice(0, Math.min(5, assets.length)).map((asset) => asset.id)
+                    : [];
 
             set({
                 assets,

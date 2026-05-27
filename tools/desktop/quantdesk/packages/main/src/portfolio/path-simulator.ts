@@ -55,6 +55,15 @@ const getQuarterKey = (date: string) => {
     return `${date.slice(0, 4)}Q${quarter}`;
 };
 
+const getWeekKey = (date: string) => {
+    const cursor = new Date(`${date}T00:00:00Z`);
+    const day = cursor.getUTCDay() || 7;
+    cursor.setUTCDate(cursor.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(cursor.getUTCFullYear(), 0, 1));
+    const week = Math.ceil((((cursor.getTime() - yearStart.getTime()) / 86_400_000) + 1) / 7);
+    return `${cursor.getUTCFullYear()}W${week}`;
+};
+
 const isRebalanceDay = (
     alignedDates: string[],
     dayIndex: number,
@@ -66,6 +75,10 @@ const isRebalanceDay = (
 
     const currentDate = alignedDates[dayIndex];
     const nextDate = alignedDates[dayIndex + 1];
+
+    if (rebalanceCadence === 'weekly') {
+        return getWeekKey(currentDate) !== getWeekKey(nextDate);
+    }
 
     if (rebalanceCadence === 'monthly') {
         return currentDate.slice(0, 7) !== nextDate.slice(0, 7);

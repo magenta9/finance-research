@@ -147,6 +147,7 @@ describe('QuantDataMarketDataAdapter', () => {
         const { adapter, calls } = createAdapter();
 
         await expect(adapter.fetchPrices({
+            assetId: 'asset-510300',
             enabledSources: ['akshare'],
             end: '2026-05-14',
             market: 'A',
@@ -170,7 +171,7 @@ describe('QuantDataMarketDataAdapter', () => {
 
         expect(calls[0]).toMatchObject({
             args: ['get-price-series'],
-            input: '{"end":"2026-05-14","market":"A","start":"2026-05-01","symbol":"510300"}\n',
+            input: '{"assetId":"asset-510300","end":"2026-05-14","market":"A","start":"2026-05-01","symbol":"510300"}\n',
         });
     });
 

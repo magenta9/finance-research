@@ -21,6 +21,7 @@ const cadenceLabelMap: Record<RebalanceCadence, string> = {
     monthly: '月度调仓',
     none: '无调仓',
     quarterly: '季度调仓',
+    weekly: '周度调仓',
 };
 
 const strategyOptions: Array<{ description: string; label: string; value: AllocationStrategy }> = [
@@ -177,7 +178,13 @@ export const AssetSelectionPanel = ({
                     <Button onClick={() => { onSelectFirst(20); }} tone="secondary" data-testid="allocation-select-first-20">
                         选择前 20 个
                     </Button>
-                    <Button onClick={onClearResult} tone="ghost">清空结果</Button>
+                    <Button
+                        onClick={() => {
+                            onSelectFirst(0);
+                            onClearResult();
+                        }}
+                        tone="ghost"
+                    >清空结果</Button>
                 </div>
             </div>
 
@@ -350,6 +357,7 @@ export const AllocationControlsPanel = ({
                         value={rebalanceCadence}
                     >
                         <option value="none">无调仓</option>
+                        <option value="weekly">周度调仓</option>
                         <option value="monthly">月度调仓</option>
                         <option value="quarterly">季度调仓</option>
                     </Select>

@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import type { AllocationPlanRecord, AllocationResult } from '@quantdesk/shared';
+import type { AllocationPlanRecord, AllocationResult, StoredAsset } from '@quantdesk/shared';
 import type { QuantdeskApi } from '@quantdesk/shared/types/api';
 
 import { setApiClientOverride } from '../lib/api-client';
@@ -63,6 +63,19 @@ const createPlan = (overrides: Partial<AllocationPlanRecord> = {}): AllocationPl
     startDate: overrides.startDate,
     strategy: overrides.strategy ?? 'inverse_volatility',
     updatedAt: overrides.updatedAt ?? '2026-04-15T12:00:00.000Z',
+});
+
+const createAsset = (id: string): StoredAsset => ({
+    assetClass: 'equity',
+    createdAt: '2026-04-15T12:00:00.000Z',
+    currency: 'USD',
+    id,
+    market: 'US',
+    metadata: {},
+    name: id.toUpperCase(),
+    symbol: id.toUpperCase(),
+    tags: [],
+    updatedAt: '2026-04-15T12:00:00.000Z',
 });
 
 describe('useAllocationStore', () => {
@@ -162,9 +175,29 @@ describe('useAllocationStore', () => {
     });
 
     test('updates rebalance cadence through explicit setter', () => {
-        useAllocationStore.getState().setRebalanceCadence('monthly');
+        useAllocationStore.getState().setRebalanceCadence('weekly');
 
-        expect(useAllocationStore.getState().rebalanceCadence).toBe('monthly');
+        expect(useAllocationStore.getState().rebalanceCadence).toBe('weekly');
+    });
+
+    test('can clear selected assets through select first zero', () => {
+        useAllocationStore.setState({ selectedAssetIds: ['spy', 'agg', 'gld'] });
+
+        useAllocationStore.getState().selectFirstAssets(0);
+
+        expect(useAllocationStore.getState().selectedAssetIds).toEqual([]);
+    });
+
+    test('keeps empty asset selection on reload after assets were loaded', async () => {
+        vi.mocked(mockApi.data.getAssets).mockResolvedValue([createAsset('spy'), createAsset('agg'), createAsset('gld')]);
+
+        await useAllocationStore.getState().loadAssets();
+        expect(useAllocationStore.getState().selectedAssetIds).toEqual(['spy', 'agg', 'gld']);
+
+        useAllocationStore.getState().selectFirstAssets(0);
+        await useAllocationStore.getState().loadAssets();
+
+        expect(useAllocationStore.getState().selectedAssetIds).toEqual([]);
     });
 
     test('does not send mixed trend-following sleeves for configuration strategies', async () => {
