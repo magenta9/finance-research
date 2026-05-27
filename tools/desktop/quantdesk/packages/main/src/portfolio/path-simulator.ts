@@ -1,6 +1,7 @@
 import type { AllocationTrade, PortfolioMetrics, PortfolioPathPoint, RebalanceCadence } from '@quantdesk/shared';
 
 import { annualizationFactor } from './analytics-constants';
+import { isPortfolioCadenceRebalanceDay } from './rebalance-calendar';
 
 export interface PathSimulationInput {
     assetMetadata?: Array<{
@@ -55,44 +56,6 @@ const computeMaxDrawdownFromEquity = (equityCurve: number[]) => {
     }
 
     return Math.abs(maxDrawdown);
-};
-
-const getQuarterKey = (date: string) => {
-    const month = Number.parseInt(date.slice(5, 7), 10);
-    const quarter = Math.ceil(month / 3);
-    return `${date.slice(0, 4)}Q${quarter}`;
-};
-
-const getWeekKey = (date: string) => {
-    const cursor = new Date(`${date}T00:00:00Z`);
-    const day = cursor.getUTCDay() || 7;
-    cursor.setUTCDate(cursor.getUTCDate() + 4 - day);
-    const yearStart = new Date(Date.UTC(cursor.getUTCFullYear(), 0, 1));
-    const week = Math.ceil((((cursor.getTime() - yearStart.getTime()) / 86_400_000) + 1) / 7);
-    return `${cursor.getUTCFullYear()}W${week}`;
-};
-
-const isRebalanceDay = (
-    alignedDates: string[],
-    dayIndex: number,
-    rebalanceCadence: RebalanceCadence,
-) => {
-    if (rebalanceCadence === 'none' || dayIndex >= alignedDates.length - 1) {
-        return false;
-    }
-
-    const currentDate = alignedDates[dayIndex];
-    const nextDate = alignedDates[dayIndex + 1];
-
-    if (rebalanceCadence === 'weekly') {
-        return getWeekKey(currentDate) !== getWeekKey(nextDate);
-    }
-
-    if (rebalanceCadence === 'monthly') {
-        return currentDate.slice(0, 7) !== nextDate.slice(0, 7);
-    }
-
-    return getQuarterKey(currentDate) !== getQuarterKey(nextDate);
 };
 
 export const simulatePortfolioPath = ({
@@ -161,7 +124,7 @@ export const simulatePortfolioPath = ({
             ? [...targetWeights]
             : nextValues.map((value) => value / totalValue);
 
-        if (isRebalanceDay(alignedDates, dayIndex, rebalanceCadence)) {
+        if (isPortfolioCadenceRebalanceDay(alignedDates, dayIndex, rebalanceCadence)) {
             targetWeights.forEach((targetWeight, assetIndex) => {
                 const fromWeight = currentWeights[assetIndex] ?? 0;
                 const weightChange = targetWeight - fromWeight;

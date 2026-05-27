@@ -21,6 +21,7 @@ import {
     signedActiveDualMomentumWeight,
     type ActiveDualMomentumPosition,
 } from './active-dual-momentum-rules';
+import { buildWeeklyRebalanceIndexesOnOrBeforeWeekday } from './rebalance-calendar';
 
 const mean = (values: number[]) => values.length === 0
     ? 0
@@ -34,46 +35,6 @@ const standardDeviation = (values: number[]) => {
     const average = mean(values);
     const variance = values.reduce((sum, value) => sum + (value - average) ** 2, 0) / (values.length - 1);
     return Math.sqrt(Math.max(variance, 0));
-};
-
-const buildWeekKey = (date: string) => {
-    const cursor = new Date(`${date}T00:00:00Z`);
-    const day = cursor.getUTCDay() || 7;
-    cursor.setUTCDate(cursor.getUTCDate() + 4 - day);
-    const yearStart = new Date(Date.UTC(cursor.getUTCFullYear(), 0, 1));
-    const week = Math.ceil((((cursor.getTime() - yearStart.getTime()) / 86_400_000) + 1) / 7);
-    return `${cursor.getUTCFullYear()}W${week}`;
-};
-
-const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay() || 7;
-
-const buildWednesdayRebalanceIndexes = (dates: string[], minimumIndex: number) => {
-    const indexes: number[] = [];
-    let currentWeek = '';
-    let candidate: number | null = null;
-
-    dates.forEach((date, index) => {
-        const weekKey = buildWeekKey(date);
-
-        if (currentWeek && weekKey !== currentWeek && candidate != null && candidate >= minimumIndex) {
-            indexes.push(candidate);
-        }
-
-        if (weekKey !== currentWeek) {
-            currentWeek = weekKey;
-            candidate = null;
-        }
-
-        if (weekday(date) <= 3) {
-            candidate = index;
-        }
-    });
-
-    if (candidate != null && candidate >= minimumIndex) {
-        indexes.push(candidate);
-    }
-
-    return indexes;
 };
 
 const buildPath = (dates: string[], dailyReturns: number[]) => {
@@ -213,7 +174,11 @@ export const runActiveDualMomentumBacktest = ({
 }): AllocationResult => {
     const config = normalizeActiveDualMomentumConfig(rawConfig);
     const maxLookbackDays = Math.max(config.shortLookbackWeeks, config.longLookbackWeeks) * activeDualMomentumTradingDaysPerWeek;
-    const rebalanceIndexes = buildWednesdayRebalanceIndexes(prepared.alignedDates, maxLookbackDays);
+    const rebalanceIndexes = buildWeeklyRebalanceIndexesOnOrBeforeWeekday({
+        dates: prepared.alignedDates,
+        latestWeekday: 3,
+        minimumIndex: maxLookbackDays,
+    });
     const warnings = [...prepared.warnings];
 
     if (prepared.series.length < 3) {
