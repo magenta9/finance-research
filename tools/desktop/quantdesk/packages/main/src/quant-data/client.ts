@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 export type QuantDataMethod =
     | 'get-fx-rates'
     | 'get-price-series'
+    | 'read-prices'
     | 'search-assets'
     | 'status';
 

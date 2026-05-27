@@ -78,7 +78,34 @@ describe('createDataHandlers', () => {
         });
     });
 
-    test('computes asset metrics from cached price history', () => {
+    test('computes asset metrics from quant-data price history when available', async () => {
+        const getRange = vi.fn(() => [
+            {
+                adjustedClose: 100,
+                assetId: 'asset-510300',
+                close: 99,
+                date: '2025-01-01',
+                fetchedAt: '2026-04-15T00:00:00.000Z',
+                high: null,
+                low: null,
+                open: null,
+                source: 'akshare',
+                volume: null,
+            },
+            {
+                adjustedClose: 110,
+                assetId: 'asset-510300',
+                close: 108,
+                date: '2025-01-02',
+                fetchedAt: '2026-04-15T00:00:00.000Z',
+                high: null,
+                low: null,
+                open: null,
+                source: 'akshare',
+                volume: null,
+            },
+        ]);
+        const localGetRange = vi.fn(() => []);
         const handlers = createDataHandlers({
             assetRepository: {
                 create: vi.fn(),
@@ -107,45 +134,24 @@ describe('createDataHandlers', () => {
                 listByPortfolio: vi.fn(() => []),
                 save: vi.fn(),
             },
+            priceReadService: {
+                getRange,
+                listByAsset: vi.fn(() => []),
+            },
             priceRepository: {
                 clearAll: vi.fn(),
                 count: vi.fn(() => 0),
                 getLatestFetchedAt: vi.fn(() => null),
-                getRange: vi.fn(() => [
-                    {
-                        adjustedClose: 100,
-                        assetId: 'asset-510300',
-                        close: 99,
-                        date: '2025-01-01',
-                        fetchedAt: '2026-04-15T00:00:00.000Z',
-                        high: null,
-                        low: null,
-                        open: null,
-                        source: 'akshare',
-                        volume: null,
-                    },
-                    {
-                        adjustedClose: 110,
-                        assetId: 'asset-510300',
-                        close: 108,
-                        date: '2025-01-02',
-                        fetchedAt: '2026-04-15T00:00:00.000Z',
-                        high: null,
-                        low: null,
-                        open: null,
-                        source: 'akshare',
-                        volume: null,
-                    },
-                ]),
+                getRange: localGetRange,
                 listByAsset: vi.fn(() => []),
             },
         });
 
-        expect(handlers.getAssetMetrics({
+        await expect(handlers.getAssetMetrics({
             assetId: 'asset-510300',
             endDate: '2025-01-31',
             startDate: '2025-01-01',
-        })).toMatchObject({
+        })).resolves.toMatchObject({
             analysisSeries: 'close',
             analyticsAvailability: 'ok',
             dataSource: 'akshare',
@@ -156,10 +162,29 @@ describe('createDataHandlers', () => {
             riskFreeRate: 0.02,
             tradingDays: 2,
         });
+        expect(getRange).toHaveBeenCalledWith({
+            assetId: 'asset-510300',
+            endDate: '2025-01-31',
+            startDate: '2025-01-01',
+        });
+        expect(localGetRange).not.toHaveBeenCalled();
     });
 
-    test('returns asset series analytics and logs skipped non-positive regression samples', () => {
+    test('returns asset series analytics from quant-data prices and logs skipped non-positive regression samples', async () => {
         const dates = buildDates(40);
+        const listByAsset = vi.fn(() => Array.from({ length: 40 }, (_, index) => ({
+            adjustedClose: index < 4 ? 0 : 100 + index,
+            assetId: 'asset-spy',
+            close: index < 4 ? 0 : 99 + index,
+            date: dates[index],
+            fetchedAt: '2026-04-15T00:00:00.000Z',
+            high: null,
+            low: null,
+            open: null,
+            source: 'yahoo',
+            volume: null,
+        })));
+        const localListByAsset = vi.fn(() => []);
         const logger = {
             close: vi.fn(),
             error: vi.fn(),
@@ -198,27 +223,20 @@ describe('createDataHandlers', () => {
                 listByPortfolio: vi.fn(() => []),
                 save: vi.fn(),
             },
+            priceReadService: {
+                getRange: vi.fn(() => []),
+                listByAsset,
+            },
             priceRepository: {
                 clearAll: vi.fn(),
                 count: vi.fn(() => 0),
                 getLatestFetchedAt: vi.fn(() => null),
                 getRange: vi.fn(() => []),
-                listByAsset: vi.fn(() => Array.from({ length: 40 }, (_, index) => ({
-                    adjustedClose: index < 4 ? 0 : 100 + index,
-                    assetId: 'asset-spy',
-                    close: index < 4 ? 0 : 99 + index,
-                    date: dates[index],
-                    fetchedAt: '2026-04-15T00:00:00.000Z',
-                    high: null,
-                    low: null,
-                    open: null,
-                    source: 'yahoo',
-                    volume: null,
-                }))),
+                listByAsset: localListByAsset,
             },
         });
 
-        const analytics = handlers.getAssetSeriesAnalytics({
+        const analytics = await handlers.getAssetSeriesAnalytics({
             assetId: 'asset-spy',
             channelWidthSigma: 2,
             displayEndDate: dates[dates.length - 1],
@@ -231,6 +249,8 @@ describe('createDataHandlers', () => {
 
         expect(analytics.meta.analysisSeries).toBe('close');
         expect(analytics.regression.regressionSkippedNonPositiveCount).toBe(4);
+        expect(listByAsset).toHaveBeenCalledWith('asset-spy');
+        expect(localListByAsset).not.toHaveBeenCalled();
         expect(logger.warn).toHaveBeenCalledWith(
             'main',
             'Asset series regression skipped non-positive samples.',

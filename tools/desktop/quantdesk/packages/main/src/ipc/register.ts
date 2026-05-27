@@ -46,7 +46,7 @@ export interface RegisterIpcRuntime {
   agent?: Pick<AgentRuntimeGroup, 'portfolioEngine'>;
   marketData?: {
     orchestrator: MarketDataPublicApi;
-    quantData?: Pick<MarketDataRuntimeGroup['quantData'], 'getStatus'>;
+    quantData?: Pick<MarketDataRuntimeGroup['quantData'], 'getRange' | 'getStatus' | 'listByAsset'>;
     services: Pick<MarketDataServices, 'cacheService' | 'csvImportService' | 'metadataBackfillService' | 'priceSyncService'>;
     sidecarRuntime: Pick<MarketDataRuntimeGroup['sidecarRuntime'], 'snapshot'>;
   };
@@ -217,6 +217,7 @@ export const registerIpcHandlers = ({
     logger,
     marketDataOrchestrator: marketDataRuntime?.orchestrator,
     positionRepository: dataServices.repositories.positionRepository,
+    priceReadService: marketDataRuntime?.quantData,
     priceRepository: dataServices.repositories.priceRepository,
     priceSyncService,
   });

@@ -1,6 +1,7 @@
 import type {
   AssetInput,
   AssetSeriesAnalyticsRequest,
+  DailyPriceRecord,
   AssetMetricsRequest,
   PricePatternAnalogSearchRequest,
   PositionImportRow,
@@ -31,6 +32,10 @@ export interface CreateDataHandlersOptions {
   logger?: LoggerLike;
   marketDataOrchestrator?: Pick<MarketDataPublicApi, 'ensure'>;
   positionRepository: Pick<Repositories['positionRepository'], 'delete' | 'listByPortfolio' | 'save'>;
+  priceReadService?: {
+    getRange: (query: PriceRangeQuery) => Promise<DailyPriceRecord[]> | DailyPriceRecord[];
+    listByAsset: (assetId: string) => Promise<DailyPriceRecord[]> | DailyPriceRecord[];
+  };
   priceRepository: Pick<Repositories['priceRepository'], 'clearAll' | 'count' | 'getLatestFetchedAt' | 'getRange' | 'listByAsset'>;
   priceSyncService?: Pick<PriceSyncService, 'getSyncStatus' | 'syncFxRates' | 'syncPrices'>;
 }
@@ -45,9 +50,14 @@ export const createDataHandlers = ({
   logger,
   marketDataOrchestrator,
   positionRepository,
+  priceReadService,
   priceRepository,
   priceSyncService,
-}: CreateDataHandlersOptions) => ({
+}: CreateDataHandlersOptions) => {
+  const getPriceRange = async (query: PriceRangeQuery) => await (priceReadService?.getRange(query) ?? priceRepository.getRange(query));
+  const listPricesByAsset = async (assetId: string) => await (priceReadService?.listByAsset(assetId) ?? priceRepository.listByAsset(assetId));
+
+  return {
   getAssets: () => assetRepository.list(),
   addAsset: (asset: AssetInput) => {
     if (!marketDataOrchestrator) {
@@ -102,17 +112,17 @@ export const createDataHandlers = ({
 
     return csvImportService.importPricesCsv(assetId, csvText);
   },
-  getPrices: (assetId: string) => priceRepository.listByAsset(assetId),
+  getPrices: (assetId: string) => listPricesByAsset(assetId),
   getPriceRange: (query: PriceRangeQuery) =>
-    priceRepository.getRange(query),
-  getAssetMetrics: (request: AssetMetricsRequest) => {
+    getPriceRange(query),
+  getAssetMetrics: async (request: AssetMetricsRequest) => {
     const asset = assetRepository.list().find((entry) => entry.id === request.assetId);
 
     if (!asset) {
       throw new Error(`Asset not found: ${request.assetId}`);
     }
 
-    const prices = priceRepository.getRange({
+    const prices = await getPriceRange({
       assetId: request.assetId,
       endDate: request.endDate,
       startDate: request.startDate,
@@ -128,14 +138,14 @@ export const createDataHandlers = ({
       })),
     });
   },
-  getAssetSeriesAnalytics: (request: AssetSeriesAnalyticsRequest) => {
+  getAssetSeriesAnalytics: async (request: AssetSeriesAnalyticsRequest) => {
     const asset = assetRepository.list().find((entry) => entry.id === request.assetId);
 
     if (!asset) {
       throw new Error(`Asset not found: ${request.assetId}`);
     }
 
-    const prices = priceRepository.listByAsset(request.assetId);
+    const prices = await listPricesByAsset(request.assetId);
     const analytics = computeAssetSeriesAnalytics({
       channelWidthSigma: request.channelWidthSigma,
       displayEndDate: request.displayEndDate,
@@ -244,7 +254,8 @@ export const createDataHandlers = ({
 
     return csvImportService.importPositionsCsv(rows);
   },
-});
+  };
+};
 
 export const registerDataIpc = (
   binder: ContractBinder,

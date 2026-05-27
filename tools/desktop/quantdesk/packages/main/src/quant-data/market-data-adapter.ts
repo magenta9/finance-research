@@ -1,4 +1,4 @@
-import type { AssetLookupResult } from '@quantdesk/shared';
+import type { AssetLookupResult, DailyPriceRecord, PriceRangeQuery } from '@quantdesk/shared';
 
 import type {
     MarketDataPort,
@@ -29,6 +29,11 @@ interface QuantDataPriceSeriesResult {
     prices?: QuantDataPriceRow[];
     symbol?: string;
     warnings?: string[];
+}
+
+interface QuantDataReadPricesResult {
+    assetId?: string;
+    prices?: DailyPriceRecord[];
 }
 
 interface QuantDataFxRow {
@@ -152,6 +157,21 @@ export class QuantDataMarketDataAdapter {
     async getStatus(): Promise<QuantDataStatusResult> {
         const envelope = await this.client.run<QuantDataStatusResult>('status');
         return envelope.data ?? {};
+    }
+
+    async listByAsset(assetId: string): Promise<DailyPriceRecord[]> {
+        const envelope = await this.client.run<QuantDataReadPricesResult>('read-prices', { assetId });
+        return envelope.data?.prices ?? [];
+    }
+
+    async getRange(query: PriceRangeQuery): Promise<DailyPriceRecord[]> {
+        const envelope = await this.client.run<QuantDataReadPricesResult>('read-prices', {
+            assetId: query.assetId,
+            end: query.endDate,
+            start: query.startDate,
+        });
+
+        return envelope.data?.prices ?? [];
     }
 }
 

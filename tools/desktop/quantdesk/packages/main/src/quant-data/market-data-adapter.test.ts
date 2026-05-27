@@ -91,6 +91,32 @@ const createAdapter = () => {
             };
         }
 
+        if (method === 'read-prices') {
+            return {
+                exitCode: 0,
+                signal: null,
+                stderr: '',
+                stdout: JSON.stringify({
+                    ok: true,
+                    data: {
+                        assetId: 'asset-510300',
+                        prices: [{
+                            adjustedClose: 3.94,
+                            assetId: 'asset-510300',
+                            close: 3.95,
+                            date: '2026-05-14',
+                            fetchedAt: '2026-05-17T00:00:00Z',
+                            high: 3.96,
+                            low: 3.9,
+                            open: 3.91,
+                            source: 'akshare',
+                            volume: 1200000,
+                        }],
+                    },
+                }),
+            };
+        }
+
         throw new Error(`Unexpected method ${method ?? 'unknown'}`);
     });
     const client = new QuantDataCliClient({ command: 'quant-data', runner });
@@ -182,6 +208,32 @@ describe('QuantDataMarketDataAdapter', () => {
         expect(calls[0]).toMatchObject({
             args: ['status'],
             input: undefined,
+        });
+    });
+
+    test('reads stored price rows from quant-data store', async () => {
+        const { adapter, calls } = createAdapter();
+
+        await expect(adapter.getRange({
+            assetId: 'asset-510300',
+            endDate: '2026-05-14',
+            startDate: '2026-05-01',
+        })).resolves.toEqual([{
+            adjustedClose: 3.94,
+            assetId: 'asset-510300',
+            close: 3.95,
+            date: '2026-05-14',
+            fetchedAt: '2026-05-17T00:00:00Z',
+            high: 3.96,
+            low: 3.9,
+            open: 3.91,
+            source: 'akshare',
+            volume: 1200000,
+        }]);
+
+        expect(calls[0]).toMatchObject({
+            args: ['read-prices'],
+            input: '{"assetId":"asset-510300","end":"2026-05-14","start":"2026-05-01"}\n',
         });
     });
 
