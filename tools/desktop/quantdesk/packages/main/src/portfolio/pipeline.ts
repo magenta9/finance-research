@@ -18,6 +18,7 @@ import { optimizeWeights } from './optimizer';
 import { runSidecarOptimization } from './sidecar-optimizer-adapter';
 import {
     defaultAllocationStrategyRegistry,
+    type AllocationStrategyHandler,
     type AllocationStrategyRegistry,
 } from './strategy-registry';
 import {
@@ -153,7 +154,34 @@ export class PortfolioAllocationPipeline {
             });
         }
 
-        const strategyExecution = await this.strategyRegistry[strategy].run({
+        const strategyHandler = this.resolveStrategyHandler(strategy);
+
+        if (!strategyHandler) {
+            return this.buildOutcome({
+                calculationDateRange,
+                effectiveDateRange,
+                optimizerPath: null,
+                result: buildAllocationErrorResult({
+                    baseCurrency,
+                    effectiveDateRange: calculationDateRange,
+                    error: {
+                        code: 'UNSUPPORTED_STRATEGY',
+                        message: `未注册的配置策略：${strategy}`,
+                        suggestions: [
+                            `可用策略：${Object.keys(defaultAllocationStrategyRegistry).sort().join('、')}`,
+                        ],
+                    },
+                    mode,
+                    prepared,
+                    rebalanceCadence,
+                    strategy,
+                }),
+                stage: 'constraint_failed',
+                warnings: prepared.warnings,
+            });
+        }
+
+        const strategyExecution = await strategyHandler.run({
             analysisInput,
             baseCurrency,
             calculationDateRange,
@@ -173,6 +201,10 @@ export class PortfolioAllocationPipeline {
             stage: strategyExecution.stage,
             warnings: prepared.warnings,
         });
+    }
+
+    private resolveStrategyHandler(strategy: AllocationStrategy): AllocationStrategyHandler | null {
+        return (this.strategyRegistry as Partial<AllocationStrategyRegistry>)[strategy] ?? null;
     }
 
     private buildOutcome({

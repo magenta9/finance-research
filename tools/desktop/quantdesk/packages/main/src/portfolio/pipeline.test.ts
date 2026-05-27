@@ -119,6 +119,31 @@ describe('portfolio allocation pipeline', () => {
         ]);
     });
 
+    test('returns an explicit error when a strategy handler is missing', async () => {
+        const assets = [
+            buildAsset('asset-a', 'SPY', 'equity'),
+            buildAsset('asset-b', 'AGG', 'fixed_income'),
+        ];
+        const { preparationService, sidecarManager } = createPipeline({
+            preparationResult: buildPreparedSuccess({ assets }),
+        });
+        const registry = { ...defaultAllocationStrategyRegistry };
+        delete (registry as Partial<typeof registry>).active_dual_momentum_gtaa;
+        const pipeline = new PortfolioAllocationPipeline(preparationService, sidecarManager as never, registry as never);
+
+        const outcome = await pipeline.allocate({
+            assetIds: assets.map((asset) => asset.id),
+            baseCurrency: 'USD',
+            constraints: baseConstraints,
+            mode: 'inverse_volatility',
+            strategy: 'active_dual_momentum_gtaa',
+        });
+
+        expect(outcome.meta.stage).toBe('constraint_failed');
+        expect(outcome.meta.optimizerPath).toBeNull();
+        expect(outcome.result.error).toEqual(expect.objectContaining({ code: 'UNSUPPORTED_STRATEGY' }));
+    });
+
     test('returns completed outcome with js optimizer path on success', async () => {
         const assets = [
             buildAsset('asset-a', 'SPY', 'equity'),
