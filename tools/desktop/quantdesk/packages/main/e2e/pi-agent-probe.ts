@@ -1,14 +1,14 @@
 import type { App, BrowserWindow } from 'electron';
 
 interface PiAgentProbePayload {
-    assistantContainsReadyToken: boolean;
-    diagnosticsVisible: boolean;
-    messageCount: number;
-    modelSummary: string;
-    riskAcknowledgedAfterAck: string;
+  assistantContainsReadyToken: boolean;
+  diagnosticsVisible: boolean;
+  messageCount: number;
+  modelSummary: string;
+  riskAcknowledgedAfterAck: string;
   runState: string;
-    runtimeState: string;
-    sessionCount: number;
+  runtimeState: string;
+  sessionCount: number;
 }
 
 const buildProbeScript = () => `
@@ -109,17 +109,17 @@ const buildProbeScript = () => `
 `;
 
 export const runPiAgentE2eProbe = async ({
-    app,
-    window,
+  app,
+  window,
 }: {
-    app: App;
-    window: BrowserWindow;
+  app: App;
+  window: BrowserWindow;
 }) => {
-    const payload = (await window.webContents.executeJavaScript(
-        buildProbeScript(),
-        true,
-    )) as PiAgentProbePayload;
+  const payload = (await window.webContents.executeJavaScript(
+    buildProbeScript(),
+    true,
+  )) as PiAgentProbePayload;
 
-    process.stdout.write(`${JSON.stringify({ type: 'pi-agent-e2e-probe', payload })}\n`);
-    app.quit();
+  process.stdout.write(`${JSON.stringify({ type: 'pi-agent-e2e-probe', payload })}\n`);
+  app.quit();
 };

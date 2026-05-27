@@ -325,12 +325,12 @@ describe('createPiSessionAdapter', () => {
 
                     return { status: 'complete', type: 'message' };
                 })).toEqual(snapshot.expectedBlocks.map((block) => (
-                        block.type === 'text'
-                            ? { status: block.status === 'streaming' ? 'streaming' : 'complete', type: 'assistant_message' }
-                            : block.type === 'thinking'
-                                ? { status: block.status, type: 'reasoning' }
-                                : { status: block.status, type: 'tool_call' }
-                    )));
+                    block.type === 'text'
+                        ? { status: block.status === 'streaming' ? 'streaming' : 'complete', type: 'assistant_message' }
+                        : block.type === 'thinking'
+                            ? { status: block.status, type: 'reasoning' }
+                            : { status: block.status, type: 'tool_call' }
+                )));
                 await vi.advanceTimersByTimeAsync(1000);
             }
         } finally {

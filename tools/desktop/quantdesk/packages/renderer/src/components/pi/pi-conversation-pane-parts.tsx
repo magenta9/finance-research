@@ -109,25 +109,25 @@ const TimelineMessageBubble = ({ message }: { message: Extract<ConversationTimel
 
     return (
         <div className={isUser ? 'flex justify-end' : 'flex justify-start'}>
-        <article
-            className={[
-                'max-w-[82%] rounded-2xl border px-4 py-3',
-                isUser
-                    ? 'rounded-br-sm border-[rgba(156,98,55,0.18)] bg-[rgba(156,98,55,0.1)]'
-                    : 'rounded-bl-sm border-[rgba(70,53,43,0.1)] bg-[rgba(255,255,255,0.36)]',
-            ].join(' ')}
-        >
-            <div className="pi-chat-markdown pi-chat-markdown-message">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {message.content}
-                </ReactMarkdown>
-            </div>
-            <div className={['mt-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)]', isUser ? 'justify-end' : 'justify-start'].join(' ')}>
-                {!isUser && <span>{roleLabelMap[message.role] ?? message.role}</span>}
-                {message.createdAt && <span>{formatTimestamp(message.createdAt)}</span>}
-            </div>
-        </article>
-    </div>
+            <article
+                className={[
+                    'max-w-[82%] rounded-2xl border px-4 py-3',
+                    isUser
+                        ? 'rounded-br-sm border-[rgba(156,98,55,0.18)] bg-[rgba(156,98,55,0.1)]'
+                        : 'rounded-bl-sm border-[rgba(70,53,43,0.1)] bg-[rgba(255,255,255,0.36)]',
+                ].join(' ')}
+            >
+                <div className="pi-chat-markdown pi-chat-markdown-message">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {message.content}
+                    </ReactMarkdown>
+                </div>
+                <div className={['mt-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)]', isUser ? 'justify-end' : 'justify-start'].join(' ')}>
+                    {!isUser && <span>{roleLabelMap[message.role] ?? message.role}</span>}
+                    {message.createdAt && <span>{formatTimestamp(message.createdAt)}</span>}
+                </div>
+            </article>
+        </div>
     );
 };
 
