@@ -8,6 +8,7 @@ import type {
 } from '@quantdesk/shared';
 
 import type { PreparedAllocationData } from './preprocessor';
+import { buildAllocationRecords } from './allocation-records';
 import { buildAllocationRiskMetrics } from './allocation-risk-metrics';
 import { simulatePortfolioPath } from './path-simulator';
 import { buildScenarioAnalysis } from './scenarios';
@@ -84,21 +85,16 @@ export const assembleAllocationResult = ({
         effectiveWeights,
         prepared,
     });
-    const allocations = prepared.series.map((entry, index) => ({
-        annualizedReturn: annualizedMeanReturns[index],
-        annualizedVolatility: annualizedAssetVolatility[index],
-        assetClass: entry.asset.assetClass,
-        assetId: entry.asset.id,
-        currency: entry.asset.currency,
-        market: entry.asset.market,
-        name: entry.asset.name,
-        riskContribution: riskMetrics.contributions[index],
-        symbol: entry.asset.symbol,
-        weight: effectiveWeights[index],
-    }));
+    const records = buildAllocationRecords({
+        annualizedAssetVolatility,
+        annualizedMeanReturns,
+        effectiveWeights,
+        prepared,
+        riskContributions: riskMetrics.contributions,
+    });
 
     return {
-        allocations: allocations.sort((left, right) => right.weight - left.weight),
+        allocations: records.allocations,
         baseCurrency,
         correlationMatrix: riskMetrics.correlationMatrix,
         diagnostics: {
@@ -146,10 +142,8 @@ export const assembleAllocationResult = ({
         portfolioPath: combinedSleeveSimulation?.path ?? pathSimulation.portfolioPath,
         rebalanceCadence,
         riskContributions: riskMetrics.riskContributions,
-        scenarioAnalysis: buildScenarioAnalysis(allocations),
-        weights: Object.fromEntries(
-            prepared.series.map((entry, index) => [entry.asset.id, effectiveWeights[index]]),
-        ),
+        scenarioAnalysis: buildScenarioAnalysis(records.allocations),
+        weights: records.weights,
     };
 };
 
