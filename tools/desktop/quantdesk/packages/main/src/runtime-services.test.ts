@@ -15,9 +15,11 @@ vi.mock('node:fs', () => ({
 import {
     ensurePiRuntimeDirectories,
     resolveProductionSkillPaths,
+    resolveProductionProjectRoot,
     resolvePiRuntimeDirectories,
     resolvePiWrapperEntryFile,
     resolveSidecarPythonCommand,
+    resolveStrategyQuantDataConfig,
 } from './runtime-services';
 
 describe('resolveSidecarPythonCommand', () => {
@@ -105,5 +107,40 @@ describe('resolveSidecarPythonCommand', () => {
         expect(resolveProductionSkillPaths({ isPackaged: false })).toEqual([
             path.resolve(process.cwd(), '../../..', '.agents', 'skills'),
         ]);
+    });
+
+    test('points strategy CLI at the current repo in development', () => {
+        const originalQuantDataCli = process.env.QUANT_DATA_CLI;
+        const originalQuantDataCliArgs = process.env.QUANT_DATA_CLI_ARGS;
+        const originalQuantDataCwd = process.env.QUANT_DATA_CWD;
+        const projectRoot = resolveProductionProjectRoot({ isPackaged: false });
+
+        delete process.env.QUANT_DATA_CLI;
+        delete process.env.QUANT_DATA_CLI_ARGS;
+        delete process.env.QUANT_DATA_CWD;
+        try {
+            expect(projectRoot).toBe(path.resolve(process.cwd(), '../../..'));
+            expect(resolveStrategyQuantDataConfig({ isPackaged: false, projectRoot })).toEqual({
+                quantDataArgs: ['run', './cmd/quant-data'],
+                quantDataCommand: 'go',
+                quantDataCwd: path.join(projectRoot, 'tools', 'data', 'quant-data'),
+            });
+        } finally {
+            if (originalQuantDataCli === undefined) {
+                delete process.env.QUANT_DATA_CLI;
+            } else {
+                process.env.QUANT_DATA_CLI = originalQuantDataCli;
+            }
+            if (originalQuantDataCliArgs === undefined) {
+                delete process.env.QUANT_DATA_CLI_ARGS;
+            } else {
+                process.env.QUANT_DATA_CLI_ARGS = originalQuantDataCliArgs;
+            }
+            if (originalQuantDataCwd === undefined) {
+                delete process.env.QUANT_DATA_CWD;
+            } else {
+                process.env.QUANT_DATA_CWD = originalQuantDataCwd;
+            }
+        }
     });
 });

@@ -339,4 +339,44 @@ describe('createFinanceHandlers', () => {
       status: 'unavailable',
     }));
   });
+
+  test('analyze_futures_trend_observation runs the repository strategy CLI service', async () => {
+    const strategyCliService = {
+      analyzeFuturesTrendObservation: vi.fn(async () => ({
+        dataQualityStatus: 'available',
+        latestDate: '2026-05-27',
+        overallDirectionLabel: '多头',
+        overallStatusLabel: '到达趋势观察位',
+        symbol: 'LH9999',
+      })),
+    };
+    const handlers = createFinanceHandlers({
+      ...createContext([buildAsset()]),
+      strategyCliService,
+    });
+
+    const payload = await handlers.analyze_futures_trend_observation({
+      end: '2026-05-27',
+      market: 'COMMODITY',
+      symbol: 'lh',
+    });
+
+    expect(strategyCliService.analyzeFuturesTrendObservation).toHaveBeenCalledWith({
+      end: '2026-05-27',
+      lookbackDays: undefined,
+      market: 'COMMODITY',
+      symbol: 'LH',
+    });
+    expect(payload.ok).toBe(true);
+    expect(payload.citations).toEqual(['[skill:futures-trend-observation]', '[strategy:futures-trend-observation:LH9999]']);
+    expect(payload.summary).toContain('LH9999 趋势观察：到达趋势观察位，方向 多头');
+  });
+
+  test('analyze_futures_trend_observation degrades when the strategy CLI service is missing', async () => {
+    const handlers = createFinanceHandlers(createContext([buildAsset()]));
+    const payload = await handlers.analyze_futures_trend_observation({ market: 'COMMODITY', symbol: 'LH9999' });
+
+    expect(payload.ok).toBe(false);
+    expect(payload.payload).toEqual(expect.objectContaining({ reasonCode: 'provider_unavailable' }));
+  });
 });

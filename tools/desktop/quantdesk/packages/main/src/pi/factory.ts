@@ -55,6 +55,7 @@ export const createPiRuntimeGroup = ({
   marketSourceService,
   priceSyncService,
   researchProviderService,
+  strategyCliService,
   spawnSpec,
 }: {
   dataServices: DataServices;
@@ -67,6 +68,7 @@ export const createPiRuntimeGroup = ({
   priceSyncService?: Parameters<typeof createFinanceCapabilityContext>[0]['priceSyncService'];
   researchProviderService?: ResearchProviderService;
   spawnSpec: PiManagerOptions['spawnSpec'];
+  strategyCliService?: Parameters<typeof createFinanceCapabilityContext>[0]['strategyCliService'];
 }): PiRuntimeGroup => {
   const defaultResearchProviderService = createDefaultResearchProviderService();
   const toolHost = createPiToolHost(createFinanceCapabilityContext({
@@ -80,6 +82,7 @@ export const createPiRuntimeGroup = ({
       ...defaultResearchProviderService,
       ...researchProviderService,
     },
+    strategyCliService,
   }));
 
   return {

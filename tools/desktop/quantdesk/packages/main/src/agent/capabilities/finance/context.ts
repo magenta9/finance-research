@@ -26,6 +26,7 @@ export const createFinanceCapabilityContext = ({
   portfolioEngine,
   priceSyncService,
   researchProviderService,
+  strategyCliService,
 }: {
   dataServices: DataServices;
   docsRagService: DocsRagService;
@@ -34,6 +35,7 @@ export const createFinanceCapabilityContext = ({
   portfolioEngine: PortfolioEngine;
   priceSyncService?: FinanceCapabilityContext['priceSyncService'];
   researchProviderService?: FinanceCapabilityContext['researchProviderService'];
+  strategyCliService?: FinanceCapabilityContext['strategyCliService'];
 }): FinanceCapabilityContext => ({
   dataServices,
   docsRagService,
@@ -53,4 +55,5 @@ export const createFinanceCapabilityContext = ({
   portfolioEngine,
   priceSyncService,
   researchProviderService,
+  strategyCliService,
 });

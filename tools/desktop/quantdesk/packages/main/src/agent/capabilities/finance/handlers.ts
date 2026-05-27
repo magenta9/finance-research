@@ -34,6 +34,12 @@ const asStringArray = (value: unknown) => (
 
 const asOptionalStringArray = (value: unknown) => asStringArray(value) ?? [];
 
+const asOptionalIsoDate = (value: unknown) => {
+  const text = asString(value);
+
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : undefined;
+};
+
 const asAnalogWindow = (value: unknown) => {
   if (value === '3M' || value === '6M' || value === '1Y') {
     return value;
@@ -52,6 +58,28 @@ const createProviderUnavailablePayload = (toolName: string, providerId: string) 
   },
   summary: `${providerId} 当前不可用；该工具只能产出结构化降级结果，不能作为事实证据。`,
 });
+
+const resultString = (payload: Record<string, unknown>, key: string) => {
+  const value = payload[key];
+
+  return typeof value === 'string' && value.trim().length > 0 ? value : null;
+};
+
+const nestedResultString = (payload: Record<string, unknown>, parentKey: string, key: string) => {
+  const parent = payload[parentKey];
+
+  if (typeof parent !== 'object' || parent === null || Array.isArray(parent)) {
+    return null;
+  }
+
+  return resultString(parent as Record<string, unknown>, key);
+};
+
+const resultStringArray = (payload: Record<string, unknown>, key: string) => {
+  const value = payload[key];
+
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+};
 
 const createToolProvenance = (input: {
   qualityStatus?: DataProvenance['qualityStatus'];
@@ -675,6 +703,47 @@ export const createFinanceHandlers = (runtime: FinanceCapabilityContext) => {
         payload: snapshot,
         summary: snapshot.summary,
       });
+    },
+    async analyze_futures_trend_observation(args) {
+      const symbol = asString(args.symbol).toUpperCase();
+      const market = asString(args.market).toUpperCase();
+
+      if (!runtime.strategyCliService) {
+        return createProviderUnavailablePayload('analyze_futures_trend_observation', 'strategy.futures_trend_observation');
+      }
+
+      try {
+        const result = await runtime.strategyCliService.analyzeFuturesTrendObservation({
+          end: asOptionalIsoDate(args.end),
+          lookbackDays: args.lookbackDays === undefined ? undefined : asInteger(args.lookbackDays, 3650, 120, 10000),
+          market,
+          symbol,
+        });
+        const resultSymbol = resultString(result, 'symbol') ?? symbol;
+        const statusLabel = resultString(result, 'overallStatusLabel') ?? nestedResultString(result, 'overall', 'statusLabel') ?? '不可用';
+        const directionLabel = resultString(result, 'overallDirectionLabel') ?? nestedResultString(result, 'overall', 'directionLabel') ?? '不可用';
+        const latestDate = resultString(result, 'latestDate') ?? nestedResultString(result, 'overall', 'latestDate') ?? null;
+        const dataQualityStatus = resultString(result, 'dataQualityStatus');
+        const dataGaps = resultStringArray(result, 'dataGaps');
+        const ok = statusLabel !== '不可用' && dataQualityStatus !== 'unavailable';
+
+        return createPayload('analyze_futures_trend_observation', {
+          citations: ['[skill:futures-trend-observation]', `[strategy:futures-trend-observation:${resultSymbol}]`],
+          ok,
+          payload: result,
+          summary: `${resultSymbol} 趋势观察：${statusLabel}，方向 ${directionLabel}${latestDate ? `，最新日期 ${latestDate}` : ''}${dataGaps.length > 0 ? `；数据缺口 ${dataGaps.length} 项` : ''}。`,
+        });
+      } catch (error) {
+        return createPayload('analyze_futures_trend_observation', {
+          citations: ['[skill:futures-trend-observation]'],
+          ok: false,
+          payload: {
+            reasonCode: 'strategy_cli_failed',
+            symbol,
+          },
+          summary: `趋势观察 CLI 调用失败：${error instanceof Error ? error.message : String(error)}`,
+        });
+      }
     },
     async propose_rebalance() {
       const skillContext = runtime.getSkillContext('propose-rebalance');

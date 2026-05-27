@@ -21,6 +21,8 @@ extraResources:
     to: .pi
   - from: ../../../.agents/skills
     to: .agents/skills
+  - from: ../../../tools/strategy/futures-trend-observation
+    to: tools/strategy/futures-trend-observation
   - from: build/sidecar-package
     to: sidecar
 extraMetadata:

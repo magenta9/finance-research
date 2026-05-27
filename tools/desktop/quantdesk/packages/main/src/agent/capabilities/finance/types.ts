@@ -56,6 +56,17 @@ export interface ResearchProviderService {
   searchNewsCatalysts?: (request: { market?: string; query: string; symbol?: string }) => Promise<ResearchProviderSnapshot>;
 }
 
+export interface FuturesTrendObservationRequest {
+  end?: string;
+  lookbackDays?: number;
+  market: string;
+  symbol: string;
+}
+
+export interface StrategyCliService {
+  analyzeFuturesTrendObservation: (request: FuturesTrendObservationRequest) => Promise<Record<string, unknown>>;
+}
+
 export interface FinanceToolDefinition {
   description: string;
   inputSchema: Record<string, unknown>;
@@ -88,6 +99,7 @@ export interface FinanceCapabilityContext {
   portfolioEngine: Pick<PortfolioEngine, 'runAllocation'>;
   priceSyncService?: Pick<PriceSyncService, 'syncPrices'>;
   researchProviderService?: ResearchProviderService;
+  strategyCliService?: StrategyCliService;
 }
 
 export type FinanceHandler = (args: Record<string, unknown>) => Promise<FinanceToolPayload>;

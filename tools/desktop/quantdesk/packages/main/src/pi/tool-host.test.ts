@@ -106,4 +106,35 @@ describe('createPiToolHost', () => {
     expect(response.payload.citations).toEqual(['[docs:quantdesk]']);
     expect(response.payload.summary).toBe('docs:allocation');
   });
+
+  test('executes repository strategy CLI tools through the host', async () => {
+    const context = {
+      ...createContext([buildAsset()]),
+      strategyCliService: {
+        analyzeFuturesTrendObservation: vi.fn(async () => ({
+          dataQualityStatus: 'available',
+          overallDirectionLabel: '空头',
+          overallStatusLabel: '有趋势但未到观察位',
+          symbol: 'LH9999',
+        })),
+      },
+    } satisfies FinanceCapabilityContext;
+    const host = createPiToolHost(context);
+
+    const response = await host.execute({
+      args: { market: 'COMMODITY', symbol: 'LH9999' },
+      runId: 'run-1',
+      sessionId: 'session-1',
+      toolCallId: 'tool-1',
+      toolName: 'analyze_futures_trend_observation',
+    });
+
+    expect(context.strategyCliService.analyzeFuturesTrendObservation).toHaveBeenCalledWith({
+      end: undefined,
+      lookbackDays: undefined,
+      market: 'COMMODITY',
+      symbol: 'LH9999',
+    });
+    expect(response.payload.summary).toContain('LH9999 趋势观察');
+  });
 });

@@ -3,6 +3,7 @@ import { mkdirSync } from 'node:fs';
 
 import type { DataServices } from './db/services';
 import { DocsRagService } from './agent/rag/docs-rag-service';
+import { createFuturesTrendObservationService } from './agent/capabilities/finance';
 import type { LoggerLike } from './logger';
 import { PortfolioEngine } from './portfolio/engine';
 import { createPiRuntimeGroup, type PiRuntimeGroup } from './pi/factory';
@@ -60,6 +61,36 @@ export const resolveProductionSkillPaths = ({ isPackaged }: { isPackaged: boolea
     ];
 };
 
+export const resolveProductionProjectRoot = ({ isPackaged }: { isPackaged: boolean }) => {
+    const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
+
+    return isPackaged && resourcesPath
+        ? resourcesPath
+        : path.resolve(process.cwd(), '../../..');
+};
+
+const parseCliArgs = (raw?: string) => raw?.split(' ').map((part) => part.trim()).filter((part) => part.length > 0) ?? [];
+
+export const resolveStrategyQuantDataConfig = ({ isPackaged, projectRoot }: { isPackaged: boolean; projectRoot: string }) => {
+    if (process.env.QUANT_DATA_CLI) {
+        return {
+            quantDataArgs: parseCliArgs(process.env.QUANT_DATA_CLI_ARGS),
+            quantDataCommand: process.env.QUANT_DATA_CLI,
+            quantDataCwd: process.env.QUANT_DATA_CWD,
+        };
+    }
+
+    if (isPackaged) {
+        return {};
+    }
+
+    return {
+        quantDataArgs: ['run', './cmd/quant-data'],
+        quantDataCommand: 'go',
+        quantDataCwd: path.join(projectRoot, 'tools', 'data', 'quant-data'),
+    };
+};
+
 export const createRuntimeServices = ({
     dataServices,
     isPackaged,
@@ -95,6 +126,12 @@ export const createRuntimeServices = ({
         { shouldSkipInteractiveSync },
     );
     const docsRagService = new DocsRagService();
+    const productionProjectRoot = resolveProductionProjectRoot({ isPackaged });
+    const strategyCliService = createFuturesTrendObservationService({
+        projectRoot: productionProjectRoot,
+        pythonCommand: resolveSidecarPythonCommand({ isPackaged }),
+        ...resolveStrategyQuantDataConfig({ isPackaged, projectRoot: productionProjectRoot }),
+    });
     const piDirectories = resolvePiRuntimeDirectories(userDataPath);
     ensurePiRuntimeDirectories(piDirectories);
     const pi = createPiRuntimeGroup({
@@ -121,6 +158,7 @@ export const createRuntimeServices = ({
                 QUANTDESK_PI_WORKSPACE_DIR: piDirectories.workspaceDir,
             },
         }),
+        strategyCliService,
     });
 
     const agent: AgentRuntimeGroup = {

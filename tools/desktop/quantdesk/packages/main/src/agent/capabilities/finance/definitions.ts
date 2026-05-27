@@ -227,6 +227,33 @@ export const financeToolDefinitions: FinanceToolDefinition[] = [
     visibility: 'contextual',
   },
   {
+    description: 'Run the repository futures trend observation deterministic CLI for a futures main contract. This returns observation status only and never trade execution advice.',
+    inputSchema: objectSchema({
+      end: {
+        description: 'Optional YYYY-MM-DD end date. Defaults to the CLI current date.',
+        type: 'string',
+      },
+      lookbackDays: {
+        default: 3650,
+        maximum: 10000,
+        minimum: 120,
+        type: 'number',
+      },
+      market: {
+        description: 'quant-data market, usually COMMODITY for domestic futures.',
+        minLength: 1,
+        type: 'string',
+      },
+      symbol: {
+        description: 'Futures symbol or main continuous symbol, for example LH or LH9999.',
+        minLength: 1,
+        type: 'string',
+      },
+    }, ['symbol', 'market']),
+    name: 'analyze_futures_trend_observation',
+    visibility: 'contextual',
+  },
+  {
     description: 'Compare current holdings against the latest target allocation.',
     inputSchema: objectSchema({}),
     name: 'propose_rebalance',
