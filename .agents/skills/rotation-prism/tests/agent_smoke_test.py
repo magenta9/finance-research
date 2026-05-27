@@ -24,10 +24,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS)
     parser.add_argument(
         "--prompt",
-        default=(
-            "/skill:rotation-prism\n\n"
-            "比较中证红利跟红利低波。"
-        ),
+        default=("/skill:rotation-prism\n\n比较中证红利跟红利低波。"),
     )
     return parser.parse_args()
 
@@ -51,7 +48,9 @@ def main() -> int:
             timeout=args.timeout_seconds,
         )
     except OSError as error:
-        print(f"rotation-prism agent smoke could not start pi: {error}", file=sys.stderr)
+        print(
+            f"rotation-prism agent smoke could not start pi: {error}", file=sys.stderr
+        )
         return 127
     except subprocess.TimeoutExpired:
         print(

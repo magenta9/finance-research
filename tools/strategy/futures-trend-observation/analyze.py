@@ -53,9 +53,7 @@ def strict_iso_date(date_text: str) -> date:
     return date.fromisoformat(date_text)
 
 
-def validate_date_inputs(
-    args: argparse.Namespace, start: str, end: str
-) -> list[str]:
+def validate_date_inputs(args: argparse.Namespace, start: str, end: str) -> list[str]:
     gaps: list[str] = []
     parsed_start: date | None = None
     parsed_end: date | None = None
@@ -68,7 +66,11 @@ def validate_date_inputs(
         parsed_end = strict_iso_date(end)
     except ValueError:
         gaps.append(f"end must be YYYY-MM-DD: {end}")
-    if parsed_start is not None and parsed_end is not None and parsed_start > parsed_end:
+    if (
+        parsed_start is not None
+        and parsed_end is not None
+        and parsed_start > parsed_end
+    ):
         gaps.append("start must be on or before end")
     if args.lookback_days <= 0:
         gaps.append("lookback-days must be greater than 0")

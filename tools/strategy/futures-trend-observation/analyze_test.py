@@ -70,9 +70,7 @@ class AnalyzeQuantDataBoundaryTest(unittest.TestCase):
 
         def fake_run(*_args: object, **kwargs: object) -> object:
             self.assertEqual(kwargs.get("timeout"), 9)
-            raise analyze_module.subprocess.TimeoutExpired(
-                cmd="quant-data", timeout=9
-            )
+            raise analyze_module.subprocess.TimeoutExpired(cmd="quant-data", timeout=9)
 
         test_args = args()
         test_args.quant_data_timeout_seconds = 9

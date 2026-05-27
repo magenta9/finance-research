@@ -159,7 +159,9 @@ class AnalyzeScriptTest(unittest.TestCase):
     def test_check_quant_data_reports_timeout(self) -> None:
         original = analyze_module.subprocess.run
 
-        def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        def fake_run(
+            *args: object, **kwargs: object
+        ) -> subprocess.CompletedProcess[str]:
             raise subprocess.TimeoutExpired(cmd="quant-data", timeout=30)
 
         try:
@@ -180,7 +182,9 @@ class AnalyzeScriptTest(unittest.TestCase):
     def test_check_quant_data_uses_configured_timeout(self) -> None:
         original = analyze_module.subprocess.run
 
-        def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        def fake_run(
+            *args: object, **kwargs: object
+        ) -> subprocess.CompletedProcess[str]:
             self.assertEqual(kwargs.get("timeout"), 7)
             raise subprocess.TimeoutExpired(cmd="quant-data", timeout=7)
 

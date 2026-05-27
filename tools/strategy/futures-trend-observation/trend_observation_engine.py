@@ -467,15 +467,15 @@ def analyze_rows(
     warnings = data.get("warnings")
     if not isinstance(warnings, list):
         warnings = []
-    data_gaps = [
-        f"quant-data warning: {warning}" for warning in warnings
-    ]
+    data_gaps = [f"quant-data warning: {warning}" for warning in warnings]
     data_gaps.extend(gap for item in timeframes for gap in item["dataGaps"])
     return {
         "dataGaps": data_gaps,
         "meta": {
             "assetId": asset_id or None,
-            "attemptedSources": data.get("attemptedSources") if isinstance(data.get("attemptedSources"), list) else [],
+            "attemptedSources": data.get("attemptedSources")
+            if isinstance(data.get("attemptedSources"), list)
+            else [],
             "dataQualityStatus": envelope.get("dataQualityStatus"),
             "end": end,
             "generatedAt": datetime.now(timezone.utc).isoformat(),
