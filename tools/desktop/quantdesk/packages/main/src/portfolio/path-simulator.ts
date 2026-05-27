@@ -65,15 +65,19 @@ export const simulatePortfolioPath = ({
         }
 
         const asset = assetMetadata?.[assetIndex];
+        if (!asset) {
+            return [];
+        }
+
         return [{
             action: 'open_long' as const,
-            assetId: asset?.assetId ?? `asset-${assetIndex}`,
+            assetId: asset.assetId,
             date: alignedDates[0] ?? '',
             fromWeight: 0,
-            name: asset?.name ?? asset?.symbol ?? `Asset ${assetIndex + 1}`,
+            name: asset.name,
             reason: '配置建仓',
             source: 'allocation' as const,
-            symbol: asset?.symbol ?? `Asset ${assetIndex + 1}`,
+            symbol: asset.symbol,
             toWeight: weight,
             weightChange: weight,
         }];
@@ -108,15 +112,19 @@ export const simulatePortfolioPath = ({
                 }
 
                 const asset = assetMetadata?.[assetIndex];
+                if (!asset) {
+                    return;
+                }
+
                 trades.push({
                     action: resolveAllocationTradeAction(fromWeight, targetWeight),
-                    assetId: asset?.assetId ?? `asset-${assetIndex}`,
+                    assetId: asset.assetId,
                     date: alignedDates[dayIndex] ?? '',
                     fromWeight,
-                    name: asset?.name ?? asset?.symbol ?? `Asset ${assetIndex + 1}`,
+                    name: asset.name,
                     reason: '配置调仓',
                     source: 'allocation',
-                    symbol: asset?.symbol ?? `Asset ${assetIndex + 1}`,
+                    symbol: asset.symbol,
                     toWeight: targetWeight,
                     weightChange,
                 });

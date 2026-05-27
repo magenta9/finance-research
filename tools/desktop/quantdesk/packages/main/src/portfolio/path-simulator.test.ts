@@ -29,6 +29,21 @@ describe('simulatePortfolioPath', () => {
         expect(result.metrics.maxDrawdown).toBe(0);
     });
 
+    test('does not invent trade identifiers when asset metadata is missing', () => {
+        const result = simulatePortfolioPath({
+            alignedDates: ['2026-01-08', '2026-01-09', '2026-01-12'],
+            priceSeries: [
+                [100, 200, 200],
+                [100, 100, 200],
+            ],
+            rebalanceCadence: 'weekly',
+            targetWeights: [0.5, 0.5],
+        });
+
+        expect(result.portfolioEquity).toEqual([1, 1.5, 2.25]);
+        expect(result.trades).toEqual([]);
+    });
+
     test('rebalances on the last available trading day of a month', () => {
         const result = simulatePortfolioPath({
             alignedDates: ['2026-01-30', '2026-01-31', '2026-02-03'],
