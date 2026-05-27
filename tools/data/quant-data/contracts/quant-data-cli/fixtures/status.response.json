@@ -8,6 +8,11 @@
             "priceRowCount": 12,
             "fxRateRowCount": 4,
             "latestPriceFetchAt": "2026-05-17T00:00:00Z"
+        },
+        "providerConfiguration": {
+            "ready": true,
+            "code": null,
+            "message": null
         }
     },
     "maintenanceStatus": {
