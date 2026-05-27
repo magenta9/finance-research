@@ -1,6 +1,5 @@
 import type {
     AllocationConstraints,
-    AllocationDiagnostics,
     AllocationResult,
     AllocationStrategy,
     AllocationStrategyMix,
@@ -11,11 +10,13 @@ import type {
 
 import type { PreparedAllocationData } from './preprocessor';
 import {
+    DefaultAllocationOptimizerAdapter,
+    type AllocationOptimizerAdapter,
+} from './allocation-optimizer-adapter';
+import {
     buildAllocationErrorResult,
 } from './allocation-result-assembler';
 import type { AllocationPreparationService } from './preparation-service';
-import { optimizeWeights } from './optimizer';
-import { runSidecarOptimization } from './sidecar-optimizer-adapter';
 import {
     defaultAllocationStrategyRegistry,
     type AllocationStrategyHandler,
@@ -58,7 +59,7 @@ export interface PortfolioAllocationOutcome {
 export class PortfolioAllocationPipeline {
     private readonly preparationService: Pick<AllocationPreparationService, 'prepare'>;
 
-    private readonly sidecarRuntime: SidecarRpc;
+    private readonly optimizerAdapter: AllocationOptimizerAdapter;
 
     private readonly strategyRegistry: AllocationStrategyRegistry;
 
@@ -66,9 +67,10 @@ export class PortfolioAllocationPipeline {
         preparationService: Pick<AllocationPreparationService, 'prepare'>,
         sidecarRuntime: SidecarRpc,
         strategyRegistry: AllocationStrategyRegistry = defaultAllocationStrategyRegistry,
+        optimizerAdapter: AllocationOptimizerAdapter = new DefaultAllocationOptimizerAdapter(sidecarRuntime),
     ) {
         this.preparationService = preparationService;
-        this.sidecarRuntime = sidecarRuntime;
+        this.optimizerAdapter = optimizerAdapter;
         this.strategyRegistry = strategyRegistry;
     }
 
@@ -187,7 +189,7 @@ export class PortfolioAllocationPipeline {
             calculationDateRange,
             constraints,
             mode,
-            optimize: (request) => this.optimize(request),
+            optimize: (request) => this.optimizerAdapter.optimize(request),
             prepared,
             rebalanceCadence,
             strategy,
@@ -294,89 +296,4 @@ export class PortfolioAllocationPipeline {
         };
     }
 
-    private async optimize({
-        annualizedAssetVolatility,
-        assetIndexes,
-        constraints,
-        covariance,
-        mode,
-        prepared,
-    }: {
-        annualizedAssetVolatility: number[];
-        assetIndexes: number[];
-        constraints: AllocationConstraints;
-        covariance: number[][];
-        mode: AllocationType;
-        prepared: PreparedAllocationData;
-    }): Promise<
-        | {
-            diagnostics: Partial<AllocationDiagnostics>;
-            diversificationRatio?: number;
-            ok: true;
-            optimizer: 'js' | 'python';
-            weights: number[];
-        }
-        | {
-            error: NonNullable<AllocationResult['error']>;
-            ok: false;
-            optimizerPath: 'js' | 'python' | null;
-        }
-    > {
-        const assetClasses = assetIndexes.map((index) => prepared.series[index].asset.assetClass);
-        const covarianceSubset = assetIndexes.map((rowIndex) => assetIndexes.map((columnIndex) => covariance[rowIndex]?.[columnIndex] ?? 0));
-        const volatilities = assetIndexes.map((index) => annualizedAssetVolatility[index] ?? 0);
-
-        if (assetIndexes.length > 20) {
-            const sidecarResult = await runSidecarOptimization(this.sidecarRuntime, {
-                assetClasses,
-                constraints,
-                covariance: covarianceSubset,
-                mode,
-                volatilities,
-            });
-
-            if (!sidecarResult.ok) {
-                return { error: sidecarResult.error, ok: false, optimizerPath: 'python' };
-            }
-
-            return {
-                diagnostics: sidecarResult.result.diagnostics,
-                diversificationRatio: sidecarResult.result.diversificationRatio,
-                ok: true,
-                optimizer: 'python',
-                weights: sidecarResult.result.weights,
-            };
-        }
-
-        try {
-            const result = optimizeWeights({
-                assetClasses,
-                constraints,
-                covariance: covarianceSubset,
-                mode,
-                volatilities,
-            });
-
-            return {
-                diagnostics: result.diagnostics,
-                diversificationRatio: result.diversificationRatio,
-                ok: true,
-                optimizer: 'js',
-                weights: result.weights,
-            };
-        } catch (error) {
-            return {
-                error: {
-                    code: 'INFEASIBLE_CONSTRAINTS',
-                    message: error instanceof Error ? error.message : String(error),
-                    suggestions: [
-                        'Raise maxSingleWeight or relax class caps.',
-                        'Disable leverage/short restrictions only if intentional.',
-                    ],
-                },
-                ok: false,
-                optimizerPath: 'js',
-            };
-        }
-    }
 }
