@@ -126,7 +126,7 @@ export const PiWorkspacePanel = () => (
                 <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">Agent Workspace</p>
                 <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">Agent 工作台</h2>
             </div>
-            <Badge tone="accent">/pi-agent</Badge>
+            <Badge tone="accent">Agent</Badge>
         </div>
         <div className="mt-4 rounded-[16px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.44)] p-4 text-sm leading-6 text-[var(--color-copy)]">
             <p data-testid="dashboard-pi-workspace-summary">Agent 已完全替代旧本地工作台。去 Agent 页面发起本地会话、调用 finance tools，并保留运行目录与 session 记录。</p>
