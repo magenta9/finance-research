@@ -12,34 +12,15 @@ import type {
 import type { PreparedAllocationData } from './preprocessor';
 import { annualizationFactor } from './analytics-constants';
 import { buildScenarioAnalysis } from './scenarios';
-
-interface NormalizedActiveDualMomentumConfig {
-    absoluteMomentumFilter: boolean;
-    longLookbackWeeks: number;
-    shortLookbackWeeks: number;
-    slippageBps: number;
-    sleeveWeights: { long: number; short: number };
-    topK: number;
-    transactionCostBps: number;
-}
-
-interface Position {
-    assetIndex: number;
-    direction: 'long' | 'short';
-    longMomentum?: number;
-    shortMomentum?: number;
-    source: 'short' | 'long' | 'both';
-    weight: number;
-}
-
-interface SleeveSelection {
-    cashWeight: number;
-    filtered: ActiveDualMomentumDiagnostics['rebalanceRecords'][number]['selectedButFiltered'];
-    positions: Position[];
-}
-
-const tradingDaysPerWeek = 5;
-const minimumTradeWeight = 0.0001;
+import {
+    activeDualMomentumMinimumTradeWeight,
+    activeDualMomentumTradingDaysPerWeek,
+    mergeActiveDualMomentumSleeves,
+    normalizeActiveDualMomentumConfig,
+    selectActiveDualMomentumSleeve,
+    signedActiveDualMomentumWeight,
+    type ActiveDualMomentumPosition,
+} from './active-dual-momentum-rules';
 
 const mean = (values: number[]) => values.length === 0
     ? 0
@@ -54,28 +35,6 @@ const standardDeviation = (values: number[]) => {
     const variance = values.reduce((sum, value) => sum + (value - average) ** 2, 0) / (values.length - 1);
     return Math.sqrt(Math.max(variance, 0));
 };
-
-const normalizeConfig = (config?: ActiveDualMomentumStrategyConfig): NormalizedActiveDualMomentumConfig => ({
-    absoluteMomentumFilter: config?.absoluteMomentumFilter ?? true,
-    longLookbackWeeks: config?.longLookbackWeeks ?? 25,
-    shortLookbackWeeks: config?.shortLookbackWeeks ?? 10,
-    slippageBps: config?.slippageBps ?? 0,
-    sleeveWeights: config?.sleeveWeights ?? { long: 0.5, short: 0.5 },
-    topK: Math.min(5, Math.max(3, Math.round(config?.topK ?? 3))),
-    transactionCostBps: config?.transactionCostBps ?? 0,
-});
-
-const isFuturesAsset = (asset: PreparedAllocationData['series'][number]['asset']) => {
-    const metadataInstrumentType = typeof asset.metadata.instrumentType === 'string'
-        ? asset.metadata.instrumentType.toLowerCase()
-        : '';
-    return metadataInstrumentType.includes('future')
-        || asset.tags.some((tag) => tag.toLowerCase().includes('future') || tag.includes('期货'))
-        || /9999$/u.test(asset.symbol);
-};
-
-const signedWeight = (position: Pick<Position, 'direction' | 'weight'>) =>
-    position.direction === 'short' ? -position.weight : position.weight;
 
 const buildWeekKey = (date: string) => {
     const cursor = new Date(`${date}T00:00:00Z`);
@@ -158,113 +117,6 @@ const metricsFromReturns = (dailyReturns: number[], equityCurve: number[]): Port
     };
 };
 
-const selectSleeve = ({
-    config,
-    lookbackWeeks,
-    prepared,
-    rebalanceIndex,
-    sleeve,
-}: {
-    config: NormalizedActiveDualMomentumConfig;
-    lookbackWeeks: number;
-    prepared: PreparedAllocationData;
-    rebalanceIndex: number;
-    sleeve: 'short' | 'long';
-}): SleeveSelection => {
-    const lookbackDays = lookbackWeeks * tradingDaysPerWeek;
-    const candidates = prepared.series.flatMap((entry, assetIndex) => {
-        const previousPrice = entry.prices[rebalanceIndex - lookbackDays];
-        const currentPrice = entry.prices[rebalanceIndex];
-
-        if (!previousPrice || !currentPrice || previousPrice <= 0) {
-            return [];
-        }
-
-        const momentum = currentPrice / previousPrice - 1;
-        const futures = isFuturesAsset(entry.asset);
-        return [{
-            assetIndex,
-            futures,
-            momentum,
-            rankScore: futures ? Math.abs(momentum) : momentum,
-        }];
-    }).sort((left, right) => right.rankScore - left.rankScore).slice(0, config.topK);
-
-    if (candidates.length === 0) {
-        return { cashWeight: 0, filtered: [], positions: [] };
-    }
-
-    const sleeveWeight = config.sleeveWeights[sleeve];
-    const slotWeight = sleeveWeight / candidates.length;
-    const filtered: SleeveSelection['filtered'] = [];
-    const positions: Position[] = [];
-    let cashWeight = 0;
-
-    candidates.forEach((candidate) => {
-        const asset = prepared.series[candidate.assetIndex].asset;
-
-        if (candidate.futures) {
-            if (candidate.momentum === 0) {
-                return;
-            }
-
-            positions.push({
-                assetIndex: candidate.assetIndex,
-                direction: candidate.momentum > 0 ? 'long' : 'short',
-                longMomentum: sleeve === 'long' ? candidate.momentum : undefined,
-                shortMomentum: sleeve === 'short' ? candidate.momentum : undefined,
-                source: sleeve,
-                weight: slotWeight,
-            });
-            return;
-        }
-
-        if (config.absoluteMomentumFilter && candidate.momentum <= 0) {
-            cashWeight += slotWeight;
-            filtered.push({
-                assetId: asset.id,
-                momentum: candidate.momentum,
-                reason: 'NEGATIVE_MOMENTUM',
-                symbol: asset.symbol,
-            });
-            return;
-        }
-
-        positions.push({
-            assetIndex: candidate.assetIndex,
-            direction: 'long',
-            longMomentum: sleeve === 'long' ? candidate.momentum : undefined,
-            shortMomentum: sleeve === 'short' ? candidate.momentum : undefined,
-            source: sleeve,
-            weight: slotWeight,
-        });
-    });
-
-    return { cashWeight, filtered, positions };
-};
-
-const mergeSleeves = (shortSleeve: SleeveSelection, longSleeve: SleeveSelection) => {
-    const merged = new Map<number, Position>();
-
-    [...shortSleeve.positions, ...longSleeve.positions].forEach((position) => {
-        const existing = merged.get(position.assetIndex);
-
-        if (!existing) {
-            merged.set(position.assetIndex, { ...position });
-            return;
-        }
-
-        const netWeight = signedWeight(existing) + signedWeight(position);
-        existing.direction = netWeight < 0 ? 'short' : 'long';
-        existing.weight = Math.abs(netWeight);
-        existing.source = 'both';
-        existing.shortMomentum = existing.shortMomentum ?? position.shortMomentum;
-        existing.longMomentum = existing.longMomentum ?? position.longMomentum;
-    });
-
-    return [...merged.values()].filter((position) => position.weight >= minimumTradeWeight);
-};
-
 const actionForTransition = (fromSigned: number, toSigned: number): AllocationTrade['action'] => {
     if (toSigned > fromSigned) {
         return toSigned > 0 ? 'open_long' : 'close_short';
@@ -280,17 +132,17 @@ const buildTrades = ({
     prepared,
 }: {
     date: string;
-    nextPositions: Position[];
-    previousPositions: Position[];
+    nextPositions: ActiveDualMomentumPosition[];
+    previousPositions: ActiveDualMomentumPosition[];
     prepared: PreparedAllocationData;
 }) => prepared.series.flatMap((entry, assetIndex): AllocationTrade[] => {
     const previous = previousPositions.find((position) => position.assetIndex === assetIndex);
     const next = nextPositions.find((position) => position.assetIndex === assetIndex);
-    const fromSigned = previous ? signedWeight(previous) : 0;
-    const toSigned = next ? signedWeight(next) : 0;
+    const fromSigned = previous ? signedActiveDualMomentumWeight(previous) : 0;
+    const toSigned = next ? signedActiveDualMomentumWeight(next) : 0;
     const weightChange = toSigned - fromSigned;
 
-    if (Math.abs(weightChange) < minimumTradeWeight) {
+    if (Math.abs(weightChange) < activeDualMomentumMinimumTradeWeight) {
         return [];
     }
 
@@ -308,14 +160,14 @@ const buildTrades = ({
     }];
 });
 
-const turnoverBetween = (previousPositions: Position[], nextPositions: Position[], assetCount: number) => {
+const turnoverBetween = (previousPositions: ActiveDualMomentumPosition[], nextPositions: ActiveDualMomentumPosition[], assetCount: number) => {
     let turnover = 0;
 
     for (let assetIndex = 0; assetIndex < assetCount; assetIndex += 1) {
         const previous = previousPositions.find((position) => position.assetIndex === assetIndex);
         const next = nextPositions.find((position) => position.assetIndex === assetIndex);
-        const fromSigned = previous ? signedWeight(previous) : 0;
-        const toSigned = next ? signedWeight(next) : 0;
+        const fromSigned = previous ? signedActiveDualMomentumWeight(previous) : 0;
+        const toSigned = next ? signedActiveDualMomentumWeight(next) : 0;
 
         turnover += Math.sign(fromSigned) !== Math.sign(toSigned) && fromSigned !== 0 && toSigned !== 0
             ? Math.abs(fromSigned) + Math.abs(toSigned)
@@ -325,7 +177,7 @@ const turnoverBetween = (previousPositions: Position[], nextPositions: Position[
     return turnover;
 };
 
-const latestAllocations = (prepared: PreparedAllocationData, positions: Position[], annualizedReturns: number[], annualizedVolatility: number[]): AllocationAssetWeight[] =>
+const latestAllocations = (prepared: PreparedAllocationData, positions: ActiveDualMomentumPosition[], annualizedReturns: number[], annualizedVolatility: number[]): AllocationAssetWeight[] =>
     positions.map((position) => {
         const entry = prepared.series[position.assetIndex];
 
@@ -359,8 +211,8 @@ export const runActiveDualMomentumBacktest = ({
     config?: ActiveDualMomentumStrategyConfig;
     prepared: PreparedAllocationData;
 }): AllocationResult => {
-    const config = normalizeConfig(rawConfig);
-    const maxLookbackDays = Math.max(config.shortLookbackWeeks, config.longLookbackWeeks) * tradingDaysPerWeek;
+    const config = normalizeActiveDualMomentumConfig(rawConfig);
+    const maxLookbackDays = Math.max(config.shortLookbackWeeks, config.longLookbackWeeks) * activeDualMomentumTradingDaysPerWeek;
     const rebalanceIndexes = buildWednesdayRebalanceIndexes(prepared.alignedDates, maxLookbackDays);
     const warnings = [...prepared.warnings];
 
@@ -406,8 +258,8 @@ export const runActiveDualMomentumBacktest = ({
         warnings.push('最大 lookback 后可回测周数不足 26 周，结果标记为 degraded。');
     }
 
-    let currentPositions: Position[] = [];
-    let latestPositions: Position[] = [];
+    let currentPositions: ActiveDualMomentumPosition[] = [];
+    let latestPositions: ActiveDualMomentumPosition[] = [];
     let totalTurnover = 0;
     let totalCost = 0;
     const trades: AllocationTrade[] = [];
@@ -423,27 +275,27 @@ export const runActiveDualMomentumBacktest = ({
             const previousPrice = prices[dayIndex - 1] ?? 0;
             const currentPrice = prices[dayIndex] ?? previousPrice;
             const assetReturn = previousPrice > 0 ? currentPrice / previousPrice - 1 : 0;
-            return sum + signedWeight(position) * assetReturn;
+            return sum + signedActiveDualMomentumWeight(position) * assetReturn;
         }, 0);
 
         let rebalanceCost = 0;
 
         if (rebalanceIndexSet.has(dayIndex)) {
-            const shortSleeve = selectSleeve({
+            const shortSleeve = selectActiveDualMomentumSleeve({
                 config,
                 lookbackWeeks: config.shortLookbackWeeks,
                 prepared,
                 rebalanceIndex: dayIndex,
                 sleeve: 'short',
             });
-            const longSleeve = selectSleeve({
+            const longSleeve = selectActiveDualMomentumSleeve({
                 config,
                 lookbackWeeks: config.longLookbackWeeks,
                 prepared,
                 rebalanceIndex: dayIndex,
                 sleeve: 'long',
             });
-            const nextPositions = mergeSleeves(shortSleeve, longSleeve);
+            const nextPositions = mergeActiveDualMomentumSleeves(shortSleeve, longSleeve);
             const turnover = turnoverBetween(currentPositions, nextPositions, prepared.series.length);
             const cost = turnover * (config.transactionCostBps + config.slippageBps) / 10_000;
 
@@ -483,7 +335,7 @@ export const runActiveDualMomentumBacktest = ({
         const netReturn = grossReturn - rebalanceCost;
         dailyReturns.push(netReturn);
         nominalExposures.push(currentPositions.reduce((sum, position) => sum + position.weight, 0));
-        netExposures.push(currentPositions.reduce((sum, position) => sum + signedWeight(position), 0));
+        netExposures.push(currentPositions.reduce((sum, position) => sum + signedActiveDualMomentumWeight(position), 0));
     }
 
     const { equityCurve, path } = buildPath(prepared.alignedDates, dailyReturns);
