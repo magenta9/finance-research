@@ -268,8 +268,8 @@ export const DashboardPage = () => {
                 ...current,
                 runtimeProbe:
                     result.exitCode === 0
-                        ? `Agent 探针成功 · ${result.stdout}`
-                        : `探针失败 · ${result.stderr} · 退出码 ${result.exitCode}`,
+                        ? 'Agent 探针成功'
+                        : `Agent 探针失败 · 退出码 ${result.exitCode}`,
             }));
         } catch (error) {
             setState((current) => ({ ...current, errorMessage: formatDashboardError(error) }));
