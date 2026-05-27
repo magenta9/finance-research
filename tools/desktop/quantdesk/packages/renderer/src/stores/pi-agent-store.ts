@@ -170,7 +170,7 @@ export const usePiAgentStore = create<PiAgentStore>((set, get) => ({
 
             set({
                 activeSessionId: nextActiveSessionId,
-                noticeMessage: 'Pi 会话已删除。',
+                noticeMessage: 'Agent 会话已删除。',
                 sessionHistoryOrder: nextSessionHistoryOrder,
                 sessionRecords: Object.fromEntries(
                     Object.entries(get().sessionRecords).filter(([conversationId]) => conversationId !== sessionId),
@@ -406,7 +406,7 @@ export const usePiAgentStore = create<PiAgentStore>((set, get) => ({
                 ),
             });
         } else {
-            set({ errorMessage: null, noticeMessage: '正在创建新的 Pi 会话...' });
+            set({ errorMessage: null, noticeMessage: '正在创建新的 Agent 会话...' });
         }
 
         try {
@@ -614,7 +614,7 @@ export const usePiAgentStore = create<PiAgentStore>((set, get) => ({
             draft: '',
             draftAttachments: [],
             errorMessage: null,
-            noticeMessage: '已切换到新的 Pi 会话。',
+            noticeMessage: '已切换到新的 Agent 会话。',
         });
     },
 }));

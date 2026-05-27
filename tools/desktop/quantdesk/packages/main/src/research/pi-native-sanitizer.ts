@@ -104,6 +104,6 @@ export const buildToolExecutionDataProvenance = (payload: ResearchToolExecutionA
         fetchedAt: payload.completedAt,
         qualityStatus: payload.isError ? 'block' : 'warn',
         sourceId: `pi.${payload.toolName}`,
-        warnings: payload.isError ? [sanitizeToolPayloadString(payload.errorMessage ?? 'Pi tool execution failed.')] : [],
+        warnings: payload.isError ? [sanitizeToolPayloadString(payload.errorMessage ?? 'Agent tool execution failed.')] : [],
     }];
 };

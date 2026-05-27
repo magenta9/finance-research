@@ -379,7 +379,7 @@ export class PiWrapperRuntime {
     const session = await this.findSession(sessionId);
 
     if (!session) {
-      throw new Error(`Unknown pi session: ${sessionId}`);
+      throw new Error(`Unknown Agent session: ${sessionId}`);
     }
 
     const sessionManager = sdk.SessionManager.open(
@@ -653,7 +653,7 @@ export class PiWrapperRuntime {
     const sdk = await this.ensureSdk();
 
     if (sessionId && startNewSession) {
-      throw new Error('Cannot start a new Pi session while targeting an existing session id.');
+      throw new Error('Cannot start a new Agent session while targeting an existing session id.');
     }
 
     if (!this.runtime) {
@@ -700,7 +700,7 @@ export class PiWrapperRuntime {
       const sessionPath = this.getSessionManagerFile(sessionManager);
 
       if (!sessionPath) {
-        throw new Error('Failed to create isolated Pi session.');
+        throw new Error('Failed to create isolated Agent session.');
       }
 
       await this.runtime.switchSession(sessionPath, this.options.directories.workspaceDir);
@@ -712,7 +712,7 @@ export class PiWrapperRuntime {
       const targetSession = await this.findSession(sessionId);
 
       if (!targetSession) {
-        throw new Error(`Unknown pi session: ${sessionId}`);
+        throw new Error(`Unknown Agent session: ${sessionId}`);
       }
 
       await this.runtime.switchSession(targetSession.path, targetSession.cwd);
@@ -804,7 +804,7 @@ export class PiWrapperRuntime {
         onUpdate?: (payload: unknown) => void,
       ) => {
         if (!this.isToolAllowedForCurrentRun(definition.name)) {
-          throw new Error(`Pi tool is not allowed for this run: ${definition.name}`);
+          throw new Error(`Agent tool is not allowed for this run: ${definition.name}`);
         }
 
         onUpdate?.(createPiToolProgressUpdate('调用 QuantDesk 金融能力层...', {

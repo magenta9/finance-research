@@ -238,7 +238,7 @@ export class PiManager {
     const status = await this.getStatus();
 
     if (status.currentSessionId === sessionId) {
-      throw new Error('Cannot delete the active Pi session.');
+      throw new Error('Cannot delete the active Agent session.');
     }
 
     const sessions = await this.listSessions();
@@ -369,13 +369,13 @@ export class PiManager {
 
   private async executeToolHostRequest(request: PiToolHostExecuteRequest) {
     if (!this.runToolPolicies.has(request.runId)) {
-      throw new Error(`Pi tool request is not associated with a registered run: ${request.runId}`);
+      throw new Error(`Agent tool request is not associated with a registered run: ${request.runId}`);
     }
 
     const allowedToolNames = this.runToolPolicies.get(request.runId);
 
     if (allowedToolNames && !allowedToolNames.has(request.toolName)) {
-      throw new Error(`Pi tool is not allowed for this run: ${request.toolName}`);
+      throw new Error(`Agent tool is not allowed for this run: ${request.toolName}`);
     }
 
     return await this.toolHost.execute(request);

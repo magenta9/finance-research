@@ -131,6 +131,34 @@ describe('createPiSessionAdapter', () => {
         }));
     });
 
+    test('skips stale session summaries that no longer have transcripts', async () => {
+        const staleSession = {
+            ...sessionSummary,
+            id: 'stale-session',
+            path: '/tmp/stale-session.json',
+        };
+        const getSessionTranscript = vi.fn(async (sessionId: string) => {
+            if (sessionId === 'stale-session') {
+                throw new Error('Unknown Agent session: stale-session');
+            }
+
+            return transcript;
+        });
+        const adapter = createPiSessionAdapter({
+            getRiskGateState: vi.fn(() => riskGateState),
+            getSessionRunStatus: vi.fn(() => null),
+            getSessionTranscript,
+            getStatus: vi.fn(async () => runtimeStatus),
+            listSessions: vi.fn(async () => [staleSession, sessionSummary]),
+            listToolInvocations: vi.fn(async () => [toolInvocation]),
+        });
+
+        await expect(adapter.listSessions()).resolves.toEqual([
+            expect.objectContaining({ id: 'session-1' }),
+        ]);
+        await expect(adapter.getSession('stale-session')).resolves.toBeNull();
+    });
+
     test('maps stream events into shared pi stream payloads', async () => {
         const adapter = createPiSessionAdapter({
             getRiskGateState: vi.fn(() => riskGateState),

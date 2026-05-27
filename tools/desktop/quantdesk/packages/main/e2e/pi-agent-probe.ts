@@ -37,7 +37,7 @@ const buildProbeScript = () => `
         await new Promise((resolve) => setTimeout(resolve, 120));
       }
 
-      throw new Error('Timed out waiting for Pi agent UI state. Logs=' + JSON.stringify(logs));
+      throw new Error('Timed out waiting for Agent UI state. Logs=' + JSON.stringify(logs));
     };
 
     const click = (selector) => {
@@ -71,8 +71,8 @@ const buildProbeScript = () => `
       element.dispatchEvent(new Event('change', { bubbles: true }));
     };
 
-    await waitFor(() => document.querySelector('a[aria-label="Pi Agent"]'));
-    click('a[aria-label="Pi Agent"]');
+    await waitFor(() => document.querySelector('a[aria-label="Agent"]'));
+    click('a[aria-label="Agent"]');
     await waitFor(() => document.querySelector('[data-testid="pi-agent-page"]'));
     await waitFor(() => getText('[data-testid="pi-agent-risk-acknowledged"]') === '0');
 
@@ -87,7 +87,7 @@ const buildProbeScript = () => `
 
     await waitFor(() => {
       if (hasElement('[data-testid="pi-agent-run-failure-banner"]')) {
-        throw new Error('Pi run failed after send. Logs=' + JSON.stringify(logs));
+        throw new Error('Agent run failed after send. Logs=' + JSON.stringify(logs));
       }
 
       return getNumber('[data-testid="pi-agent-message-count"]') >= 2

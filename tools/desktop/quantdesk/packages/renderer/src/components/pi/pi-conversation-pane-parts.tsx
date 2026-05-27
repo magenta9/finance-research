@@ -265,7 +265,7 @@ export const PiMessageList = memo(({
     if (isLoadingSession) {
         return (
             <div className="rounded-[16px] border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-4 text-sm text-[var(--color-copy)]">
-                正在载入 Pi 会话详情...
+                正在载入 Agent 会话详情...
             </div>
         );
     }

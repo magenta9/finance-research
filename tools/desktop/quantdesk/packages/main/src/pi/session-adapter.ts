@@ -43,6 +43,12 @@ interface PiSessionAccess {
   listToolInvocations(sessionId: string): Promise<PiToolInvocation[]>;
 }
 
+const isUnknownAgentSessionError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return /Unknown (?:pi|Agent) session:/i.test(message);
+};
+
 interface PiLiveNarrativeItemState {
   assistantSegmentId?: string | null;
   createdAt: string;
@@ -743,10 +749,22 @@ export const createPiSessionAdapter = (access: PiSessionAccess) => ({
       return null;
     }
 
-    const [transcript, toolInvocations] = await Promise.all([
-      access.getSessionTranscript(sessionId),
-      access.listToolInvocations(sessionId),
-    ]);
+    let transcript: PiWrapperSessionTranscript;
+    let toolInvocations: PiToolInvocation[];
+
+    try {
+      [transcript, toolInvocations] = await Promise.all([
+        access.getSessionTranscript(sessionId),
+        access.listToolInvocations(sessionId),
+      ]);
+    } catch (error) {
+      if (isUnknownAgentSessionError(error)) {
+        return null;
+      }
+
+      throw error;
+    }
+
     const liveStatus = access.getSessionRunStatus(sessionId);
     const runStatus = resolveRunStatus(sessionId, session.modifiedAt, liveStatus, transcript, toolInvocations);
     const projection = buildPiProjection({
@@ -770,7 +788,7 @@ export const createPiSessionAdapter = (access: PiSessionAccess) => ({
   },
   async listSessions(): Promise<PiSessionSummary[]> {
     const sessions = await access.listSessions();
-    return await Promise.all(sessions.map(async (session) => {
+    const summaries = await Promise.all(sessions.map(async (session) => {
       const liveStatus = access.getSessionRunStatus(session.id);
 
       if (liveStatus) {
@@ -778,13 +796,23 @@ export const createPiSessionAdapter = (access: PiSessionAccess) => ({
         return mapSessionSummary(session, runStatus, resolveLastToolName(runStatus, []));
       }
 
-      const [transcript, toolInvocations] = await Promise.all([
-        access.getSessionTranscript(session.id),
-        access.listToolInvocations(session.id),
-      ]);
-      const runStatus = resolveRunStatus(session.id, session.modifiedAt, null, transcript, toolInvocations);
-      return mapSessionSummary(session, runStatus, resolveLastToolName(runStatus, toolInvocations));
+      try {
+        const [transcript, toolInvocations] = await Promise.all([
+          access.getSessionTranscript(session.id),
+          access.listToolInvocations(session.id),
+        ]);
+        const runStatus = resolveRunStatus(session.id, session.modifiedAt, null, transcript, toolInvocations);
+        return mapSessionSummary(session, runStatus, resolveLastToolName(runStatus, toolInvocations));
+      } catch (error) {
+        if (isUnknownAgentSessionError(error)) {
+          return null;
+        }
+
+        throw error;
+      }
     }));
+
+    return summaries.filter((session): session is PiSessionSummary => session !== null);
   },
   async mapStreamEvent(event: PiStreamEvent): Promise<PiAgentStreamEvent> {
     const getLiveRun = (runId: string) => {

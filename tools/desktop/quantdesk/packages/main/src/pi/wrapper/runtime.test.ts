@@ -800,7 +800,7 @@ describe('PiWrapperRuntime.getDiagnostics', () => {
             throw new Error('Expected finance test tools to be registered.');
         }
 
-        await expect(runAllocationTool.execute('tool-1', {})).rejects.toThrow('Pi tool is not allowed for this run: run_allocation');
+        await expect(runAllocationTool.execute('tool-1', {})).rejects.toThrow('Agent tool is not allowed for this run: run_allocation');
         expect(requestHost).not.toHaveBeenCalled();
 
         await expect(searchAssetsTool.execute('tool-2', { query: 'ETF' })).resolves.toEqual(expect.objectContaining({

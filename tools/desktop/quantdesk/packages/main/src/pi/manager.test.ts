@@ -212,7 +212,7 @@ describe('PiManager', () => {
       sessionId: 'session-1',
       toolCallId: 'tool-1',
       toolName: 'run_allocation',
-    })).rejects.toThrow('Pi tool is not allowed for this run: run_allocation');
+    })).rejects.toThrow('Agent tool is not allowed for this run: run_allocation');
     expect(execute).not.toHaveBeenCalled();
 
     await expect(internals.executeToolHostRequest({
