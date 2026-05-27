@@ -13,7 +13,7 @@ description: 分析两个指数、ETF 或基金之间的轮动三棱镜相对强
 - 不编造行情、指标、评级或数据来源。
 - 最终回答只输出分析报告本身;不要输出调用过程、工具日志、脚本原始 JSON、验证通过话术或"是否继续分析"的追问。
 - 数据只能通过外部 `quant-data` CLI 获取,不直接读取数据库,不复制行情源实现。
-- 分析前必须先验证 `quant-data` CLI 可启动且 contract 兼容;如果未安装,明确告诉用户先运行 `make quant-data-install` 或提供 `--quant-data` 路径。
+- 分析前必须先验证 `quant-data` CLI 可启动且 contract 兼容;如果未安装,明确告诉用户先运行 `make data.install` 或提供 `--quant-data` 路径。
 - 用户可输入名称或代码;必须先通过 quant-data 解析并确认无歧义。
 - 标的解析失败（未找到或歧义）时，**直接返回失败报告**，不追问用户、不猜测、不使用代理标的。
 - 比值方向严格使用用户输入顺序:`ratio = asset_a / asset_b`。
@@ -44,7 +44,7 @@ uv run python scripts/analyze.py --asset-a 510300 --asset-b 512100 --quant-data 
 ```bash
 quant-data help --json
 ```
-如果失败，明确告知用户先运行 `make quant-data-install` 或提供 `--quant-data` 路径，然后**直接返回失败**，不做市场判断。
+如果失败，明确告知用户先运行 `make data.install` 或提供 `--quant-data` 路径，然后**直接返回失败**，不做市场判断。
 
 ### 第二步：解析标的
 直接运行分析脚本，让脚本通过 quant-data `search-assets` 解析两个标的。解析策略属于 quant-data 的 External Instrument Resolution；Skill 不自行消歧、不挑最短名称、不猜代理标的。

@@ -25,7 +25,7 @@
 
 ## Go
 - `tools/data/quant-data/` 是保留在本仓库中的 Go 行情数据 CLI。
-- 修改 Go 代码、Go 使用的契约或 provider policy 行为后，运行 `make quant-data-test` 或 `cd tools/data/quant-data && go test ./...`。
+- 修改 Go 代码、Go 使用的契约或 provider policy 行为后，运行 `make data.test` 或 `cd tools/data/quant-data && go test ./...`。
 - 除非另行批准迁移，保持 provider policy discovery 兼容 `tools/data/quant-data/contracts/market-data-policy.json`。
 
 ## Python
@@ -39,7 +39,7 @@
 - 修改 skill-owned 脚本、fixture 或输出契约后，按对应生产级 Skill 的 `SKILL.md` 声明的验证流程执行。
 - 当 Skill 需要验证 Agent runtime 能发现并调用它时，验证名称统一使用 `agent smoke`，不要绑定到具体 SDK 或供应商名称。
 - 需要人工验证 Skill 是否能被 Agent 正常调用时，优先使用 `pi --skill <skill-path> --no-session -p '<prompt>'` 做非交互验证，并在报告中说明实际输出是否符合 Skill 的输出契约。
-- 修改期货趋势观察 Python 代码后，运行 `make strategy-test`。
+- 修改期货趋势观察 Python 代码后，运行 `make strategy.test`。
 - 报告保留栈清理工作完成前，运行 `make test`。
 
 ## Agent skills

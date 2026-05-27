@@ -16,13 +16,13 @@
 安装本仓库保留的 `quant-data` CLI：
 
 ```bash
-make quant-data-install
+make data.install
 ```
 
 ```bash
-make quant-data-test
-make strategy-test
-make job-smoke
+make data.test
+make strategy.test
+make jobs.smoke
 ```
 
 运行保留栈的全部检查：
