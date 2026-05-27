@@ -260,7 +260,7 @@ describe('AllocationVisualizationPanel', () => {
                     const day = String(index + 1).padStart(2, '0');
 
                     return {
-                        action: index % 2 === 0 ? 'buy' : 'sell',
+                        action: index % 2 === 0 ? 'open_long' : 'close_long',
                         assetId: `trade-${index + 1}`,
                         date: `2026-01-${day}`,
                         fromWeight: 0.01 * index,

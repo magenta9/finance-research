@@ -17,6 +17,7 @@ import {
 
 export interface NormalizedTrendFollowingConfig {
     assetIds?: string[];
+    allowShort: boolean;
     cap: number;
     forecastDiversificationMultiplier?: number;
     rules: NormalizedEwmacRule[];
@@ -34,6 +35,7 @@ export interface TrendFollowingSimulationInput {
 }
 
 export interface TrendFollowingSimulationResult {
+    allowShort: boolean;
     assetIds: string[];
     assetDiagnostics: NonNullable<AllocationDiagnostics['trendFollowing']>['assets'];
     dailyReturns: number[];
@@ -152,6 +154,7 @@ export const normalizeTrendFollowingConfig = (
 
     return {
         assetIds: normalizeAssetIds(config.assetIds),
+        allowShort: config.allowShort ?? true,
         cap: config.forecastCap ?? defaultForecastCap,
         forecastDiversificationMultiplier: config.forecastDiversificationMultiplier,
         rules: config.rules ? config.rules.map((rule) => {
@@ -170,21 +173,48 @@ export const normalizeTrendFollowingConfig = (
     };
 };
 
-const countActiveRules = (family: EwmacFamilyForecast, forecastIndex: number) =>
+const countLongRules = (family: EwmacFamilyForecast, forecastIndex: number) =>
     family.ruleForecasts.reduce(
         (count, ruleForecast) => count + ((ruleForecast.forecast[forecastIndex] ?? 0) > 0 ? 1 : 0),
         0,
     );
 
+const countShortRules = (family: EwmacFamilyForecast, forecastIndex: number) =>
+    family.ruleForecasts.reduce(
+        (count, ruleForecast) => count + ((ruleForecast.forecast[forecastIndex] ?? 0) < 0 ? 1 : 0),
+        0,
+    );
+
+const countActiveRules = (family: EwmacFamilyForecast, forecastIndex: number, allowShort: boolean) =>
+    countLongRules(family, forecastIndex) + (allowShort ? countShortRules(family, forecastIndex) : 0);
+
 const buildSlotWeights = (
     familyForecasts: Array<EwmacFamilyForecast | null>,
+    allowShort: boolean,
     ruleSlotCount: number,
     pointCount: number,
 ) => familyForecasts.map((family) => family
     ? family.forecast.map((_value, index) => (
-        ruleSlotCount === 0 ? 0 : countActiveRules(family, index) / ruleSlotCount
+        ruleSlotCount === 0
+            ? 0
+            : (countLongRules(family, index) - (allowShort ? countShortRules(family, index) : 0)) / ruleSlotCount
     ))
     : Array.from({ length: pointCount }, () => 0));
+
+const resolveTrendTradeAction = (fromWeight: number, toWeight: number): AllocationTrade['action'] => {
+    if (toWeight > fromWeight) {
+        return toWeight > 0 ? 'open_long' : 'close_short';
+    }
+
+    return toWeight < 0 ? 'open_short' : 'close_long';
+};
+
+const tradeReasonMap: Record<AllocationTrade['action'], string> = {
+    close_long: '趋势规则转弱，平多仓',
+    close_short: '趋势规则转多，平空仓',
+    open_long: '趋势规则转多，开多仓',
+    open_short: '趋势规则转空，开空仓',
+};
 
 const buildTrendTrades = ({
     alignedDates,
@@ -219,13 +249,15 @@ const buildTrendTrades = ({
                 return;
             }
 
+            const action = resolveTrendTradeAction(fromWeight, toWeight);
+
             trades.push({
-                action: weightChange > 0 ? 'buy' : 'sell',
+                action,
                 assetId: assetIds[assetIndex],
                 date: alignedDates[dateIndex] ?? alignedDates[alignedDates.length - 1] ?? '',
                 fromWeight,
                 name: assetNames[assetIndex] ?? symbols[assetIndex] ?? assetIds[assetIndex],
-                reason: weightChange > 0 ? '趋势规则转多' : '趋势规则转弱',
+                reason: tradeReasonMap[action],
                 source: 'trend_following',
                 symbol: symbols[assetIndex] ?? assetIds[assetIndex],
                 toWeight,
@@ -239,19 +271,23 @@ const buildTrendTrades = ({
 
 const summarizeAssetDiagnostics = ({
     assetIds,
+    allowShort,
     familyForecasts,
     positionWeights,
     sleeveWeight,
     symbols,
 }: {
     assetIds: string[];
+    allowShort: boolean;
     familyForecasts: Array<EwmacFamilyForecast | null>;
     positionWeights: number[][];
     sleeveWeight: number;
     symbols: string[];
 }): TrendFollowingSimulationResult['assetDiagnostics'] => familyForecasts.flatMap((family, index) => family
     ? [{
-        activeRuleCount: countActiveRules(family, family.forecast.length - 1),
+        activeLongRules: countLongRules(family, family.forecast.length - 1),
+        activeRuleCount: countActiveRules(family, family.forecast.length - 1, allowShort),
+        activeShortRules: allowShort ? countShortRules(family, family.forecast.length - 1) : 0,
         assetId: assetIds[index],
         averageAbsForecast: mean(family.forecast.map((value) => Math.abs(value))),
         latestForecast: family.forecast.at(-1) ?? 0,
@@ -291,7 +327,7 @@ export const simulateTrendFollowingSleeve = ({
     const enabledRules = firstFamily?.rules ?? normalizeEwmacRules(config.rules);
     const ruleSlotCount = trendAssetIndexes.length * enabledRules.length;
 
-    const positionWeights = buildSlotWeights(familyForecasts, ruleSlotCount, alignedDates.length);
+    const positionWeights = buildSlotWeights(familyForecasts, config.allowShort, ruleSlotCount, alignedDates.length);
     const trades = buildTrendTrades({
         alignedDates,
         assetIds,
@@ -317,9 +353,11 @@ export const simulateTrendFollowingSleeve = ({
     const { path } = buildPathFromDailyReturns(alignedDates, dailyReturns);
 
     return {
+        allowShort: config.allowShort,
         assetIds: trendAssetIndexes.map((index) => assetIds[index]),
         assetDiagnostics: summarizeAssetDiagnostics({
             assetIds,
+            allowShort: config.allowShort,
             familyForecasts,
             positionWeights,
             sleeveWeight: config.sleeveWeight,

@@ -26,6 +26,7 @@ export interface EwmacRuleConfig {
 export interface TrendFollowingStrategyConfig {
   enabled: boolean;
   sleeveWeight: number;
+  allowShort?: boolean;
   assetIds?: string[];
   forecastCap?: number;
   forecastDiversificationMultiplier?: number;
@@ -116,7 +117,7 @@ export interface AllocationTrade {
   symbol: string;
   name: string;
   source: 'allocation' | 'trend_following';
-  action: 'buy' | 'sell';
+  action: 'open_long' | 'close_long' | 'open_short' | 'close_short';
   fromWeight: number;
   toWeight: number;
   weightChange: number;
@@ -164,6 +165,7 @@ export interface AllocationDiagnostics {
     trendFollowing?: {
       enabled: boolean;
       sleeveWeight: number;
+      allowShort: boolean;
       assetIds?: string[];
       forecastCap: number;
       forecastDiversificationMultiplier: number;
@@ -180,7 +182,9 @@ export interface AllocationDiagnostics {
     assets: Array<{
       assetId: string;
       symbol: string;
+      activeLongRules: number;
       activeRuleCount: number;
+      activeShortRules: number;
       averageAbsForecast: number;
       latestForecast: number;
       latestPositionWeight: number;

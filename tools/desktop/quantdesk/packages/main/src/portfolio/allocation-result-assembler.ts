@@ -132,6 +132,7 @@ export const assembleAllocationResult = ({
                 allocationSleeveWeight,
                 allocation: allocationAssetIds ? { assetIds: allocationAssetIds } : undefined,
                 trendFollowing: trendFollowing ? {
+                    allowShort: trendFollowing.allowShort,
                     assetIds: trendFollowing.assetIds,
                     enabled: true,
                     forecastCap: trendFollowing.forecastCap,

@@ -24,6 +24,14 @@ export interface PathSimulationResult {
 
 const minimumTradeWeight = 0.0001;
 
+const resolveAllocationTradeAction = (fromWeight: number, toWeight: number): AllocationTrade['action'] => {
+    if (toWeight > fromWeight) {
+        return toWeight > 0 ? 'open_long' : 'close_short';
+    }
+
+    return toWeight < 0 ? 'open_short' : 'close_long';
+};
+
 const mean = (values: number[]) =>
     values.reduce((sum, value) => sum + value, 0) / values.length;
 
@@ -121,7 +129,7 @@ export const simulatePortfolioPath = ({
 
         const asset = assetMetadata?.[assetIndex];
         return [{
-            action: 'buy' as const,
+            action: 'open_long' as const,
             assetId: asset?.assetId ?? `asset-${assetIndex}`,
             date: alignedDates[0] ?? '',
             fromWeight: 0,
@@ -164,7 +172,7 @@ export const simulatePortfolioPath = ({
 
                 const asset = assetMetadata?.[assetIndex];
                 trades.push({
-                    action: weightChange > 0 ? 'buy' : 'sell',
+                    action: resolveAllocationTradeAction(fromWeight, targetWeight),
                     assetId: asset?.assetId ?? `asset-${assetIndex}`,
                     date: alignedDates[dayIndex] ?? '',
                     fromWeight,

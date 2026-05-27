@@ -126,31 +126,34 @@ describe('AllocationPage', () => {
         });
 
         expect(await screen.findByTestId('allocation-page')).toBeInTheDocument();
-        expect(await screen.findByTestId('allocation-asset-toggle-SPY')).toBeInTheDocument();
+        expect(await screen.findByTestId('allocation-selected-asset-SPY')).toBeInTheDocument();
+        await user.click(screen.getByTestId('allocation-filter-input'));
+        expect(screen.getByTestId('allocation-asset-dropdown')).toBeInTheDocument();
+        expect(screen.getByTestId('allocation-asset-toggle-SPY')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-strategy-panel')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-strategy-inverse_volatility')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-strategy-ewmac_trend_following')).toBeInTheDocument();
-        expect(screen.getByText('从资产池里挑选参与计算的标的')).toBeInTheDocument();
         expect(screen.getByText('反波动率加权 参数')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-asset-list')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-run-button')).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: /配置结果总览与历史方案库/i })).not.toBeInTheDocument();
         expect(screen.queryByText('保存与回放')).not.toBeInTheDocument();
         expect(await screen.findByText('还没有保存过方案。先运行一次配置，再把结果归档到历史列表。')).toBeInTheDocument();
-        expect(screen.getByTestId('allocation-mode-description')).toHaveTextContent('低波动资产权重更高');
+        expect(screen.queryByTestId('allocation-mode-description')).not.toBeInTheDocument();
         expect(screen.queryByTestId('allocation-sleeve-asset-list')).not.toBeInTheDocument();
         expect(screen.queryByTestId('allocation-trend-asset-list')).not.toBeInTheDocument();
 
         await user.click(screen.getByTestId('allocation-strategy-erc'));
-        expect(screen.getByTestId('allocation-mode-description')).toHaveTextContent('追求风险贡献更均衡');
         expect(screen.getByTestId('allocation-current-strategy')).toHaveTextContent('erc');
+        expect(screen.getByText('等风险贡献 参数')).toBeInTheDocument();
 
         await user.click(screen.getByTestId('allocation-strategy-max_diversification'));
-        expect(screen.getByTestId('allocation-mode-description')).toHaveTextContent('最大化组合分散化效率');
+        expect(screen.getByText('最大分散化 参数')).toBeInTheDocument();
 
         await user.click(screen.getByTestId('allocation-strategy-ewmac_trend_following'));
         expect(screen.getByTestId('allocation-current-strategy')).toHaveTextContent('ewmac_trend_following');
-        expect(screen.getByTestId('allocation-mode-description')).toHaveTextContent('用 EWMAC 长短线规则生成趋势暴露');
+        expect(screen.getByText('EWMAC 趋势跟随 参数')).toBeInTheDocument();
+        expect(screen.getByTestId('allocation-ewmac-allow-short')).toBeChecked();
         expect(screen.getByTestId('allocation-ewmac-rule-2-8')).toBeChecked();
         expect(screen.queryByTestId('allocation-max-single-input')).not.toBeInTheDocument();
 

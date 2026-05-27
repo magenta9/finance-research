@@ -75,6 +75,7 @@ export const AllocationPage = () => {
         setMaxSingleWeight,
         setPlanNameDraft,
         setRebalanceCadence,
+        setTrendFollowingAllowShort,
         setTrendFollowingRuleEnabled,
         setStrategy,
         stageExport,
@@ -226,6 +227,7 @@ export const AllocationPage = () => {
                     onOpenAssetDetail={openAssetDetail}
                     onSelectFirst={selectFirstAssets}
                     onToggleSelected={toggleSelectedAsset}
+                    selectedAssets={selectedAssets}
                     selectedAssetIds={selectedAssetIds}
                     visibleAssets={visibleAssets}
                 />
@@ -244,6 +246,7 @@ export const AllocationPage = () => {
                     onSetDateRange={setDateRange}
                     onSetMaxSingleWeight={setMaxSingleWeight}
                     onSetRebalanceCadence={setRebalanceCadence}
+                    onSetTrendFollowingAllowShort={setTrendFollowingAllowShort}
                     onSetTrendFollowingRuleEnabled={setTrendFollowingRuleEnabled}
                     rebalanceCadence={rebalanceCadence}
                     selectedAssets={selectedAssets}

@@ -54,6 +54,7 @@ interface AllocationStoreActions {
     setRebalanceCadence: (cadence: RebalanceCadence) => void;
     setTrendFollowingAssetEnabled: (assetId: string, enabled: boolean) => void;
     setTrendFollowingAssetSelection: (assetIds: string[]) => void;
+    setTrendFollowingAllowShort: (enabled: boolean) => void;
     setTrendFollowingEnabled: (enabled: boolean) => void;
     setTrendFollowingRuleEnabled: (fast: number, enabled: boolean) => void;
     setTrendFollowingSleeveWeight: (value: number) => void;
@@ -70,6 +71,7 @@ const createDefaultConstraints = (): AllocationConstraints => ({
 });
 
 const createDefaultTrendFollowingConfig = (): TrendFollowingStrategyConfig => ({
+    allowShort: true,
     enabled: false,
     rules: [
         { enabled: true, fast: 2, scalar: 10.6, slow: 8, weight: 1 },
@@ -113,6 +115,7 @@ const restoreStrategyMixFromPlan = (plan: AllocationPlanRecord): AllocationStrat
     return {
         allocation: strategyMix.allocation,
         trendFollowing: {
+            allowShort: trendFollowing.allowShort ?? true,
             enabled: trendFollowing.enabled,
             forecastCap: trendFollowing.forecastCap,
             forecastDiversificationMultiplier: trendFollowing.forecastDiversificationMultiplier,
@@ -198,6 +201,7 @@ const buildRunnableStrategyMix = (
             enabled: true,
             forecastCap: configuredTrendFollowing?.forecastCap,
             forecastDiversificationMultiplier: configuredTrendFollowing?.forecastDiversificationMultiplier,
+            allowShort: configuredTrendFollowing?.allowShort ?? defaultTrendFollowing.allowShort,
             rules: configuredTrendFollowing?.rules ?? defaultTrendFollowing.rules,
             sleeveWeight: 1,
             volatilitySpan: configuredTrendFollowing?.volatilitySpan,
@@ -484,6 +488,18 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
                 trendFollowing: {
                     ...baseConfig,
                     assetIds: get().selectedAssetIds.filter((selectedAssetId) => selectedTrendAssetIds.has(selectedAssetId)),
+                },
+            },
+        });
+    },
+    setTrendFollowingAllowShort(allowShort) {
+        set({
+            strategyMix: {
+                ...get().strategyMix,
+                trendFollowing: {
+                    ...createDefaultTrendFollowingConfig(),
+                    ...get().strategyMix.trendFollowing,
+                    allowShort,
                 },
             },
         });

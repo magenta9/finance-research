@@ -13,6 +13,27 @@ const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
 
 const formatSignedPercent = (value: number) => `${value > 0 ? '+' : ''}${formatPercent(value)}`;
 
+const tradeActionView: Record<TradeRow['action'], { className: string; label: string }> = {
+    close_long: { className: 'text-[#9f3a29]', label: '平多' },
+    close_short: { className: 'text-[#3f7a4a]', label: '平空' },
+    open_long: { className: 'text-[#3f7a4a]', label: '开多' },
+    open_short: { className: 'text-[#9f3a29]', label: '开空' },
+};
+
+const resolveTradeActionView = (action: TradeRow['action']) => {
+    const legacyAction = action as TradeRow['action'] | 'buy' | 'sell';
+
+    if (legacyAction === 'buy') {
+        return tradeActionView.open_long;
+    }
+
+    if (legacyAction === 'sell') {
+        return tradeActionView.close_long;
+    }
+
+    return tradeActionView[action];
+};
+
 const assetChipClassName = [
     'inline-flex items-center rounded-full border border-[color:var(--color-highlight-soft)] bg-[rgba(156,98,55,0.08)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-highlight)] transition',
     'hover:bg-[rgba(156,98,55,0.14)] hover:text-[var(--color-foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(188,140,88,0.28)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
@@ -65,11 +86,11 @@ export const TradeBehaviorSection = ({
         {
             header: '方向',
             key: 'action',
-            render: (row) => (
-                <span className={row.action === 'buy' ? 'text-[#3f7a4a]' : 'text-[#9f3a29]'}>
-                    {row.action === 'buy' ? '买入' : '卖出'}
-                </span>
-            ),
+            render: (row) => {
+                const view = resolveTradeActionView(row.action);
+
+                return <span className={view.className}>{view.label}</span>;
+            },
         },
         {
             header: '标的',
@@ -100,7 +121,7 @@ export const TradeBehaviorSection = ({
             className: 'text-right',
             header: '从 / 到',
             key: 'weights',
-            render: (row) => `${formatPercent(row.fromWeight)} / ${formatPercent(row.toWeight)}`,
+            render: (row) => `${formatSignedPercent(row.fromWeight)} / ${formatSignedPercent(row.toWeight)}`,
         },
         {
             header: '原因',

@@ -37,6 +37,7 @@ type AllocationPageAllocationState = Pick<AllocationStore,
     | 'setRebalanceCadence'
     | 'setTrendFollowingAssetEnabled'
     | 'setTrendFollowingAssetSelection'
+    | 'setTrendFollowingAllowShort'
     | 'startDate'
     | 'strategy'
     | 'strategyMix'
@@ -107,6 +108,7 @@ export const useAllocationPageState = (): AllocationPageState => {
         setRebalanceCadence: state.setRebalanceCadence,
         setTrendFollowingAssetEnabled: state.setTrendFollowingAssetEnabled,
         setTrendFollowingAssetSelection: state.setTrendFollowingAssetSelection,
+        setTrendFollowingAllowShort: state.setTrendFollowingAllowShort,
         startDate: state.startDate,
         strategy: state.strategy,
         strategyMix: state.strategyMix,

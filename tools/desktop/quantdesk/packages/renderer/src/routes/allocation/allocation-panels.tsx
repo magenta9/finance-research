@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
 
 import type { AllocationConstraints, AllocationStrategy, AllocationStrategyMix, RebalanceCadence, StoredAsset } from '@quantdesk/shared';
 
@@ -57,6 +57,7 @@ const resolveTrendFollowingConfig = (strategyMix: AllocationStrategyMix) => {
     const configuredRulesByFast = new Map(configuredRules.map((rule) => [rule.fast, rule]));
 
     return {
+        allowShort: strategyMix.trendFollowing?.allowShort ?? true,
         rules: defaultEwmacRuleControls.map((rule) => {
             const configuredRule = configuredRulesByFast.get(rule.fast);
 
@@ -135,6 +136,7 @@ export const AssetSelectionPanel = ({
     onOpenAssetDetail,
     onSelectFirst,
     onToggleSelected,
+    selectedAssets,
     selectedAssetIds,
     visibleAssets,
 }: {
@@ -145,17 +147,19 @@ export const AssetSelectionPanel = ({
     onOpenAssetDetail: (assetId: string) => void;
     onSelectFirst: (count: number) => void;
     onToggleSelected: (assetId: string) => void;
+    selectedAssets: StoredAsset[];
     selectedAssetIds: string[];
     visibleAssets: StoredAsset[];
 }) => {
+    const [isDropdownOpen, setDropdownOpen] = useState(false);
     const selectedAssetIdSet = new Set(selectedAssetIds);
+    const dropdownAssets = visibleAssets.slice(0, 12);
 
     return (
         <section className="rounded-[20px] border border-[color:var(--color-border)] bg-[rgba(255,252,248,0.78)] p-4 shadow-[0_12px_32px_rgba(61,43,31,0.05)]">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">标的选择</p>
-                    <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">从资产池里挑选参与计算的标的</h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Badge tone="accent">可见 {visibleAssets.length}</Badge>
@@ -163,14 +167,99 @@ export const AssetSelectionPanel = ({
                 </div>
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 xl:flex-row">
-                <SearchInput
-                    className="flex-1"
-                    data-testid="allocation-filter-input"
-                    onChange={onFilterChange}
-                    placeholder="按代码、名称、市场或资产类别过滤"
-                    value={filterQuery}
-                />
+            <div className="mt-3 flex flex-col gap-3 xl:flex-row">
+                <div className="relative min-w-0 flex-1">
+                    <SearchInput
+                        className="flex-1"
+                        data-testid="allocation-filter-input"
+                        onBlur={() => {
+                            setDropdownOpen(false);
+                        }}
+                        onChange={(value) => {
+                            onFilterChange(value);
+                            setDropdownOpen(true);
+                        }}
+                        onFocus={() => {
+                            setDropdownOpen(true);
+                        }}
+                        placeholder="搜索代码、名称、市场或资产类别"
+                        value={filterQuery}
+                    />
+                    {isDropdownOpen && (
+                        <div
+                            className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-80 overflow-y-auto rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-surface-strong)] p-2 shadow-[0_18px_40px_rgba(23,19,16,0.14)]"
+                            data-testid="allocation-asset-dropdown"
+                            onMouseDown={(event) => {
+                                event.preventDefault();
+                            }}
+                        >
+                            {isLoadingAssets ? (
+                                <div className="rounded-[12px] border border-dashed border-[color:var(--color-border)] bg-[rgba(244,239,230,0.46)] p-3 text-sm text-[var(--color-copy)]">
+                                    正在装载资产池...
+                                </div>
+                            ) : dropdownAssets.length === 0 ? (
+                                <div className="rounded-[12px] border border-dashed border-[color:var(--color-border)] bg-[rgba(244,239,230,0.46)] p-3 text-sm text-[var(--color-copy)]">
+                                    当前没有匹配标的。
+                                </div>
+                            ) : (
+                                <div className="space-y-1">
+                                    {dropdownAssets.map((asset) => {
+                                        const isSelected = selectedAssetIdSet.has(asset.id);
+
+                                        return (
+                                            <div
+                                                className={[
+                                                    'flex items-center gap-3 rounded-[12px] border px-3 py-2 transition',
+                                                    isSelected
+                                                        ? 'border-[var(--color-highlight-soft)] bg-[rgba(156,98,55,0.08)]'
+                                                        : 'border-transparent bg-transparent hover:border-[var(--color-highlight-soft)] hover:bg-white/70',
+                                                ].join(' ')}
+                                                key={asset.id}
+                                            >
+                                                <Checkbox
+                                                    checked={isSelected}
+                                                    data-testid={`allocation-asset-toggle-${asset.symbol}`}
+                                                    onChange={() => {
+                                                        onToggleSelected(asset.id);
+                                                    }}
+                                                />
+                                                <Button
+                                                    className="h-auto min-w-0 flex-1 justify-start border-0 bg-transparent px-0 py-0 text-left shadow-none hover:bg-transparent"
+                                                    data-testid={`allocation-asset-open-${asset.symbol}`}
+                                                    onClick={() => {
+                                                        onOpenAssetDetail(asset.id);
+                                                    }}
+                                                    size="sm"
+                                                    tone="ghost"
+                                                    type="button"
+                                                >
+                                                    <span className="block min-w-0 truncate font-display text-lg text-[var(--color-foreground)]">{asset.symbol}（{asset.name}）</span>
+                                                    <span className="mt-1 flex flex-wrap gap-1.5">
+                                                        <Badge>{asset.market}</Badge>
+                                                        <Badge tone="accent">{asset.assetClass}</Badge>
+                                                        <Badge>{asset.currency}</Badge>
+                                                    </span>
+                                                </Button>
+                                                <Button
+                                                    onClick={() => {
+                                                        onOpenAssetDetail(asset.id);
+                                                    }}
+                                                    size="sm"
+                                                    tone="ghost"
+                                                >
+                                                    详情
+                                                </Button>
+                                            </div>
+                                        );
+                                    })}
+                                    {visibleAssets.length > dropdownAssets.length && (
+                                        <p className="px-3 py-2 text-xs text-[var(--color-muted)]">继续输入以收窄 {visibleAssets.length} 个匹配标的。</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
                 <div className="flex flex-wrap gap-2">
                     <Button onClick={() => { onSelectFirst(5); }} tone="secondary" data-testid="allocation-select-first-5">
                         选择前 5 个
@@ -188,73 +277,25 @@ export const AssetSelectionPanel = ({
                 </div>
             </div>
 
-            <div className="mt-4 space-y-3" data-testid="allocation-asset-list">
-                {isLoadingAssets ? (
-                    <div className="rounded-[16px] border border-dashed border-[color:var(--color-border)] bg-[rgba(244,239,230,0.46)] p-4 text-sm text-[var(--color-copy)]">
-                        正在装载资产池...
-                    </div>
-                ) : visibleAssets.length === 0 ? (
-                    <div className="rounded-[16px] border border-dashed border-[color:var(--color-border)] bg-[rgba(244,239,230,0.46)] p-4 text-sm text-[var(--color-copy)]">
-                        当前没有可用资产。先去资产池添加标的，或调整过滤条件。
-                    </div>
+            <div className="mt-3 flex flex-wrap gap-2" data-testid="allocation-asset-list">
+                {selectedAssets.length === 0 ? (
+                    <span className="rounded-[12px] border border-dashed border-[color:var(--color-border)] bg-[rgba(244,239,230,0.46)] px-3 py-2 text-sm text-[var(--color-copy)]">尚未选择标的。</span>
                 ) : (
-                    visibleAssets.map((asset) => {
-                        const isSelected = selectedAssetIdSet.has(asset.id);
-
-                        return (
-                            <article
-                                className={[
-                                    'flex items-start gap-4 rounded-[16px] border p-4 transition',
-                                    isSelected
-                                        ? 'border-[var(--color-highlight-soft)] bg-[rgba(156,98,55,0.08)]'
-                                        : 'border-[color:var(--color-border)] bg-[rgba(255,255,255,0.72)] hover:border-[var(--color-highlight-soft)]',
-                                ].join(' ')}
-                                key={asset.id}
-                            >
-                                <Checkbox
-                                    checked={isSelected}
-                                    data-testid={`allocation-asset-toggle-${asset.symbol}`}
-                                    onChange={() => {
-                                        onToggleSelected(asset.id);
-                                    }}
-                                />
-                                <Button
-                                    className="h-auto min-w-0 flex-1 justify-start border-0 bg-transparent px-0 py-0 text-left shadow-none hover:bg-transparent"
-                                    data-testid={`allocation-asset-open-${asset.symbol}`}
-                                    onClick={() => {
-                                        onOpenAssetDetail(asset.id);
-                                    }}
-                                    size="sm"
-                                    tone="ghost"
-                                    type="button"
-                                >
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="font-display text-2xl text-[var(--color-foreground)]">{asset.symbol}</span>
-                                        <span className="text-sm text-[var(--color-copy)]">（{asset.name}）</span>
-                                        <Badge>{asset.market}</Badge>
-                                        <Badge tone="accent">{asset.assetClass}</Badge>
-                                        <Badge>{asset.currency}</Badge>
-                                    </div>
-                                    {asset.tags.length > 0 && (
-                                        <div className="mt-3 flex flex-wrap gap-2">
-                                            {asset.tags.slice(0, 3).map((tag) => (
-                                                <Badge key={`${asset.id}-${tag}`} tone="muted">{tag}</Badge>
-                                            ))}
-                                        </div>
-                                    )}
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        onOpenAssetDetail(asset.id);
-                                    }}
-                                    size="sm"
-                                    tone="ghost"
-                                >
-                                    详情
-                                </Button>
-                            </article>
-                        );
-                    })
+                    selectedAssets.map((asset) => (
+                        <Button
+                            className="h-auto rounded-full border border-[var(--color-highlight-soft)] bg-[rgba(156,98,55,0.08)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-highlight)] shadow-none hover:bg-[rgba(156,98,55,0.14)]"
+                            data-testid={`allocation-selected-asset-${asset.symbol}`}
+                            key={asset.id}
+                            onClick={() => {
+                                onToggleSelected(asset.id);
+                            }}
+                            size="sm"
+                            tone="ghost"
+                            type="button"
+                        >
+                            {asset.symbol} ×
+                        </Button>
+                    ))
                 )}
             </div>
         </section>
@@ -273,6 +314,7 @@ export const AllocationControlsPanel = ({
     onSetDateRange,
     onSetMaxSingleWeight,
     onSetRebalanceCadence,
+    onSetTrendFollowingAllowShort,
     onSetTrendFollowingRuleEnabled,
     rebalanceCadence,
     selectedAssets,
@@ -291,6 +333,7 @@ export const AllocationControlsPanel = ({
     onSetDateRange: (startDate: string, endDate: string) => void;
     onSetMaxSingleWeight: (value: number) => void;
     onSetRebalanceCadence: (value: RebalanceCadence) => void;
+    onSetTrendFollowingAllowShort: (value: boolean) => void;
     onSetTrendFollowingRuleEnabled: (fast: number, value: boolean) => void;
     rebalanceCadence: RebalanceCadence;
     selectedAssets: StoredAsset[];
@@ -419,12 +462,19 @@ export const AllocationControlsPanel = ({
                     </div>
                 </div>
 
-                <div className="space-y-2 text-sm text-[var(--color-copy)]">
-                    <span className="text-xs uppercase tracking-[0.24em] text-[var(--color-muted)]">模式说明</span>
-                    <div className="flex h-10 items-center rounded-[12px] border border-[color:var(--color-border)] bg-white/80 px-3 text-sm text-[var(--color-copy)]" data-testid="allocation-mode-description">
-                        {strategyDescriptionMap[strategy]}
+                {isEwmacStrategy && (
+                    <div className="flex h-10 items-center gap-2 rounded-[12px] border border-[color:var(--color-border)] bg-white/80 px-3 text-sm text-[var(--color-copy)]">
+                        <Checkbox
+                            checked={trendConfig.allowShort}
+                            data-testid="allocation-ewmac-allow-short"
+                            onChange={(event) => {
+                                onSetTrendFollowingAllowShort(event.currentTarget.checked);
+                            }}
+                        >
+                            允许做空
+                        </Checkbox>
                     </div>
-                </div>
+                )}
 
                 {isEwmacStrategy && (
                     <div className="rounded-[18px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.48)] p-4 md:col-span-2">
@@ -465,6 +515,7 @@ export const AllocationControlsPanel = ({
                 <Badge>{selectedAssets.length} 个标的</Badge>
                 {!isEwmacStrategy && <Badge>{formatPercent(constraints.maxSingleWeight)} 单标的上限</Badge>}
                 <Badge>{cadenceLabelMap[rebalanceCadence]}</Badge>
+                {isEwmacStrategy && <Badge>{trendConfig.allowShort ? '允许做空' : '仅做多'}</Badge>}
                 {isEwmacStrategy && <Badge tone="accent">EWMAC {enabledTrendRuleCount} 条规则</Badge>}
                 <Badge>{startDate} ~ {endDate}</Badge>
             </div>
