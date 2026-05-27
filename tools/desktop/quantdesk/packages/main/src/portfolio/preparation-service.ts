@@ -13,7 +13,8 @@ import {
     resolvePreparedCalculationDateRange,
     type AllocationPreparationDateRange,
 } from './preparation-date-range';
-import { AllocationPreparationError, isAllocationPreparationError } from './preparation-errors';
+import { classifyAllocationPreparationError } from './preparation-error-classifier';
+import { AllocationPreparationError } from './preparation-errors';
 import type { AllocationPreparationReader } from './preparation-repository-adapter';
 
 const emptyPreparedAllocationData: PreparedAllocationData = {
@@ -51,38 +52,6 @@ export interface AllocationPreparationServiceDeps {
     clock?: () => Date;
     shouldSkipInteractiveSync?: () => boolean;
 }
-
-const classifyPreparationError = (
-    error: unknown,
-): NonNullable<AllocationResult['error']> => {
-    if (isAllocationPreparationError(error)) {
-        return error.toAllocationError();
-    }
-
-    if (error instanceof Error && 'code' in error && error.code === 'MARKET_DATA_UNAVAILABLE') {
-        return {
-            code: 'MARKET_DATA_UNAVAILABLE',
-            message: error.message,
-            suggestions: ['Enable at least one market data provider.', 'Refresh the asset after the provider recovers.'],
-        };
-    }
-
-    if (error instanceof Error && 'code' in error && error.code === 'FX_RATE_UNAVAILABLE') {
-        return {
-            code: 'FX_RATE_UNAVAILABLE',
-            message: error.message,
-            suggestions: ['Enable at least one FX provider.', 'Refresh FX cache before running allocation.'],
-        };
-    }
-
-    const message = error instanceof Error ? error.message : String(error);
-
-    return {
-        code: 'ALLOCATION_PREPARATION_FAILED',
-        message,
-        suggestions: ['Review asset history coverage and cached prices.', 'Retry after refreshing market data.'],
-    };
-};
 
 export class AllocationPreparationService {
     private readonly deps: AllocationPreparationServiceDeps;
@@ -158,7 +127,7 @@ export class AllocationPreparationService {
         } catch (error) {
             return {
                 calculationDateRange: resolvePreparedCalculationDateRange(prepared, effectiveDateRange),
-                error: classifyPreparationError(error),
+                error: classifyAllocationPreparationError(error),
                 ok: false,
                 prepared,
             };
