@@ -155,6 +155,50 @@ describe('database layer', () => {
     }
   });
 
+  test('repairs upgraded databases that are missing market cache tables', () => {
+    const database = new Database(':memory:');
+
+    try {
+      database.exec(`
+        CREATE TABLE assets (
+          id TEXT PRIMARY KEY,
+          symbol TEXT NOT NULL,
+          name TEXT NOT NULL,
+          market TEXT NOT NULL,
+          asset_class TEXT NOT NULL,
+          currency TEXT NOT NULL,
+          tags TEXT NOT NULL DEFAULT '[]',
+          metadata TEXT NOT NULL DEFAULT '{}',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(symbol, market)
+        );
+
+        CREATE TABLE fx_rates (
+          pair TEXT NOT NULL,
+          date TEXT NOT NULL,
+          rate REAL NOT NULL,
+          source TEXT NOT NULL DEFAULT 'unknown',
+          PRIMARY KEY (pair, date)
+        );
+
+        PRAGMA user_version = 11;
+      `);
+
+      runMigrations(database);
+
+      const tables = database
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('daily_prices', 'fx_rates') ORDER BY name")
+        .all() as Array<{ name: string }>;
+      const version = database.prepare('PRAGMA user_version').get() as { user_version: number };
+
+      expect(tables.map((table) => table.name)).toEqual(['daily_prices', 'fx_rates']);
+      expect(version.user_version).toBe(getLatestMigrationVersion());
+    } finally {
+      database.close();
+    }
+  });
+
   test('migration 003 clears stale allocation results and backfills cadence columns', () => {
     const database = new Database(':memory:');
     try {
