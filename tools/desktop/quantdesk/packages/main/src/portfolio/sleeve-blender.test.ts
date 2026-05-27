@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 
 import type { AllocationTrade } from '@quantdesk/shared';
 
-import { blendAllocationSleeves, scaleAllocationTrade } from './sleeve-blender';
+import { scaleAllocationTrade } from './allocation-trade-orchestrator';
+import { blendAllocationSleeves } from './sleeve-blender';
 import type { TrendFollowingSimulationResult } from './trend-following';
 
 const allocationTrade: AllocationTrade = {

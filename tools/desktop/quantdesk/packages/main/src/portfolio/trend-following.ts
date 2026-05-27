@@ -6,6 +6,7 @@ import type {
     PortfolioPathPoint,
 } from '@quantdesk/shared';
 
+import { isMaterialAllocationTradeChange } from './allocation-trade-orchestrator';
 import {
     computeEwmacFamily,
     defaultEwmacRules,
@@ -13,7 +14,6 @@ import {
     type EwmacFamilyForecast,
     type NormalizedEwmacRule,
 } from './ewmac';
-import { minimumPortfolioTradeWeight } from './portfolio-constants';
 import {
     buildPortfolioPathFromDailyReturns,
     computePortfolioMetricsFromDailyReturns,
@@ -188,7 +188,7 @@ const buildTrendTrades = ({
             const toWeight = weight * sleeveWeight;
             const weightChange = toWeight - fromWeight;
 
-            if (Math.abs(weightChange) < minimumPortfolioTradeWeight) {
+            if (!isMaterialAllocationTradeChange(weightChange)) {
                 return;
             }
 

@@ -8,6 +8,7 @@ import type {
     PortfolioMetrics,
 } from '@quantdesk/shared';
 
+import { isMaterialAllocationTradeChange } from './allocation-trade-orchestrator';
 import type { PreparedAllocationData } from './preprocessor';
 import { buildScenarioAnalysis } from './scenarios';
 import {
@@ -18,7 +19,6 @@ import {
     signedActiveDualMomentumWeight,
     type ActiveDualMomentumPosition,
 } from './active-dual-momentum-rules';
-import { minimumPortfolioTradeWeight } from './portfolio-constants';
 import {
     buildPortfolioPathFromDailyReturns,
     computePortfolioCalmarRatio,
@@ -63,7 +63,7 @@ const buildTrades = ({
     const toSigned = next ? signedActiveDualMomentumWeight(next) : 0;
     const weightChange = toSigned - fromSigned;
 
-    if (Math.abs(weightChange) < minimumPortfolioTradeWeight) {
+    if (!isMaterialAllocationTradeChange(weightChange)) {
         return [];
     }
 
