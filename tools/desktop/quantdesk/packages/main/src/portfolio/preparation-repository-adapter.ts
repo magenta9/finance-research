@@ -1,6 +1,7 @@
 import type { Currency, DailyPriceRecord, FxRateRecord, StoredAsset } from '@quantdesk/shared';
 
 import type { Repositories } from '../db/repositories';
+import { AllocationPreparationError } from './preparation-errors';
 
 export interface AllocationPreparationContext {
     assets: StoredAsset[];
@@ -45,6 +46,14 @@ export class PreparationRepositoryAdapter implements AllocationPreparationReader
                 assetId,
                 endDate,
                 startDate,
+            });
+        }
+
+        if (startDate || endDate) {
+            throw new AllocationPreparationError({
+                code: 'INVALID_DATE_RANGE',
+                message: 'Price history range queries require both startDate and endDate.',
+                suggestions: ['Provide both startDate and endDate, or omit both to read full asset history.'],
             });
         }
 
