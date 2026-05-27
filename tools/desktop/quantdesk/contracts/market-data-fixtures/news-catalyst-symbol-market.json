@@ -1,0 +1,60 @@
+{
+    "cases": [
+        {
+            "name": "sz-suffix-resolves-a-share",
+            "symbol": "000001.SZ",
+            "market": null,
+            "assetMetadata": {},
+            "expectedMarket": "A",
+            "expectedSymbol": "000001",
+            "expectedReasonCode": null
+        },
+        {
+            "name": "bare-six-digit-without-context-is-unknown",
+            "symbol": "000001",
+            "market": null,
+            "assetMetadata": {},
+            "expectedMarket": null,
+            "expectedSymbol": "000001",
+            "expectedReasonCode": "market_unresolved"
+        },
+        {
+            "name": "bare-six-digit-explicit-a-market",
+            "symbol": "000001",
+            "market": "A",
+            "assetMetadata": {},
+            "expectedMarket": "A",
+            "expectedSymbol": "000001",
+            "expectedReasonCode": null
+        },
+        {
+            "name": "metadata-market-beats-alpha-default",
+            "symbol": "BABA",
+            "market": null,
+            "assetMetadata": {
+                "market": "HK"
+            },
+            "expectedMarket": "HK",
+            "expectedSymbol": "BABA",
+            "expectedReasonCode": null
+        },
+        {
+            "name": "hk-suffix-resolves-hk",
+            "symbol": "00700.HK",
+            "market": null,
+            "assetMetadata": {},
+            "expectedMarket": "HK",
+            "expectedSymbol": "00700",
+            "expectedReasonCode": null
+        },
+        {
+            "name": "alpha-ticker-resolves-us",
+            "symbol": "AAPL",
+            "market": null,
+            "assetMetadata": {},
+            "expectedMarket": "US",
+            "expectedSymbol": "AAPL",
+            "expectedReasonCode": null
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@quantdesk/preload",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs --external electron --external @quantdesk/shared && tsc -p tsconfig.build.json",
+    "dev": "tsup src/index.ts --format cjs --watch --external electron --external @quantdesk/shared",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@quantdesk/shared": "workspace:*"
+  }
+}

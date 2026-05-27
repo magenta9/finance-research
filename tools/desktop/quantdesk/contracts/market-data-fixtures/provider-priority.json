@@ -1,0 +1,67 @@
+{
+    "cases": [
+        {
+            "name": "price-us-yfinance-base-priority",
+            "kind": "price",
+            "market": "US",
+            "source": "yfinance",
+            "expectedPriority": 30
+        },
+        {
+            "name": "price-us-yfinance-derived-penalty",
+            "kind": "price",
+            "market": "US",
+            "source": "yfinance-derived",
+            "expectedPriority": 25
+        },
+        {
+            "name": "price-a-tushare-base-priority",
+            "kind": "price",
+            "market": "A",
+            "source": "tushare",
+            "expectedPriority": 30
+        },
+        {
+            "name": "price-hk-tushare-base-priority",
+            "kind": "price",
+            "market": "HK",
+            "source": "tushare-qfq",
+            "expectedPriority": 30
+        },
+        {
+            "name": "price-default-market-fallback",
+            "kind": "price",
+            "market": "SG",
+            "source": "tushare",
+            "expectedPriority": 30
+        },
+        {
+            "name": "price-commodity-tushare-base-priority",
+            "kind": "price",
+            "market": "COMMODITY",
+            "source": "tushare-futures-main",
+            "expectedPriority": 30
+        },
+        {
+            "name": "price-commodity-akshare-fallback-priority",
+            "kind": "price",
+            "market": "COMMODITY",
+            "source": "akshare-futures-main-sina",
+            "expectedPriority": 20
+        },
+        {
+            "name": "fx-frankfurter-base-priority",
+            "kind": "fx",
+            "market": null,
+            "source": "frankfurter",
+            "expectedPriority": 10
+        },
+        {
+            "name": "fx-akshare-derived-penalty",
+            "kind": "fx",
+            "market": null,
+            "source": "akshare-derived",
+            "expectedPriority": 25
+        }
+    ]
+}

@@ -387,6 +387,32 @@ func TestStatusReturnsSuccessfulEnvelope(t *testing.T) {
 	if stats["priceRowCount"] != float64(0) || stats["fxRateRowCount"] != float64(0) || stats["latestPriceFetchAt"] != nil {
 		t.Fatalf("unexpected empty stats: %#v", stats)
 	}
+	providerConfiguration := data["providerConfiguration"].(map[string]any)
+	if providerConfiguration["ready"] != false || providerConfiguration["code"] != app.MaintenanceCodeConfigRequired {
+		t.Fatalf("expected provider configuration to require setup, got %#v", providerConfiguration)
+	}
+}
+
+func TestStatusReturnsReadyProviderConfiguration(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("QUANT_DATA_HOME", home)
+	configDir := filepath.Join(home, "config")
+	if err := os.MkdirAll(configDir, 0o700); err != nil {
+		t.Fatalf("create config dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(configDir, "provider.json"), []byte(`{"TUSHARE_TOKEN":"test-token"}`), 0o600); err != nil {
+		t.Fatalf("write provider config: %v", err)
+	}
+
+	envelope := runJSONCommand(t, "status", "")
+	if !envelope.OK {
+		t.Fatalf("expected ok=true envelope")
+	}
+	data := envelope.Data.(map[string]any)
+	providerConfiguration := data["providerConfiguration"].(map[string]any)
+	if providerConfiguration["ready"] != true || providerConfiguration["code"] != nil || providerConfiguration["message"] != nil {
+		t.Fatalf("expected ready provider configuration, got %#v", providerConfiguration)
+	}
 }
 
 func TestStatusReturnsExternalDataStats(t *testing.T) {

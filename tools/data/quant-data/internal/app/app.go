@@ -115,17 +115,55 @@ func runStatus(stdout io.Writer) int {
 	if err != nil {
 		return writeStoreError(stdout, err)
 	}
+	providerConfiguration, err := providerConfigurationStatus(dataStore.ConfigDir())
+	if err != nil {
+		return writeStoreError(stdout, err)
+	}
 
 	return writeEnvelope(stdout, Envelope{
 		OK: true,
 		Data: map[string]any{
-			"storeVersion": StoreVersion,
-			"storePath":    dataStore.Path(),
-			"stats":        stats,
+			"storeVersion":          StoreVersion,
+			"storePath":             dataStore.Path(),
+			"stats":                 stats,
+			"providerConfiguration": providerConfiguration,
 		},
 		MaintenanceStatus: maintenanceStatus,
 		DataQualityStatus: "available",
 	})
+}
+
+func providerConfigurationStatus(configDir string) (map[string]any, error) {
+	configStatus, err := store.CheckProviderConfig(configDir)
+	if err != nil {
+		return nil, err
+	}
+	if !configStatus.Exists {
+		return map[string]any{
+			"ready":   false,
+			"code":    MaintenanceCodeConfigRequired,
+			"message": "Configure provider credentials under ~/.quant_data/config before using data methods.",
+		}, nil
+	}
+	if !configStatus.Secure {
+		return map[string]any{
+			"ready":   false,
+			"code":    MaintenanceCodeConfigInsecure,
+			"message": "Provider config files must not be readable or writable by group/other users.",
+		}, nil
+	}
+	if _, err := store.LoadProviderConfig(configDir); err != nil {
+		return map[string]any{
+			"ready":   false,
+			"code":    MaintenanceCodeConfigRequired,
+			"message": err.Error(),
+		}, nil
+	}
+	return map[string]any{
+		"ready":   true,
+		"code":    nil,
+		"message": nil,
+	}, nil
 }
 
 func runRepair(stdout io.Writer) int {

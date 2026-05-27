@@ -48,6 +48,8 @@ The current Go store creates `quant-data.sqlite3` plus a `config` directory unde
 
 finance-research fetches and reads go through JSON commands. Tools must not open `QUANT_DATA_HOME/quant-data.sqlite3` directly for External Data reads; use CLI-backed read/status commands instead of recreating host-owned external-data caches.
 
+`quant-data status` returns store status plus provider configuration diagnostics. Provider configuration problems do not make `status` itself fail when the store is readable; the envelope remains `ok: true` and reports `data.providerConfiguration` with `ready`, `code`, and `message` fields.
+
 ## Provider Configuration
 
 Provider configuration lives under:

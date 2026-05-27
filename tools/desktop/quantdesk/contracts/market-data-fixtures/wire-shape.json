@@ -1,0 +1,69 @@
+{
+  "searchAssets": {
+    "method": "search_assets",
+    "params": {
+      "query": "SPY",
+      "market": "US",
+      "enabledSources": ["yfinance"]
+    },
+    "result": [
+      {
+        "symbol": "SPY",
+        "name": "SPDR S&P 500 ETF Trust",
+        "market": "US",
+        "assetClass": "equity",
+        "currency": "USD",
+        "source": "yfinance",
+        "metadata": {}
+      }
+    ]
+  },
+  "fetchPrices": {
+    "method": "fetch_prices",
+    "params": {
+      "symbol": "SPY",
+      "market": "US",
+      "start": "2026-01-02",
+      "end": "2026-01-05",
+      "enabledSources": ["yfinance", "akshare"]
+    },
+    "result": {
+      "symbol": "SPY",
+      "attemptedSources": ["yfinance"],
+      "prices": [
+        {
+          "date": "2026-01-02",
+          "open": 584,
+          "high": 586,
+          "low": 583,
+          "close": 585,
+          "volume": 117000000,
+          "adjusted_close": 585,
+          "source": "yfinance-test"
+        }
+      ],
+      "warnings": []
+    }
+  },
+  "fetchFxRates": {
+    "method": "fetch_fx_rates",
+    "params": {
+      "pair": "USD/CNY",
+      "start": "2026-01-02",
+      "end": "2026-01-05",
+      "enabledSources": ["akshare", "yfinance", "frankfurter"]
+    },
+    "result": {
+      "pair": "USD/CNY",
+      "attemptedSources": ["akshare", "yfinance"],
+      "rates": [
+        {
+          "date": "2026-01-02",
+          "rate": 7.11,
+          "source": "akshare"
+        }
+      ],
+      "warnings": []
+    }
+  }
+}

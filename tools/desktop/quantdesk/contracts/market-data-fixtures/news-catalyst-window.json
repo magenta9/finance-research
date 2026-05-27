@@ -1,0 +1,48 @@
+{
+    "referenceDate": "2026-05-05",
+    "window": {
+        "lookbackDays": 30,
+        "lookaheadDays": 14
+    },
+    "cases": [
+        {
+            "name": "recent-published-announcement-is-in-window",
+            "providerStatus": "available",
+            "events": [
+                {
+                    "publishedAt": "2026-04-20T00:00:00.000Z",
+                    "eventDate": null
+                }
+            ],
+            "expectedInCatalystWindow": true
+        },
+        {
+            "name": "old-announcement-is-outside-window",
+            "providerStatus": "available",
+            "events": [
+                {
+                    "publishedAt": "2026-03-01T00:00:00.000Z",
+                    "eventDate": null
+                }
+            ],
+            "expectedInCatalystWindow": false
+        },
+        {
+            "name": "published-future-event-date-is-in-lookahead-window",
+            "providerStatus": "available",
+            "events": [
+                {
+                    "publishedAt": "2026-05-01T00:00:00.000Z",
+                    "eventDate": "2026-05-15"
+                }
+            ],
+            "expectedInCatalystWindow": true
+        },
+        {
+            "name": "provider-unavailable-keeps-window-unknown",
+            "providerStatus": "unavailable",
+            "events": [],
+            "expectedInCatalystWindow": "unknown"
+        }
+    ]
+}

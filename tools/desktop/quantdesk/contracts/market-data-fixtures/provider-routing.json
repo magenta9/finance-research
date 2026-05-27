@@ -1,0 +1,196 @@
+{
+    "cases": [
+        {
+            "name": "search-us-market-uses-yfinance",
+            "kind": "search",
+            "market": "US",
+            "symbol": "SPY",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "yfinance"
+            ]
+        },
+        {
+            "name": "search-a-market-uses-tushare-then-akshare",
+            "kind": "search",
+            "market": "A",
+            "symbol": "510300",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "tushare",
+                "akshare"
+            ]
+        },
+        {
+            "name": "search-hk-market-uses-yfinance",
+            "kind": "search",
+            "market": "HK",
+            "symbol": "00700.HK",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "yfinance"
+            ]
+        },
+        {
+            "name": "search-default-market-uses-tushare-and-yfinance",
+            "kind": "search",
+            "market": null,
+            "symbol": "510300",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "tushare",
+                "akshare",
+                "yfinance"
+            ]
+        },
+        {
+            "name": "search-commodity-market-uses-tushare-then-akshare",
+            "kind": "search",
+            "market": "COMMODITY",
+            "symbol": "RB9999",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "tushare",
+                "akshare"
+            ]
+        },
+        {
+            "name": "price-us-market-uses-yfinance",
+            "kind": "price",
+            "market": "US",
+            "symbol": "SPY",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "yfinance"
+            ]
+        },
+        {
+            "name": "price-a-market-uses-tushare-then-akshare",
+            "kind": "price",
+            "market": "A",
+            "symbol": "510300",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "tushare",
+                "akshare"
+            ]
+        },
+        {
+            "name": "price-hk-market-uses-akshare-then-yfinance",
+            "kind": "price",
+            "market": "HK",
+            "symbol": "00700.HK",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "akshare",
+                "yfinance"
+            ]
+        },
+        {
+            "name": "price-digit-fallback-uses-tushare-when-market-is-unknown",
+            "kind": "price",
+            "market": null,
+            "symbol": "513100",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "tushare"
+            ]
+        },
+        {
+            "name": "price-domestic-bond-etf-uses-a-market-providers",
+            "kind": "price",
+            "market": "BOND",
+            "symbol": "159834",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "tushare",
+                "akshare"
+            ]
+        },
+        {
+            "name": "price-commodity-futures-uses-tushare-then-akshare",
+            "kind": "price",
+            "market": "COMMODITY",
+            "symbol": "RB9999",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "tushare",
+                "akshare"
+            ]
+        },
+        {
+            "name": "fx-order-keeps-frankfurter-last",
+            "kind": "fx",
+            "market": null,
+            "symbol": "USD/CNY",
+            "enabledSources": [
+                "akshare",
+                "tushare",
+                "yfinance",
+                "frankfurter"
+            ],
+            "expectedProviders": [
+                "akshare",
+                "yfinance",
+                "frankfurter"
+            ]
+        },
+        {
+            "name": "disabled-tushare-uses-akshare-a-market-fallback",
+            "kind": "price",
+            "market": "A",
+            "symbol": "510300",
+            "enabledSources": [
+                "akshare",
+                "yfinance"
+            ],
+            "expectedProviders": [
+                "akshare"
+            ]
+        }
+    ]
+}

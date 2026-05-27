@@ -1,0 +1,100 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://quantdesk.local/contracts/decision-card.schema.json",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "actionLevel",
+        "dataGaps",
+        "edgeType",
+        "entryConditions",
+        "invalidation",
+        "payoffGrade",
+        "positionLevel",
+        "reviewTrigger",
+        "takeProfitOrExit",
+        "timeHorizon",
+        "winRateGrade"
+    ],
+    "properties": {
+        "actionLevel": {
+            "enum": [
+                "avoid",
+                "observe",
+                "prepare",
+                "suggested_operation",
+                "trading_plan"
+            ]
+        },
+        "dataGaps": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "edgeType": {
+            "enum": [
+                "none",
+                "win_rate",
+                "payoff",
+                "risk_adjusted",
+                "diversification",
+                "execution",
+                "information"
+            ]
+        },
+        "entryConditions": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "invalidation": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "payoffGrade": {
+            "enum": [
+                "unknown",
+                "none",
+                "weak",
+                "medium",
+                "strong"
+            ]
+        },
+        "positionLevel": {
+            "enum": [
+                "none",
+                "small",
+                "medium",
+                "large",
+                "precise_unavailable"
+            ]
+        },
+        "reviewTrigger": {
+            "type": "string",
+            "minLength": 1
+        },
+        "takeProfitOrExit": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "timeHorizon": {
+            "type": "string",
+            "minLength": 1
+        },
+        "winRateGrade": {
+            "enum": [
+                "unknown",
+                "none",
+                "weak",
+                "medium",
+                "strong"
+            ]
+        }
+    }
+}

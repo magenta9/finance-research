@@ -1,0 +1,12 @@
+{
+    "name": "eslint-plugin-quantdesk",
+    "version": "0.1.0",
+    "private": true,
+    "main": "index.cjs",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs --dts --clean",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "lint": "eslint src --ext .ts"
+    }
+}

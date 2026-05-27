@@ -44,6 +44,10 @@ _Avoid_: Business data, data quality, portfolio diagnostic
 The local user configuration required for external data providers, including credentials and provider-specific settings.
 _Avoid_: Host preference, portfolio setting
 
+**Provider Configuration Status**:
+The CLI-owned diagnostic summary of whether **Provider Configuration** exists, is secure, and is ready for provider-backed data requests.
+_Avoid_: Desktop login state, provider routing policy, external data quality
+
 **Provider Routing**:
 The CLI-owned decision about which external providers to attempt and how their rows are prioritized for a data request.
 _Avoid_: Host preference filtering, presentation source selection, portfolio strategy
@@ -113,6 +117,7 @@ _Avoid_: Data maintenance, market-data fetch
 - **Provider Status** and **Maintenance Status** describe data availability and refresh progress, not portfolio quality.
 - **External Data Status** is reported by the CLI and may be combined with **User Workspace Data** counts for display.
 - **Provider Configuration** enables provider access for **Data Maintenance**.
+- **Provider Configuration Status** reports whether **Provider Configuration** can support provider-backed requests; it is exposed through `quant-data status` diagnostics.
 - **Provider Routing** is interpreted by the CLI from **Provider Configuration** and provider policy contracts.
 - A **Maintenance Error** describes limit, quota, provider unavailability, and other maintenance blockers.
 - **Data Quality Status** summarizes whether returned **External Data** is fit for use; it does not encode provider limits.

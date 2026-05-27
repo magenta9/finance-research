@@ -1,0 +1,108 @@
+{
+    "searchNewsCatalysts": {
+        "method": "search_news_catalysts",
+        "params": {
+            "query": "AAPL earnings",
+            "symbol": "AAPL",
+            "market": "US",
+            "enabledProviders": [
+                "sec_edgar"
+            ],
+            "lookbackDays": 30,
+            "lookaheadDays": 14
+        },
+        "result": {
+            "symbol": "AAPL",
+            "market": "US",
+            "events": [
+                {
+                    "eventId": "sec_edgar:AAPL:0000320193-26-000001",
+                    "sourceId": "sec_edgar:0000320193-26-000001",
+                    "providerId": "sec_edgar",
+                    "symbol": "AAPL",
+                    "market": "US",
+                    "category": "earnings_result",
+                    "title": "AAPL 10-Q filing",
+                    "publishedAt": "2026-05-01T00:00:00.000Z",
+                    "eventDate": null,
+                    "evidenceEligible": false,
+                    "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000001/0000320193-26-000001-index.html",
+                    "confidence": "high",
+                    "credibilityStatus": "official",
+                    "snippet": "10-Q filing",
+                    "fetchedAt": "2026-05-05T00:00:00.000Z",
+                    "contentHash": "sha256:test"
+                }
+            ],
+            "inCatalystWindow": true,
+            "window": {
+                "referenceDate": "2026-05-05",
+                "startDate": "2026-04-05",
+                "endDate": "2026-05-19",
+                "lookbackDays": 30,
+                "lookaheadDays": 14
+            },
+            "attemptedSources": [
+                "sec_edgar"
+            ],
+            "providerErrors": [],
+            "warnings": [],
+            "qualityStatus": "available",
+            "coverageNotes": [
+                "SEC EDGAR submissions metadata only; full-text EFTS search is planned."
+            ]
+        }
+    },
+    "searchAnnouncements": {
+        "method": "search_announcements",
+        "params": {
+            "query": "repurchase",
+            "symbol": "000001.SZ",
+            "market": "A",
+            "enabledProviders": [
+                "cninfo",
+                "eastmoney_notice"
+            ]
+        },
+        "result": [
+            {
+                "credibilityStatus": "official",
+                "evidenceEligible": false,
+                "providerId": "cninfo",
+                "publishedAt": "2026-05-01T00:00:00.000Z",
+                "snippet": "snippet only",
+                "sourceId": "cninfo:announcement-1",
+                "title": "Repurchase announcement",
+                "url": "https://www.cninfo.com.cn/new/disclosure/detail?announcementId=announcement-1"
+            }
+        ]
+    },
+    "fetchMarketSource": {
+        "method": "fetch_market_source",
+        "params": {
+            "sourceId": "cninfo:announcement-1",
+            "url": "https://www.cninfo.com.cn/new/disclosure/detail?announcementId=announcement-1"
+        },
+        "result": {
+            "contentHash": "sha256:source-test",
+            "evidenceEligible": true,
+            "fetchedAt": "2026-05-05T00:00:00.000Z",
+            "provenance": [
+                {
+                    "fetchedAt": "2026-05-05T00:00:00.000Z",
+                    "providerIds": [
+                        "cninfo"
+                    ],
+                    "qualityStatus": "pass",
+                    "rowsUsed": 1,
+                    "sourceId": "cninfo:announcement-1",
+                    "warnings": []
+                }
+            ],
+            "sourceId": "cninfo:announcement-1",
+            "summary": "Fetched announcement source.",
+            "title": "Repurchase announcement",
+            "url": "https://www.cninfo.com.cn/new/disclosure/detail?announcementId=announcement-1"
+        }
+    }
+}

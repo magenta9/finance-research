@@ -1,0 +1,1 @@
+export type PreferenceMap = Record<string, string>;

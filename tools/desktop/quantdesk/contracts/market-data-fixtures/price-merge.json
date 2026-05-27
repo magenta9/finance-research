@@ -1,0 +1,103 @@
+{
+  "cases": [
+    {
+      "name": "higher-priority-provider-wins-same-date",
+      "market": "US",
+      "existing": {
+        "date": "2026-01-02",
+        "open": 9.5,
+        "high": 11,
+        "low": 9,
+        "close": 10,
+        "volume": 100,
+        "adjusted_close": 10,
+        "source": "akshare"
+      },
+      "incoming": {
+        "date": "2026-01-02",
+        "open": 9.5,
+        "high": 11,
+        "low": 9,
+        "close": 12,
+        "volume": 100,
+        "adjusted_close": 12,
+        "source": "yfinance"
+      },
+      "expected": {
+        "source": "yfinance",
+        "close": 12,
+        "adjusted_close": 12,
+        "open": 9.5,
+        "high": 11,
+        "low": 9,
+        "volume": 100
+      }
+    },
+    {
+      "name": "same-source-rows-merge-non-null-fields",
+      "market": "A",
+      "existing": {
+        "date": "2026-01-02",
+        "open": null,
+        "high": null,
+        "low": 9,
+        "close": 10,
+        "volume": null,
+        "adjusted_close": 10,
+        "source": "akshare"
+      },
+      "incoming": {
+        "date": "2026-01-02",
+        "open": 10.1,
+        "high": 10.5,
+        "low": null,
+        "close": 10,
+        "volume": null,
+        "adjusted_close": 10,
+        "source": "akshare"
+      },
+      "expected": {
+        "source": "akshare",
+        "close": 10,
+        "adjusted_close": 10,
+        "open": 10.1,
+        "high": 10.5,
+        "low": 9,
+        "volume": null
+      }
+    },
+    {
+      "name": "gap-fill-preserves-existing-source-on-equal-priority",
+      "market": "A",
+      "existing": {
+        "date": "2026-01-02",
+        "open": null,
+        "high": 10.5,
+        "low": 9.5,
+        "close": 10,
+        "volume": null,
+        "adjusted_close": 10,
+        "source": "akshare-nav"
+      },
+      "incoming": {
+        "date": "2026-01-02",
+        "open": 10.1,
+        "high": null,
+        "low": null,
+        "close": 10,
+        "volume": 100,
+        "adjusted_close": 10,
+        "source": "akshare"
+      },
+      "expected": {
+        "source": "akshare-nav",
+        "close": 10,
+        "adjusted_close": 10,
+        "open": 10.1,
+        "high": 10.5,
+        "low": 9.5,
+        "volume": 100
+      }
+    }
+  ]
+}

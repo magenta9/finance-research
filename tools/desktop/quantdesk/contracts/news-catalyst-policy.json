@@ -1,0 +1,84 @@
+{
+    "schemaVersion": 1,
+    "symbolMarketRules": {
+        "unknownReasonCode": "market_unresolved",
+        "rules": [
+            {
+                "id": "explicit-market-first",
+                "market": "unknown",
+                "description": "Explicit request market or trusted asset metadata wins before ticker-shape inference."
+            },
+            {
+                "id": "a-share-suffix",
+                "market": "A",
+                "description": ".SZ and .SH suffixes resolve to A-share disclosure providers."
+            },
+            {
+                "id": "a-share-six-digit-requires-context",
+                "market": "unknown",
+                "description": "Bare six-digit symbols require explicit A market or trusted asset metadata."
+            },
+            {
+                "id": "hk-five-digit-or-suffix",
+                "market": "HK",
+                "description": "Five-digit HK stock codes and .HK suffixes resolve to HKEXnews."
+            },
+            {
+                "id": "us-alpha-or-suffix",
+                "market": "US",
+                "description": "Alphabetic tickers and .US suffixes resolve to SEC EDGAR unless explicit context says otherwise."
+            }
+        ]
+    },
+    "announcementProviderOrder": {
+        "A": [
+            "cninfo",
+            "eastmoney_notice"
+        ],
+        "HK": [
+            "hkexnews",
+            "hsi_index_notices"
+        ],
+        "US": [
+            "sec_edgar"
+        ],
+        "default": []
+    },
+    "providerStatus": {
+        "cninfo": "enabled",
+        "eastmoney_notice": "enabled",
+        "sse_disclosure": "planned",
+        "hkexnews": "enabled",
+        "hsi_index_notices": "enabled",
+        "sec_edgar": "enabled",
+        "sec_efts": "planned"
+    },
+    "sourcePriorityWeights": {
+        "cninfo": 90,
+        "eastmoney_notice": 60,
+        "sse_disclosure": 85,
+        "hkexnews": 90,
+        "hsi_index_notices": 85,
+        "sec_edgar": 90,
+        "sec_efts": 70
+    },
+    "windowDefaults": {
+        "lookbackDays": 30,
+        "lookaheadDays": 14
+    },
+    "catalystCategories": [
+        "earnings_result",
+        "guidance_forecast",
+        "buyback",
+        "dividend",
+        "shareholder_meeting",
+        "suspension_resumption",
+        "major_transaction",
+        "litigation_regulatory",
+        "issuance_listing",
+        "contract_order",
+        "operation_update",
+        "management_change",
+        "other"
+    ]
+}

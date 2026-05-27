@@ -5,6 +5,7 @@ This repository uses a multi-context layout for domain documentation.
 | Context | Path | Description |
 |---------|------|-------------|
 | quant-data | `tools/data/quant-data/CONTEXT.md` | Go CLI data acquisition tool |
+| desktop | `tools/desktop/CONTEXT.md` | Local-first graphical finance workspace tools |
 | strategy | `tools/strategy/CONTEXT.md` | Reusable strategy implementations |
 | jobs | `tools/jobs/CONTEXT.md` | Scheduled and batch wrappers |
 

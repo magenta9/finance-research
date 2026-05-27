@@ -1,0 +1,1 @@
+database.prepare('select sqlite_version() as sqlite_version').get();

@@ -1,0 +1,26 @@
+{
+  "name": "@quantdesk/renderer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@quantdesk/shared": "workspace:*",
+    "@fontsource/noto-serif-sc": "^5.1.0",
+    "@fontsource/noto-sans-sc": "^5.1.0",
+    "@tailwindcss/vite": "^4.2.2",
+    "react": "^19.2.5",
+    "react-markdown": "^10.1.0",
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^6.28.0",
+    "recharts": "^2.15.4",
+    "remark-gfm": "^4.0.1",
+    "tailwindcss": "^4.2.2",
+    "zustand": "^5.0.2"
+  }
+}

@@ -1,0 +1,1 @@
+export const loadLazyModule = async () => await import('./lazy-module');

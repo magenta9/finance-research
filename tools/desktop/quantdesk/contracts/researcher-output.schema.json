@@ -1,0 +1,291 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://quantdesk.local/contracts/researcher-output.schema.json",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "actionRecommendation",
+        "assumptions",
+        "confidence",
+        "conclusion",
+        "dataGaps",
+        "dataProvenance",
+        "direction",
+        "edgeStrength",
+        "edgeTypes",
+        "evidence",
+        "invalidationConditions",
+        "needsSecondReview",
+        "payoffGrade",
+        "requestId",
+        "risks",
+        "role",
+        "timeHorizon",
+        "winRateGrade"
+    ],
+    "properties": {
+        "actionRecommendation": {
+            "enum": [
+                "avoid",
+                "observe",
+                "prepare",
+                "suggested_operation",
+                "trading_plan"
+            ]
+        },
+        "assumptions": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "confidence": {
+            "enum": [
+                "low",
+                "medium",
+                "high"
+            ]
+        },
+        "conclusion": {
+            "type": "string",
+            "minLength": 1
+        },
+        "dataGaps": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "dataProvenance": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/dataProvenance"
+            }
+        },
+        "direction": {
+            "enum": [
+                "bullish",
+                "bearish",
+                "neutral",
+                "mixed"
+            ]
+        },
+        "edgeStrength": {
+            "$ref": "#/definitions/grade"
+        },
+        "edgeTypes": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/edgeType"
+            }
+        },
+        "evidence": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "label",
+                    "provenance",
+                    "summary"
+                ],
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "provenance": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/dataProvenance"
+                        }
+                    },
+                    "summary": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "invalidationConditions": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "needsSecondReview": {
+            "type": "boolean"
+        },
+        "payoffGrade": {
+            "$ref": "#/definitions/grade"
+        },
+        "repairMetadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "confidenceForcedLow",
+                "needsSecondReviewForced",
+                "repairedFields",
+                "schemaRepairApplied"
+            ],
+            "properties": {
+                "confidenceForcedLow": {
+                    "type": "boolean"
+                },
+                "needsSecondReviewForced": {
+                    "type": "boolean"
+                },
+                "repairedFields": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "schemaRepairApplied": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "requestId": {
+            "type": "string",
+            "minLength": 1
+        },
+        "risks": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "role": {
+            "enum": [
+                "allocation",
+                "trend",
+                "macro",
+                "fundamental",
+                "risk",
+                "factor",
+                "flow_sentiment",
+                "execution"
+            ]
+        },
+        "timeHorizon": {
+            "type": "string",
+            "minLength": 1
+        },
+        "winRateGrade": {
+            "$ref": "#/definitions/grade"
+        }
+    },
+    "definitions": {
+        "dataProvenance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "fetchedAt",
+                "qualityStatus",
+                "sourceId",
+                "warnings"
+            ],
+            "properties": {
+                "analysisWindow": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "endDate",
+                        "startDate"
+                    ],
+                    "properties": {
+                        "endDate": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        "startDate": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    }
+                },
+                "cacheStatus": {
+                    "enum": [
+                        "hit",
+                        "miss",
+                        "stale"
+                    ]
+                },
+                "expectedRows": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "fallbackProviderIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "fetchedAt": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "providerIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "qualityStatus": {
+                    "enum": [
+                        "pass",
+                        "warn",
+                        "block"
+                    ]
+                },
+                "rowsUsed": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "sourceId": {
+                    "type": "string"
+                },
+                "sourcePriority": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "edgeType": {
+            "enum": [
+                "win_rate",
+                "payoff",
+                "risk_adjusted",
+                "diversification",
+                "execution",
+                "information"
+            ]
+        },
+        "grade": {
+            "enum": [
+                "unknown",
+                "none",
+                "weak",
+                "medium",
+                "strong"
+            ]
+        }
+    }
+}
