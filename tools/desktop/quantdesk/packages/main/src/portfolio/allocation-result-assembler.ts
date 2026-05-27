@@ -8,10 +8,10 @@ import type {
 } from '@quantdesk/shared';
 
 import type { PreparedAllocationData } from './preprocessor';
+import { buildAllocationRiskMetrics } from './allocation-risk-metrics';
 import { simulatePortfolioPath } from './path-simulator';
 import { buildScenarioAnalysis } from './scenarios';
 import { blendAllocationSleeves } from './sleeve-blender';
-import { computeRiskContributions, correlationMatrix } from './statistics';
 import type {
     TrendFollowingSimulationResult,
 } from './trend-following';
@@ -79,7 +79,11 @@ export const assembleAllocationResult = ({
     });
     const { allocationSleeveWeight, effectiveWeights, trades } = sleeveBlend;
     const hasStrategyMix = trendFollowing != null || allocationAssetIds != null;
-    const contributions = computeRiskContributions(effectiveWeights, covariance);
+    const riskMetrics = buildAllocationRiskMetrics({
+        covariance,
+        effectiveWeights,
+        prepared,
+    });
     const allocations = prepared.series.map((entry, index) => ({
         annualizedReturn: annualizedMeanReturns[index],
         annualizedVolatility: annualizedAssetVolatility[index],
@@ -88,7 +92,7 @@ export const assembleAllocationResult = ({
         currency: entry.asset.currency,
         market: entry.asset.market,
         name: entry.asset.name,
-        riskContribution: contributions[index],
+        riskContribution: riskMetrics.contributions[index],
         symbol: entry.asset.symbol,
         weight: effectiveWeights[index],
     }));
@@ -96,10 +100,7 @@ export const assembleAllocationResult = ({
     return {
         allocations: allocations.sort((left, right) => right.weight - left.weight),
         baseCurrency,
-        correlationMatrix: {
-            labels: prepared.series.map((entry) => entry.asset.symbol),
-            matrix: correlationMatrix(covariance),
-        },
+        correlationMatrix: riskMetrics.correlationMatrix,
         diagnostics: {
             alignedDates: prepared.alignedDates.length,
             strategy,
@@ -144,9 +145,7 @@ export const assembleAllocationResult = ({
         portfolioMetrics: combinedSleeveSimulation?.metrics ?? pathSimulation.metrics,
         portfolioPath: combinedSleeveSimulation?.path ?? pathSimulation.portfolioPath,
         rebalanceCadence,
-        riskContributions: Object.fromEntries(
-            prepared.series.map((entry, index) => [entry.asset.id, contributions[index]]),
-        ),
+        riskContributions: riskMetrics.riskContributions,
         scenarioAnalysis: buildScenarioAnalysis(allocations),
         weights: Object.fromEntries(
             prepared.series.map((entry, index) => [entry.asset.id, effectiveWeights[index]]),
