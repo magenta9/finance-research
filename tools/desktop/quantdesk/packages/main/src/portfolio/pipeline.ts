@@ -11,14 +11,15 @@ import type {
 
 import type { PreparedAllocationData } from './preprocessor';
 import {
-    assembleAllocationResult,
     buildAllocationErrorResult,
 } from './allocation-result-assembler';
 import type { AllocationPreparationService } from './preparation-service';
 import { optimizeWeights } from './optimizer';
 import { runSidecarOptimization } from './sidecar-optimizer-adapter';
-import { simulateTrendFollowingSleeve } from './trend-following';
-import { runActiveDualMomentumBacktest } from './active-dual-momentum';
+import {
+    defaultAllocationStrategyRegistry,
+    type AllocationStrategyRegistry,
+} from './strategy-registry';
 import {
     annualizedReturns,
     annualizedVolatility,
@@ -27,13 +28,6 @@ import {
     shrinkCovarianceMatrix,
 } from './statistics';
 import type { SidecarRpc } from '../sidecar/runtime-types';
-
-const defaultConstraints: AllocationConstraints = {
-    allowLeverage: false,
-    allowShort: false,
-    maxClassWeight: {},
-    maxSingleWeight: 0.5,
-};
 
 export interface PortfolioAllocationCommand {
     assetIds: string[];
@@ -65,12 +59,16 @@ export class PortfolioAllocationPipeline {
 
     private readonly sidecarRuntime: SidecarRpc;
 
+    private readonly strategyRegistry: AllocationStrategyRegistry;
+
     constructor(
         preparationService: Pick<AllocationPreparationService, 'prepare'>,
         sidecarRuntime: SidecarRpc,
+        strategyRegistry: AllocationStrategyRegistry = defaultAllocationStrategyRegistry,
     ) {
         this.preparationService = preparationService;
         this.sidecarRuntime = sidecarRuntime;
+        this.strategyRegistry = strategyRegistry;
     }
 
     async allocate({
@@ -155,159 +153,24 @@ export class PortfolioAllocationPipeline {
             });
         }
 
-        const isTrendStrategy = strategy === 'ewmac_trend_following';
-        const isActiveDualMomentumStrategy = strategy === 'active_dual_momentum_gtaa';
-
-        if (isActiveDualMomentumStrategy) {
-            return this.buildOutcome({
-                calculationDateRange,
-                effectiveDateRange,
-                optimizerPath: 'js',
-                result: runActiveDualMomentumBacktest({
-                    annualizedMeanReturns: analysisInput.annualizedMeanReturns,
-                    annualizedVolatility: analysisInput.annualizedAssetVolatility,
-                    baseCurrency,
-                    calculationDateRange,
-                    config: strategyMix?.activeDualMomentum,
-                    prepared,
-                }),
-                stage: 'completed',
-                warnings: prepared.warnings,
-            });
-        }
-
-        const mergedConstraints = this.mergeConstraints(constraints);
-        const constraintError = isTrendStrategy ? null : this.validateConstraints(mergedConstraints);
-
-        if (constraintError) {
-            return this.buildOutcome({
-                calculationDateRange,
-                effectiveDateRange,
-                optimizerPath: null,
-                result: buildAllocationErrorResult({
-                    baseCurrency,
-                    effectiveDateRange: calculationDateRange,
-                    error: constraintError,
-                    mode,
-                    prepared,
-                    rebalanceCadence,
-                    strategy,
-                }),
-                stage: 'constraint_failed',
-                warnings: prepared.warnings,
-            });
-        }
-
-        const runnableStrategyMix = this.buildRunnableStrategyMix(strategy, strategyMix);
-        const strategyMixError = this.validateStrategyMix(runnableStrategyMix);
-
-        if (strategyMixError) {
-            return this.buildOutcome({
-                calculationDateRange,
-                effectiveDateRange,
-                optimizerPath: null,
-                result: buildAllocationErrorResult({
-                    baseCurrency,
-                    effectiveDateRange: calculationDateRange,
-                    error: strategyMixError,
-                    mode,
-                    prepared,
-                    rebalanceCadence,
-                    strategy,
-                }),
-                stage: 'constraint_failed',
-                warnings: prepared.warnings,
-            });
-        }
-
-        const allocationAssetIndexes = this.resolveAllocationAssetIndexes(prepared, runnableStrategyMix?.allocation?.assetIds);
-        const allocationAssetError = isTrendStrategy ? null : this.validateAllocationAssetSelection(allocationAssetIndexes);
-
-        if (allocationAssetError) {
-            return this.buildOutcome({
-                calculationDateRange,
-                effectiveDateRange,
-                optimizerPath: null,
-                result: buildAllocationErrorResult({
-                    baseCurrency,
-                    effectiveDateRange: calculationDateRange,
-                    error: allocationAssetError,
-                    mode,
-                    prepared,
-                    rebalanceCadence,
-                    strategy,
-                }),
-                stage: 'constraint_failed',
-                warnings: prepared.warnings,
-            });
-        }
-
-        const optimization = isTrendStrategy
-            ? {
-                diagnostics: {},
-                ok: true as const,
-                optimizer: 'js' as const,
-                weights: Array.from({ length: prepared.series.length }, () => 0),
-            }
-            : await this.optimize({
-                annualizedAssetVolatility: analysisInput.annualizedAssetVolatility,
-                assetIndexes: allocationAssetIndexes,
-                constraints: mergedConstraints,
-                covariance: analysisInput.shrunkCovariance,
-                mode,
-                prepared,
-            });
-
-        if (!optimization.ok) {
-            return this.buildOutcome({
-                calculationDateRange,
-                effectiveDateRange,
-                optimizerPath: optimization.optimizerPath,
-                result: buildAllocationErrorResult({
-                    baseCurrency,
-                    effectiveDateRange: calculationDateRange,
-                    error: optimization.error,
-                    mode,
-                    prepared,
-                    rebalanceCadence,
-                    strategy,
-                }),
-                stage: 'optimization_failed',
-                warnings: prepared.warnings,
-            });
-        }
+        const strategyExecution = await this.strategyRegistry[strategy].run({
+            analysisInput,
+            baseCurrency,
+            calculationDateRange,
+            constraints,
+            mode,
+            optimize: (request) => this.optimize(request),
+            prepared,
+            rebalanceCadence,
+            strategyMix,
+        });
 
         return this.buildOutcome({
             calculationDateRange,
             effectiveDateRange,
-            optimizerPath: optimization.optimizer,
-            result: assembleAllocationResult({
-                annualizedAssetVolatility: analysisInput.annualizedAssetVolatility,
-                annualizedMeanReturns: analysisInput.annualizedMeanReturns,
-                baseCurrency,
-                calculationDateRange,
-                covariance: analysisInput.shrunkCovariance,
-                diversificationRatio: optimization.diversificationRatio,
-                mode,
-                optimizer: optimization.optimizer,
-                optimizerDiagnostics: optimization.diagnostics,
-                prepared,
-                rebalanceCadence,
-                strategy,
-                trendFollowing: simulateTrendFollowingSleeve({
-                    alignedDates: prepared.alignedDates,
-                    assetIds: prepared.series.map((entry) => entry.asset.id),
-                    assetNames: prepared.series.map((entry) => entry.asset.name),
-                    priceSeries: prepared.series.map((entry) => entry.prices),
-                    strategyMix: runnableStrategyMix,
-                    symbols: prepared.series.map((entry) => entry.asset.symbol),
-                }),
-                allocationAssetIds: runnableStrategyMix?.allocation?.assetIds
-                    ? allocationAssetIndexes.map((index) => prepared.series[index].asset.id)
-                    : undefined,
-                weights: this.expandWeights(optimization.weights, allocationAssetIndexes, prepared.series.length),
-            }),
-            stage: 'completed',
+            optimizerPath: strategyExecution.optimizerPath,
+            result: strategyExecution.result,
+            stage: strategyExecution.stage,
             warnings: prepared.warnings,
         });
     }
@@ -361,134 +224,6 @@ export class PortfolioAllocationPipeline {
             annualizedAssetVolatility: annualizedVolatility(shrunkCovariance),
             annualizedMeanReturns: annualizedReturns(returns),
             shrunkCovariance,
-        };
-    }
-
-    private mergeConstraints(constraints: AllocationConstraints): AllocationConstraints {
-        return {
-            ...defaultConstraints,
-            ...constraints,
-            maxClassWeight: {
-                ...defaultConstraints.maxClassWeight,
-                ...constraints.maxClassWeight,
-            },
-        };
-    }
-
-    private validateConstraints(constraints: AllocationConstraints): NonNullable<AllocationResult['error']> | null {
-        if (constraints.allowShort) {
-            return {
-                code: 'UNSUPPORTED_CONSTRAINTS',
-                message: 'Short selling is not supported by the current allocation modes.',
-                suggestions: ['Disable allowShort and re-run.'],
-            };
-        }
-
-        if (constraints.allowLeverage) {
-            return {
-                code: 'UNSUPPORTED_CONSTRAINTS',
-                message: 'Leverage is not supported by the current allocation modes.',
-                suggestions: ['Disable allowLeverage and re-run.'],
-            };
-        }
-
-        return null;
-    }
-
-    private resolveAllocationAssetIndexes(prepared: PreparedAllocationData, assetIds?: string[]) {
-        if (!assetIds) {
-            return prepared.series.map((_entry, index) => index);
-        }
-
-        const assetIdSet = new Set(assetIds);
-        return prepared.series
-            .map((entry, index) => assetIdSet.has(entry.asset.id) ? index : -1)
-            .filter((index) => index >= 0);
-    }
-
-    private validateAllocationAssetSelection(assetIndexes: number[]): NonNullable<AllocationResult['error']> | null {
-        if (assetIndexes.length >= 2) {
-            return null;
-        }
-
-        return {
-            code: 'INVALID_STRATEGY_MIX',
-            message: '配置部分至少需要覆盖两个标的。',
-            suggestions: ['在配置标的中至少勾选两个资产，或从资产池补充可配置标的。'],
-        };
-    }
-
-    private expandWeights(weights: number[], assetIndexes: number[], assetCount: number) {
-        const expandedWeights = Array.from({ length: assetCount }, () => 0);
-
-        assetIndexes.forEach((assetIndex, localIndex) => {
-            expandedWeights[assetIndex] = weights[localIndex] ?? 0;
-        });
-
-        return expandedWeights;
-    }
-
-    private validateStrategyMix(strategyMix?: AllocationStrategyMix): NonNullable<AllocationResult['error']> | null {
-        const trendFollowing = strategyMix?.trendFollowing;
-
-        if (!trendFollowing?.enabled) {
-            return null;
-        }
-
-        if (!Number.isFinite(trendFollowing.sleeveWeight) || trendFollowing.sleeveWeight < 0 || trendFollowing.sleeveWeight > 1) {
-            return {
-                code: 'INVALID_STRATEGY_MIX',
-                message: '趋势跟随仓位需要在 0% 到 100% 之间。',
-                suggestions: ['将趋势跟随仓位调整到 0 到 1 之间。'],
-            };
-        }
-
-        if (trendFollowing.forecastCap != null && (!Number.isFinite(trendFollowing.forecastCap) || trendFollowing.forecastCap <= 0)) {
-            return {
-                code: 'INVALID_STRATEGY_MIX',
-                message: '趋势跟随 forecast cap 必须为正数。',
-                suggestions: ['使用默认 cap 20，或输入一个正数。'],
-            };
-        }
-
-        for (const rule of trendFollowing.rules ?? []) {
-            if (rule.enabled === false) {
-                continue;
-            }
-
-            const slow = rule.slow ?? rule.fast * 4;
-
-            if (!Number.isFinite(rule.fast) || rule.fast <= 0 || !Number.isFinite(slow) || slow <= rule.fast) {
-                return {
-                    code: 'INVALID_STRATEGY_MIX',
-                    message: 'EWMAC 子规则需要满足 slow > fast > 0。',
-                    suggestions: ['使用 2/8、4/16、8/32、16/64、32/128、64/256 这一组默认规则。'],
-                };
-            }
-
-            if (rule.scalar != null && (!Number.isFinite(rule.scalar) || rule.scalar <= 0)) {
-                return {
-                    code: 'INVALID_STRATEGY_MIX',
-                    message: 'EWMAC forecast scalar 必须为正数。',
-                    suggestions: ['使用默认 scalar 表。'],
-                };
-            }
-        }
-
-        return null;
-    }
-
-    private buildRunnableStrategyMix(strategy: AllocationStrategy, strategyMix?: AllocationStrategyMix): AllocationStrategyMix | undefined {
-        if (strategy !== 'ewmac_trend_following') {
-            return undefined;
-        }
-
-        return {
-            trendFollowing: {
-                ...strategyMix?.trendFollowing,
-                enabled: true,
-                sleeveWeight: 1,
-            },
         };
     }
 

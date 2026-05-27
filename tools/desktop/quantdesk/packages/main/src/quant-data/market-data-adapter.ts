@@ -49,14 +49,14 @@ interface QuantDataFxRatesResult {
     warnings?: string[];
 }
 
-export interface QuantDataProviderConfigurationStatus {
+export interface QuantDataCliProviderConfigurationStatus {
     code: string | null;
     message: string | null;
     ready: boolean;
 }
 
 export interface QuantDataStatusResult {
-    providerConfiguration?: QuantDataProviderConfigurationStatus;
+    providerConfiguration?: QuantDataCliProviderConfigurationStatus;
     stats?: {
         fxRateRowCount?: number;
         latestPriceFetchAt?: string | null;

@@ -36,10 +36,6 @@ const strategyLabelMap: Record<AllocationStrategy, string> = Object.fromEntries(
     strategyOptions.map((option) => [option.value, option.label]),
 ) as Record<AllocationStrategy, string>;
 
-const strategyDescriptionMap: Record<AllocationStrategy, string> = Object.fromEntries(
-    strategyOptions.map((option) => [option.value, option.description]),
-) as Record<AllocationStrategy, string>;
-
 const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
 
 const formatAssetLabel = (asset: Pick<StoredAsset, 'name' | 'symbol'>) => `${asset.symbol}（${asset.name}）`;

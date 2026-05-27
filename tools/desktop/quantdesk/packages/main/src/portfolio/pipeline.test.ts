@@ -5,6 +5,7 @@ import type { AllocationConstraints, StoredAsset } from '@quantdesk/shared';
 import type { AllocationPreparationService } from './preparation-service';
 import { PortfolioAllocationPipeline } from './pipeline';
 import { buildAsset, buildDateRange } from './portfolio-test-support';
+import { defaultAllocationStrategyRegistry } from './strategy-registry';
 
 const buildSeries = (basePrice: number, length = 90) =>
     Array.from({ length }, (_, index) =>
@@ -108,6 +109,16 @@ const createPipeline = ({
 };
 
 describe('portfolio allocation pipeline', () => {
+    test('registers every allocation strategy identity', () => {
+        expect(Object.keys(defaultAllocationStrategyRegistry).sort()).toEqual([
+            'active_dual_momentum_gtaa',
+            'erc',
+            'ewmac_trend_following',
+            'inverse_volatility',
+            'max_diversification',
+        ]);
+    });
+
     test('returns completed outcome with js optimizer path on success', async () => {
         const assets = [
             buildAsset('asset-a', 'SPY', 'equity'),
@@ -130,6 +141,30 @@ describe('portfolio allocation pipeline', () => {
         expect(outcome.result.portfolioPath).toHaveLength(90);
         expect(outcome.result.portfolioPath?.[0]).toEqual({ date: '2024-01-01', equity: 1 });
         expect(outcome.dateWindow.calculation).toEqual(outcome.dateWindow.effective);
+    });
+
+    test('routes explicit configuration strategy through the registry identity', async () => {
+        const assets = [
+            buildAsset('asset-a', 'SPY', 'equity'),
+            buildAsset('asset-b', 'AGG', 'fixed_income'),
+            buildAsset('asset-c', 'GLD', 'commodity'),
+        ];
+        const { pipeline } = createPipeline({
+            preparationResult: buildPreparedSuccess({ assets }),
+        });
+
+        const outcome = await pipeline.allocate({
+            assetIds: ['asset-a', 'asset-b', 'asset-c'],
+            baseCurrency: 'USD',
+            constraints: baseConstraints,
+            mode: 'erc',
+            strategy: 'max_diversification',
+        });
+
+        expect(outcome.meta.stage).toBe('completed');
+        expect(outcome.result.mode).toBe('max_diversification');
+        expect(outcome.result.strategy).toBe('max_diversification');
+        expect(outcome.result.diagnostics.strategy).toBe('max_diversification');
     });
 
     test('runs EWMAC as a top-level full trend-following strategy', async () => {
