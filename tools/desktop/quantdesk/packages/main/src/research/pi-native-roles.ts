@@ -68,7 +68,7 @@ export const getPiNativeResearchRoleDefinition = (role: PiNativeResearchAgentRol
     const definition = piNativeResearchRoleDefinitions.find((candidate) => candidate.role === role);
 
     if (!definition) {
-        throw new Error(`Unknown Pi native research role: ${role}`);
+        throw new Error(`Unknown Agent research role: ${role}`);
     }
 
     return definition;

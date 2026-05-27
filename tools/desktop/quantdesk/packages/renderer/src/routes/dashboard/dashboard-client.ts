@@ -1,5 +1,4 @@
 import type {
-    CacheSummary,
     PositionImportRow,
     PositionInput,
     PositionRecord,
@@ -14,7 +13,6 @@ import { parseLatestPrice } from './dashboard-utils';
 
 export interface DashboardPageData {
     assets: StoredAsset[];
-    cacheSummary: CacheSummary;
     latestPriceByAssetId: Record<string, number>;
     plans: AllocationPlanRecord[];
     positions: PositionRecord[];
@@ -39,18 +37,16 @@ const loadLatestPriceByAssetId = async (positions: PositionRecord[]) => {
 };
 
 export const loadDashboardPageData = async (): Promise<DashboardPageData> => {
-    const [assets, plans, positions, cacheSummary, runtimeStatus, syncStatus] = await Promise.all([
+    const [assets, plans, positions, runtimeStatus, syncStatus] = await Promise.all([
         apiClient.data.getAssets(),
         apiClient.portfolio.getPlans(),
         apiClient.data.getPositions(),
-        apiClient.data.getCacheSummary(),
         apiClient.system.getRuntimeStatus(),
         apiClient.data.getSyncStatus(),
     ]);
 
     return {
         assets,
-        cacheSummary,
         latestPriceByAssetId: await loadLatestPriceByAssetId(positions),
         plans,
         positions,
@@ -77,5 +73,5 @@ export const runHeartbeatCheck = async () =>
 export const runNativeBindingsCheck = async () =>
     await apiClient.system.checkNativeBindings();
 
-export const runPythonProbeCheck = async () =>
+export const runAgentRuntimeProbeCheck = async () =>
     await apiClient.system.runDummyPython();

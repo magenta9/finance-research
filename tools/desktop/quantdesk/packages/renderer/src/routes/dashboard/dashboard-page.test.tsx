@@ -192,7 +192,8 @@ describe('DashboardPage', () => {
 
         expect(screen.getByTestId('dashboard-page')).toBeInTheDocument();
         expect(screen.getByTestId('dashboard-sync-status-banner')).toBeInTheDocument();
-        expect(screen.getByText('Pi Agent 工作台')).toBeInTheDocument();
+        expect(screen.getByText('Agent 工作台')).toBeInTheDocument();
+        expect(mockApi.data.getCacheSummary).not.toHaveBeenCalled();
         expect(screen.queryByRole('heading', { name: /投资组合指挥中心/i })).not.toBeInTheDocument();
     });
 });

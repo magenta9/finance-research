@@ -61,7 +61,7 @@ const createPiStatus = (patch: Partial<PiRuntimeStatus> = {}): PiRuntimeStatus =
     ...patch,
 });
 
-const createRiskGatePreferences = (acknowledged: boolean, message = '请先确认 Pi Agent 高权限风险。'): PiRiskGatePreferences => ({
+const createRiskGatePreferences = (acknowledged: boolean, message = '请先确认 Agent 高权限风险。'): PiRiskGatePreferences => ({
     acknowledgeHighPrivilegeRisk: vi.fn(() => ({
         acknowledged: true,
         acknowledgedAt: '2026-04-21T10:00:00.000Z',
@@ -80,7 +80,7 @@ const createRiskGatePreferences = (acknowledged: boolean, message = '请先确�
 
 const createPiResearcherOutput = (requestId: string, role: ResearcherOutput['role']): ResearcherOutput => ({
     actionRecommendation: 'observe',
-    assumptions: ['Pi runtime was started before research preflight diagnostics.'],
+    assumptions: ['Agent runtime was started before research preflight diagnostics.'],
     confidence: 'medium',
     conclusion: `${role} Pi research completed.`,
     dataGaps: [],
@@ -93,7 +93,7 @@ const createPiResearcherOutput = (requestId: string, role: ResearcherOutput['rol
     direction: 'neutral',
     edgeStrength: 'weak',
     edgeTypes: ['information'],
-    evidence: [{ label: 'Pi runtime', provenance: [], summary: 'Pi researcher returned structured output.' }],
+    evidence: [{ label: 'Agent runtime', provenance: [], summary: 'Agent researcher returned structured output.' }],
     invalidationConditions: ['New verified data contradicts the thesis.'],
     needsSecondReview: false,
     payoffGrade: 'weak',
@@ -234,7 +234,7 @@ describe('createResearchHandlers', () => {
 
             expect(completedRequest?.status).toBe('failed');
             expect(completedRequest?.runtimeMode).toBe('pi');
-            expect(completedRequest?.error).toBe('Pi runtime is unavailable.');
+            expect(completedRequest?.error).toBe('Agent runtime is unavailable.');
         } finally {
             database.close();
         }
@@ -365,7 +365,7 @@ describe('createResearchHandlers', () => {
             expect(ensureReady).not.toHaveBeenCalled();
             expect(completedRequest?.status).toBe('failed');
             expect(completedRequest?.runtimeMode).toBe('pi');
-            expect(completedRequest?.error).toBe('请先确认 Pi Agent 高权限风险。');
+            expect(completedRequest?.error).toBe('请先确认 Agent 高权限风险。');
         } finally {
             database.close();
         }
@@ -521,10 +521,10 @@ describe('createResearchHandlers', () => {
             expect(sendMessage).not.toHaveBeenCalled();
             expect(completedRequest?.status).toBe('failed');
             expect(completedRequest?.runtimeMode).toBe('pi');
-            expect(completedRequest?.error).toBe('Pi runtime status check failed: Pi runtime startup timed out after 30000ms.');
+            expect(completedRequest?.error).toBe('Agent runtime status check failed: Agent runtime startup timed out after 30000ms.');
             expect(runtimeEvents).toEqual(expect.arrayContaining([
                 expect.objectContaining({
-                    error: 'Pi runtime status check failed: Pi runtime startup timed out after 30000ms.',
+                    error: 'Agent runtime status check failed: Agent runtime startup timed out after 30000ms.',
                     type: 'request_failed',
                 }),
             ]));
@@ -572,10 +572,10 @@ describe('createResearchHandlers', () => {
             expect(sendMessage).not.toHaveBeenCalled();
             expect(completedRequest?.status).toBe('failed');
             expect(completedRequest?.runtimeMode).toBe('pi');
-            expect(completedRequest?.error).toBe('Pi runtime is not ready for research: no model is available.');
+            expect(completedRequest?.error).toBe('Agent runtime is not ready for research: no model is available.');
             expect(runtimeEvents).toEqual(expect.arrayContaining([
                 expect.objectContaining({
-                    error: 'Pi runtime is not ready for research: no model is available.',
+                    error: 'Agent runtime is not ready for research: no model is available.',
                     type: 'request_failed',
                 }),
             ]));

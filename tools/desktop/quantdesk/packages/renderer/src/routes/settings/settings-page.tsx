@@ -60,11 +60,11 @@ export const SettingsPage = () => {
             <section className="rounded-[20px] border border-[color:var(--color-border)] bg-[rgba(255,252,248,0.78)] p-4 shadow-[0_12px_32px_rgba(61,43,31,0.05)]" data-testid="settings-pi-runtime-section">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
-                        <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">Pi Runtime</p>
-                        <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">独立 Pi wrapper、risk gate 与目录入口</h2>
+                        <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">Agent Runtime</p>
+                        <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">独立 Agent runtime、risk gate 与目录入口</h2>
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        <Button data-testid="settings-pi-refresh" onClick={handleRefreshPiRuntime} tone="ghost">刷新 Pi 状态</Button>
+                        <Button data-testid="settings-pi-refresh" onClick={handleRefreshPiRuntime} tone="ghost">刷新 Agent 状态</Button>
                         {!piRiskGateState?.acknowledged && (
                             <Button data-testid="settings-pi-ack-risk" onClick={handleAcknowledgePiRisk} tone="danger">确认高权限风险</Button>
                         )}
@@ -73,7 +73,7 @@ export const SettingsPage = () => {
 
                 {!piStatus ? (
                     <div className="mt-4 rounded-[16px] border border-dashed border-[color:var(--color-border)] bg-[rgba(244,239,230,0.44)] p-4 text-sm text-[var(--color-copy)]">
-                        正在读取 Pi runtime 状态...
+                        正在读取 Agent runtime 状态...
                     </div>
                 ) : (
                     <div className="mt-4 space-y-4 text-sm leading-6 text-[var(--color-copy)]">

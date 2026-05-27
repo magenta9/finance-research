@@ -2,7 +2,7 @@ import type { Currency, PiRiskGateState, PreferenceMap } from '@quantdesk/shared
 
 import { preferenceKeys } from './preference-keys';
 
-const PI_RISK_GATE_MESSAGE = 'Pi Agent 具备本地文件访问与命令执行能力。发送消息前需要先明确确认高权限风险。';
+const PI_RISK_GATE_MESSAGE = 'Agent 具备本地文件访问与命令执行能力。发送消息前需要先明确确认高权限风险。';
 
 export interface PreferenceStore {
   get(key: string): string | null;
@@ -56,4 +56,4 @@ export const createPreferencesService = (preferences: PreferenceStore): Preferen
   },
 });
 
-export const PI_RISK_GATE_BLOCK_MESSAGE = 'Pi Agent 尚未确认高权限风险，当前禁止发送消息。';
+export const PI_RISK_GATE_BLOCK_MESSAGE = 'Agent 尚未确认高权限风险，当前禁止发送消息。';

@@ -7,7 +7,7 @@ const resolveRequiredEnv = (name: string) => {
   const value = process.env[name]?.trim();
 
   if (!value) {
-    throw new Error(`Missing required pi wrapper environment variable: ${name}`);
+    throw new Error(`Missing required Agent runtime environment variable: ${name}`);
   }
 
   return value;

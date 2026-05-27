@@ -117,7 +117,7 @@ export const usePiAgentStore = create<PiAgentStore>((set, get) => ({
     async acknowledgeHighPrivilegeRisk() {
         try {
             const riskGateState = await apiClient.piRuntime.acknowledgeHighPrivilegeRisk();
-            set({ noticeMessage: '已确认 Pi Agent 高权限风险。', riskGateState });
+            set({ noticeMessage: '已确认 Agent 高权限风险。', riskGateState });
             return true;
         } catch (error) {
             set({ errorMessage: normalizeError(error) });
@@ -142,7 +142,7 @@ export const usePiAgentStore = create<PiAgentStore>((set, get) => ({
                 runId: currentRun.runId,
                 sessionId: targetSessionId,
             });
-            set({ noticeMessage: '已请求取消当前 Pi 运行。' });
+            set({ noticeMessage: '已请求取消当前 Agent 运行。' });
             return true;
         } catch (error) {
             set({ errorMessage: normalizeError(error) });
@@ -298,7 +298,7 @@ export const usePiAgentStore = create<PiAgentStore>((set, get) => ({
     async openRuntimeDirectory(target) {
         try {
             await apiClient.piRuntime.openDirectory(target);
-            set({ noticeMessage: '已打开 Pi 运行目录。' });
+            set({ noticeMessage: '已打开 Agent 运行目录。' });
             return true;
         } catch (error) {
             set({ errorMessage: normalizeError(error) });
@@ -340,7 +340,7 @@ export const usePiAgentStore = create<PiAgentStore>((set, get) => ({
         }
 
         if (!get().riskGateState?.acknowledged) {
-            set({ errorMessage: '请先确认 Pi Agent 的高权限风险。' });
+            set({ errorMessage: '请先确认 Agent 的高权限风险。' });
             return false;
         }
 
@@ -463,7 +463,7 @@ export const usePiAgentStore = create<PiAgentStore>((set, get) => ({
                 activeSessionId: response.sessionId,
                 draft: '',
                 draftAttachments: [],
-                noticeMessage: 'Pi 运行已启动。',
+                noticeMessage: 'Agent 运行已启动。',
                 sessionRecords: optimisticNewRecord
                     ? {
                         ...get().sessionRecords,

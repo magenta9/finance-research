@@ -48,7 +48,7 @@ export const formatPiModelDisplay = (modelStatus: PiModelStatus) => {
         ?? model;
 
     return {
-        detail: modelStatus.source === 'runtime' ? 'Pi runtime active model' : (provider ?? 'provider 未解析'),
+        detail: modelStatus.source === 'runtime' ? 'Agent runtime active model' : (provider ?? 'provider 未解析'),
         value: provider ? `${resolvedModel} [${provider}]` : resolvedModel,
     };
 };
@@ -139,7 +139,7 @@ export const useSettingsPageController = () => {
             ]);
             setPiStatus(nextPiStatus);
             setPiRiskGateState(nextPiRiskGateState);
-            setNoticeMessage('Pi runtime 状态已刷新。');
+            setNoticeMessage('Agent runtime 状态已刷新。');
         } catch (error) {
             setErrorMessage(formatSettingsError(error));
         }
@@ -151,7 +151,7 @@ export const useSettingsPageController = () => {
         try {
             const nextState = await acknowledgePiHighPrivilegeRisk();
             setPiRiskGateState(nextState);
-            setNoticeMessage('已确认 Pi Agent 高权限风险。');
+            setNoticeMessage('已确认 Agent 高权限风险。');
         } catch (error) {
             setErrorMessage(formatSettingsError(error));
         }
@@ -162,7 +162,7 @@ export const useSettingsPageController = () => {
 
         try {
             await openPiRuntimeDirectory(target);
-            setNoticeMessage('Pi runtime 目录已打开。');
+            setNoticeMessage('Agent runtime 目录已打开。');
         } catch (error) {
             setErrorMessage(formatSettingsError(error));
         }
@@ -240,10 +240,10 @@ export const useSettingsPageController = () => {
     const metrics = useMemo(() => {
         if (!piStatus || !piRiskGateState || !runtimeStatus) {
             return [
-                { detail: '等待 Pi runtime 状态。', label: 'Pi Runtime', value: '加载中' },
-                { detail: '等待模型列表。', label: 'Pi Model', value: 'n/a' },
+                { detail: '等待 Agent runtime 状态。', label: 'Agent Runtime', value: '加载中' },
+                { detail: '等待模型列表。', label: 'Agent Model', value: 'n/a' },
                 { detail: '等待 finance tools 状态。', label: 'Finance Tools', value: '0' },
-                { detail: '等待高权限风险确认状态。', label: 'Pi Risk Gate', value: 'n/a' },
+                { detail: '等待高权限风险确认状态。', label: 'Agent Risk Gate', value: 'n/a' },
                 { detail: '等待 sidecar 状态。', label: 'Sidecar', value: '加载中' },
             ];
         }
@@ -252,13 +252,13 @@ export const useSettingsPageController = () => {
 
         return [
             {
-                detail: piStatus.lastError ?? `当前 ${piStatus.sessionCount} 个 Pi 会话。`,
-                label: 'Pi Runtime',
+                detail: piStatus.lastError ?? `当前 ${piStatus.sessionCount} 个 Agent 会话。`,
+                label: 'Agent Runtime',
                 value: piStatus.state,
             },
             {
                 detail: piModelDisplay.detail,
-                label: 'Pi Model',
+                label: 'Agent Model',
                 value: piModelDisplay.value,
             },
             {
@@ -268,7 +268,7 @@ export const useSettingsPageController = () => {
             },
             {
                 detail: piRiskGateState?.message ?? '发送消息前需要确认高权限风险。',
-                label: 'Pi Risk Gate',
+                label: 'Agent Risk Gate',
                 value: piRiskGateState?.acknowledged ? '已确认' : '待确认',
             },
             {

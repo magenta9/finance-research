@@ -43,14 +43,14 @@ export const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, tim
 
 export const createPiRuntimeDegradationReason = async (piRuntime: PiResearchRuntime | undefined) => {
     if (!piRuntime) {
-        return 'Pi runtime is unavailable.';
+        return 'Agent runtime is unavailable.';
     }
 
     try {
         await withTimeout(
             piRuntime.ensureReady(),
             piRuntimeReadyTimeoutMs,
-            `Pi runtime startup timed out after ${piRuntimeReadyTimeoutMs}ms`,
+            `Agent runtime startup timed out after ${piRuntimeReadyTimeoutMs}ms`,
         );
         const status = await piRuntime.getStatus?.();
 
@@ -59,22 +59,22 @@ export const createPiRuntimeDegradationReason = async (piRuntime: PiResearchRunt
         }
 
         if (status.state === 'error') {
-            return `Pi runtime is not ready for research: ${redactRuntimeDiagnostic(status.lastError ?? status.degradedReason, 'runtime error')}.`;
+            return `Agent runtime is not ready for research: ${redactRuntimeDiagnostic(status.lastError ?? status.degradedReason, 'runtime error')}.`;
         }
 
         if (status.state !== 'ready' && status.state !== 'degraded') {
-            return `Pi runtime is ${status.state}.`;
+            return `Agent runtime is ${status.state}.`;
         }
 
         if (!status.model.available) {
-            return 'Pi runtime is not ready for research: no model is available.';
+            return 'Agent runtime is not ready for research: no model is available.';
         }
 
         if (!status.financeTools.available) {
-            return `Pi runtime is not ready for research: finance tools unavailable${status.financeTools.lastError ? ` (${redactRuntimeDiagnostic(status.financeTools.lastError, 'tool host error')})` : ''}.`;
+            return `Agent runtime is not ready for research: finance tools unavailable${status.financeTools.lastError ? ` (${redactRuntimeDiagnostic(status.financeTools.lastError, 'tool host error')})` : ''}.`;
         }
     } catch (error) {
-        return `Pi runtime status check failed: ${redactRuntimeDiagnostic(error instanceof Error ? error.message : String(error), 'status check error')}.`;
+        return `Agent runtime status check failed: ${redactRuntimeDiagnostic(error instanceof Error ? error.message : String(error), 'status check error')}.`;
     }
 
     return null;

@@ -143,7 +143,7 @@ describe('synthesizeResearchReport', () => {
         const partialFailureGate: ReviewGateResult = {
             dataProvenance: [],
             reasons: [
-                'allocation researcher failed: Pi researcher attempted unauthorized tool: get_asset_snapshot',
+                'allocation researcher failed: Agent researcher attempted unauthorized tool: get_asset_snapshot',
                 'macro researcher failed: macro provider timed out',
                 'Risk profile is missing; precise position sizing must stay unavailable.',
                 'Portfolio has no local positions for this scope.',
@@ -167,7 +167,7 @@ describe('synthesizeResearchReport', () => {
         };
         const failures: ResearcherFailureArtifact[] = [
             {
-                error: 'Pi researcher attempted unauthorized tool: get_asset_snapshot',
+                error: 'Agent researcher attempted unauthorized tool: get_asset_snapshot',
                 failedAt: '2026-04-28T00:00:04.000Z',
                 recovered: false,
                 requestId: 'request-allocation',

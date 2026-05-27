@@ -48,7 +48,7 @@ const probeRegistry: ProbeSpec[] = [
         envVar: 'QUANTDESK_E2E_PI_AGENT_PROBE',
         exportName: 'runPiAgentE2eProbe',
         fileName: 'pi-agent-probe.js',
-        label: 'Pi Agent E2E probe',
+        label: 'Agent E2E probe',
     },
     {
         envVar: 'QUANTDESK_E2E_RESEARCH_PROBE',

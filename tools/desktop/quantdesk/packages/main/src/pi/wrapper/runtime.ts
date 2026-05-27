@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import type {
@@ -57,7 +56,7 @@ interface PiRuntimeModel {
   provider: string;
 }
 
-const piSkillDirectoryRelativePath = path.join('.pi', 'skills');
+const agentSkillDirectoryRelativePath = path.join('.agent', 'skills');
 const agentsSkillDirectoryRelativePath = path.join('.agents', 'skills');
 const skillFileName = 'SKILL.md';
 const piSkillPathsEnvKey = 'QUANTDESK_PI_SKILL_PATHS';
@@ -178,20 +177,20 @@ export class PiWrapperRuntime {
 
   private getPiSkillResourcePaths(cwd: string) {
     const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
-    const homeDir = os.homedir();
     const candidates = [
-      path.join(this.options.directories.agentDir, 'skills'),
-      path.join(homeDir, '.pi', 'agent', 'skills'),
-      path.join(homeDir, '.agents', 'skills'),
+      path.join(this.options.directories.agentDir, agentSkillDirectoryRelativePath),
+      path.join(this.options.directories.agentDir, agentsSkillDirectoryRelativePath),
       ...this.getConfiguredSkillResourcePaths(),
-      ...this.findSkillDirectories(cwd, piSkillDirectoryRelativePath),
+      ...this.findSkillDirectories(cwd, agentSkillDirectoryRelativePath),
       ...this.findSkillDirectories(cwd, agentsSkillDirectoryRelativePath),
-      ...this.findSkillDirectories(process.cwd(), piSkillDirectoryRelativePath),
+      ...this.findSkillDirectories(process.cwd(), agentSkillDirectoryRelativePath),
       ...this.findSkillDirectories(process.cwd(), agentsSkillDirectoryRelativePath),
-      ...this.findSkillDirectories(__dirname, piSkillDirectoryRelativePath),
+      ...this.findSkillDirectories(__dirname, agentSkillDirectoryRelativePath),
       ...this.findSkillDirectories(__dirname, agentsSkillDirectoryRelativePath),
-      resourcesPath ? path.join(resourcesPath, piSkillDirectoryRelativePath) : null,
-      resourcesPath ? path.join(resourcesPath, 'app.asar.unpacked', piSkillDirectoryRelativePath) : null,
+      resourcesPath ? path.join(resourcesPath, agentSkillDirectoryRelativePath) : null,
+      resourcesPath ? path.join(resourcesPath, agentsSkillDirectoryRelativePath) : null,
+      resourcesPath ? path.join(resourcesPath, 'app.asar.unpacked', agentSkillDirectoryRelativePath) : null,
+      resourcesPath ? path.join(resourcesPath, 'app.asar.unpacked', agentsSkillDirectoryRelativePath) : null,
     ];
     const paths: string[] = [];
     const seen = new Set<string>();
@@ -217,7 +216,7 @@ export class PiWrapperRuntime {
       paths.push(candidate);
     }
 
-    return paths.length > 0 ? paths : [path.join(path.resolve(cwd), piSkillDirectoryRelativePath)];
+    return paths.length > 0 ? paths : [path.join(path.resolve(cwd), agentsSkillDirectoryRelativePath)];
   }
 
   private getResourceLoaderOptions(cwd: string) {
@@ -478,7 +477,7 @@ export class PiWrapperRuntime {
 
   async sendMessage(input: PiSendMessageInput): Promise<PiSendMessageResult> {
     if (this.currentRun) {
-      throw new Error('Pi runtime already has an active run.');
+      throw new Error('Agent runtime already has an active run.');
     }
 
     await this.ensureRuntimeForSession(input.sessionId, input.startNewSession === true);
@@ -844,7 +843,7 @@ export class PiWrapperRuntime {
   private async ensureSdk() {
     if (!this.sdk || !this.ai) {
       [this.sdk, this.ai] = await Promise.all([
-        // Pi SDK packages are ESM-only while the wrapper is emitted as CJS.
+        // Runtime SDK packages are ESM-only while this process is emitted as CJS.
         // eslint-disable-next-line quantdesk/no-runtime-dynamic-import
         import('@mariozechner/pi-coding-agent'),
         // eslint-disable-next-line quantdesk/no-runtime-dynamic-import
@@ -868,7 +867,7 @@ export class PiWrapperRuntime {
 
   private getAuthStorage() {
     if (!this.sdk) {
-      throw new Error('Pi SDK not initialized.');
+      throw new Error('Agent runtime not initialized.');
     }
 
     return this.sdk.AuthStorage.create(path.join(this.options.directories.agentDir, 'auth.json'));
@@ -876,7 +875,7 @@ export class PiWrapperRuntime {
 
   private getActiveRuntime() {
     if (!this.runtime) {
-      throw new Error('Pi runtime not initialized.');
+      throw new Error('Agent runtime not initialized.');
     }
 
     return this.runtime;
@@ -884,7 +883,7 @@ export class PiWrapperRuntime {
 
   private getModelRegistry() {
     if (!this.sdk) {
-      throw new Error('Pi SDK not initialized.');
+      throw new Error('Agent runtime not initialized.');
     }
 
     if (!this.modelRegistry) {

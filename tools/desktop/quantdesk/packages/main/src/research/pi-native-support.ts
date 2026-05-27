@@ -66,7 +66,7 @@ const extractJsonObject = (content: string) => {
         return trimmed.slice(firstBrace, lastBrace + 1);
     }
 
-    throw new Error('Pi native researcher response did not contain a JSON object.');
+    throw new Error('Agent researcher response did not contain a JSON object.');
 };
 
 const latestAssistantContent = (transcript: PiWrapperSessionTranscript) => {
@@ -75,7 +75,7 @@ const latestAssistantContent = (transcript: PiWrapperSessionTranscript) => {
         .find((entry) => entry.role === 'assistant' && entry.phase !== 'thinking' && !entry.isError && entry.content.trim().length > 0);
 
     if (!message) {
-        throw new Error('Pi native researcher completed without an assistant response.');
+        throw new Error('Agent researcher completed without an assistant response.');
     }
 
     return message.content;
@@ -94,7 +94,7 @@ export const parsePiNativeResearcherOutput = (transcript: PiWrapperSessionTransc
         confidence: 'low',
         dataGaps: Array.from(new Set([
             ...output.dataGaps,
-            'Pi native researcher output did not include verifiable data provenance.',
+            'Agent researcher output did not include verifiable data provenance.',
         ])),
         needsSecondReview: true,
     };
@@ -133,9 +133,9 @@ export const createDegradedPiNativeOutputFromToolArtifacts = (input: {
         actionRecommendation: 'observe',
         assumptions: [],
         confidence: 'low',
-        conclusion: `${input.role} Pi native run aborted after collecting ${successfulTools.length} QuantDesk tool result(s); treat this as degraded evidence only.`,
+        conclusion: `${input.role} Agent run aborted after collecting ${successfulTools.length} QuantDesk tool result(s); treat this as degraded evidence only.`,
         dataGaps: [
-            `Pi native ${input.role} run ended before returning assistant JSON: ${sanitizeToolPayloadString(input.error)}`,
+            `Agent ${input.role} run ended before returning assistant JSON: ${sanitizeToolPayloadString(input.error)}`,
             'Rerun this role before increasing action intensity.',
         ],
         dataProvenance: provenance.length > 0
@@ -144,7 +144,7 @@ export const createDegradedPiNativeOutputFromToolArtifacts = (input: {
                 fetchedAt: artifact.payload.completedAt,
                 qualityStatus: 'warn' as const,
                 sourceId: `pi.${artifact.payload.toolName}`,
-                warnings: ['Pi native role aborted before assistant synthesis.'],
+                warnings: ['Agent role aborted before assistant synthesis.'],
             })),
         direction: 'neutral',
         edgeStrength: 'unknown',
@@ -154,7 +154,7 @@ export const createDegradedPiNativeOutputFromToolArtifacts = (input: {
             provenance: artifact.dataProvenance,
             summary: toolSummary(artifact),
         })),
-        invalidationConditions: ['Assistant synthesis did not complete for this Pi native role.'],
+        invalidationConditions: ['Assistant synthesis did not complete for this Agent role.'],
         needsSecondReview: true,
         payoffGrade: 'unknown',
         requestId: input.requestId,
@@ -165,13 +165,13 @@ export const createDegradedPiNativeOutputFromToolArtifacts = (input: {
     };
 };
 
-export const createRuntimeUnavailableError = (reason: string) => new Error(`Pi runtime unavailable for native research: ${reason}`);
+export const createRuntimeUnavailableError = (reason: string) => new Error(`Agent runtime unavailable for native research: ${reason}`);
 
 export const getPiRiskGateError = (riskGatePreferences: { getRiskGateState: () => { acknowledged: boolean; message?: string | null } } | undefined) => {
     const state = riskGatePreferences?.getRiskGateState();
 
     return state && !state.acknowledged
-        ? state.message || 'Pi Agent high-privilege risk must be acknowledged before Pi native research.'
+        ? state.message || 'Agent high-privilege risk must be acknowledged before native research.'
         : null;
 };
 
@@ -216,10 +216,10 @@ export const buildResearcherFailureArtifact = (input: {
         reasonCode,
         recovered: false,
         remediation: unauthorized?.remediation ?? (reasonCode === 'timeout'
-            ? `Rerun ${input.role} with a narrower request or increase the Pi native role timeout.`
+            ? `Rerun ${input.role} with a narrower request or increase the Agent role timeout.`
             : reasonCode === 'schema_invalid'
-                ? `Inspect the Pi session transcript for ${input.role}; the role did not return a parseable JSON object.`
-                : `Inspect the Pi session transcript and tool invocations for ${input.role}.`),
+                ? `Inspect the Agent session transcript for ${input.role}; the role did not return a parseable JSON object.`
+                : `Inspect the Agent session transcript and tool invocations for ${input.role}.`),
         requestId: input.requestId,
         role: input.role,
         runtimeMode: piNativeRuntimeMode,
@@ -253,7 +253,7 @@ export const createMinimalDecisionCard = (outputs: ResearcherOutput[], failures:
         invalidation: outputs.flatMap((output) => output.invalidationConditions).slice(0, 6),
         payoffGrade: strongestOutput?.payoffGrade ?? 'unknown',
         positionLevel: 'precise_unavailable',
-        reviewTrigger: failures.length > 0 || dataGaps.length > 0 ? 'Review Pi role failures and data gaps before increasing action.' : 'Review when new verified data changes the thesis.',
+        reviewTrigger: failures.length > 0 || dataGaps.length > 0 ? 'Review Agent role failures and data gaps before increasing action.' : 'Review when new verified data changes the thesis.',
         takeProfitOrExit: outputs.flatMap((output) => output.risks).slice(0, 4),
         timeHorizon: strongestOutput?.timeHorizon ?? 'unspecified',
         winRateGrade: strongestOutput?.winRateGrade ?? 'unknown',
@@ -279,8 +279,8 @@ export const createMinimalReport = (input: {
 
     return {
         conclusion: input.outputs.length > 0
-            ? `Pi native research completed with ${input.outputs.length} role result(s) and ${input.failures.length} failure(s).`
-            : 'Pi native research did not produce a successful role result.',
+            ? `Agent research completed with ${input.outputs.length} role result(s) and ${input.failures.length} failure(s).`
+            : 'Agent research did not produce a successful role result.',
         consensus,
         dataGaps,
         decisionCard: input.decisionCard,
@@ -291,7 +291,7 @@ export const createMinimalReport = (input: {
         remediationItems: dataGaps.map((gap, index) => ({
             category: input.failures.some((failure) => gap.startsWith(`${failure.role}:`)) ? 'runtime_failure' : 'data_gap',
             id: `pi-native-gap-${index + 1}`,
-            nextAction: 'Inspect the Pi role transcript and rerun with narrower scope or better data coverage.',
+            nextAction: 'Inspect the Agent role transcript and rerun with narrower scope or better data coverage.',
             reasonCode: input.failures.some((failure) => gap.startsWith(`${failure.role}:`)) ? 'runtime_failed' : 'missing_provenance',
             severity: input.failures.some((failure) => gap.startsWith(`${failure.role}:`)) ? 'warn' : 'info',
             summary: gap,
@@ -308,13 +308,13 @@ export const createMinimalReport = (input: {
                         `confidence=${output.confidence}; direction=${output.direction}; action=${output.actionRecommendation}`,
                         `session=${run?.sessionId ?? 'n/a'}; run=${run?.runId ?? 'n/a'}`,
                     ].join('\n'),
-                    title: `${output.role} Pi native result`,
+                    title: `${output.role} Agent result`,
                 };
             }),
             ...failedSections,
         ],
         summonedResearchers: input.outputs.map((output) => output.role),
-        title: 'Pi Native Research Report',
+        title: 'Agent Research Report',
     };
 };
 
@@ -325,16 +325,16 @@ export const buildPreflight = (input: { context: ResearchContextSnapshot; now: s
     const checks: ResearchPreflightCheck[] = [
         {
             checkedAt: input.now,
-            details: 'Pi native runtime is available and deterministic fallback is disabled.',
+            details: 'Agent runtime is available and deterministic fallback is disabled.',
             id: 'runtime.pi_native',
-            label: 'Pi native runtime',
+            label: 'Agent runtime',
             status: 'pass',
         },
         {
             checkedAt: input.now,
-            details: `${input.roleCount} Pi native role sessions will run with per-role tool allowlists.`,
+            details: `${input.roleCount} Agent role sessions will run with per-role tool allowlists.`,
             id: 'roles.pi_native',
-            label: 'Pi native roles',
+            label: 'Agent roles',
             status: input.roleCount > 0 ? 'pass' : 'block',
         },
         {

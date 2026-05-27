@@ -1,6 +1,5 @@
 import type {
     AllocationPlanRecord,
-    CacheSummary,
     PositionImportRow,
     PositionInput,
     PositionRecord,
@@ -14,7 +13,6 @@ export const chartPalette = ['#9c6237', '#bd8c58', '#d9bc9a', '#5d4638', '#b54b3
 export interface DashboardState {
     activePlan: AllocationPlanRecord | null;
     assets: StoredAsset[];
-    cacheSummary: CacheSummary | null;
     errorMessage: string | null;
     heartbeat: string | null;
     isImportingPositions: boolean;
@@ -26,7 +24,7 @@ export interface DashboardState {
     positionCsvDraft: string;
     positionDraft: PositionDraft;
     positions: PositionRecord[];
-    pythonProbe: string | null;
+    runtimeProbe: string | null;
     runtimeStatus: RuntimeStatusResponse | null;
     syncStatus: SyncStatus | null;
 }

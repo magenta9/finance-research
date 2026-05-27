@@ -42,7 +42,7 @@ const getPiRiskGateError = (riskGatePreferences: PiRiskGatePreferences | undefin
     const state = riskGatePreferences?.getRiskGateState();
 
     return state && !state.acknowledged
-        ? state.message || 'Pi Agent high-privilege risk must be acknowledged before Pi research.'
+        ? state.message || 'Agent high-privilege risk must be acknowledged before research.'
         : null;
 };
 
@@ -74,7 +74,7 @@ const resolveResearchExecutor = async ({
     }
 
     if (!piRuntime) {
-        throw createRuntimeResolutionError('Pi runtime is unavailable.', 'pi');
+        throw createRuntimeResolutionError('Agent runtime is unavailable.', 'pi');
     }
 
     return createPiResearchExecutor({ piRuntime });

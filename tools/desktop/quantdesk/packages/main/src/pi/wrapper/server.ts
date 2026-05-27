@@ -58,11 +58,11 @@ export class PiWrapperServer {
     });
 
     process.stdin.resume();
-    return await new Promise<never>(() => {});
+    return await new Promise<never>(() => { });
   }
 
   async dispose() {
-    this.rejectPending(new Error('Pi wrapper shutting down.'));
+    this.rejectPending(new Error('Agent runtime shutting down.'));
     await this.runtime.dispose();
   }
 
@@ -153,7 +153,7 @@ export class PiWrapperServer {
         default: {
           writePiWrapperMessage(process.stdout, createPiWrapperErrorResponse(message.id, {
             code: 'UNKNOWN_METHOD',
-            message: `Unknown pi wrapper method: ${message.method}`,
+            message: `Unknown Agent runtime method: ${message.method}`,
           }));
         }
       }

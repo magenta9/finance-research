@@ -9,7 +9,6 @@ import {
 } from 'recharts';
 
 import type {
-    CacheSummary,
     RuntimeStatusResponse,
     StoredAsset,
     SyncStatus,
@@ -261,25 +260,23 @@ export const PositionManagementSection = memo(PositionManagementSectionComponent
 PositionManagementSection.displayName = 'PositionManagementSection';
 
 const RuntimeStatusSectionComponent = ({
-    cacheSummary,
     heartbeat,
     nativeStatus,
     onRefresh,
     onRunHeartbeat,
     onRunNativeCheck,
-    onRunPythonProbe,
-    pythonProbe,
+    onRunRuntimeProbe,
+    runtimeProbe,
     runtimeStatus,
     syncStatus,
 }: {
-    cacheSummary: CacheSummary | null;
     heartbeat: string | null;
     nativeStatus: string | null;
     onRefresh: () => void;
     onRunHeartbeat: () => void;
     onRunNativeCheck: () => void;
-    onRunPythonProbe: () => void;
-    pythonProbe: string | null;
+    onRunRuntimeProbe: () => void;
+    runtimeProbe: string | null;
     runtimeStatus: RuntimeStatusResponse | null;
     syncStatus: SyncStatus | null;
 }) => (
@@ -287,7 +284,7 @@ const RuntimeStatusSectionComponent = ({
         <div className="flex items-start justify-between gap-4">
             <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">运行状态</p>
-                <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">IPC、原生模块与 Python 探针</h2>
+                <h2 className="mt-2 font-display text-2xl text-[var(--color-foreground)]">IPC、原生模块与 Agent 运行检查</h2>
             </div>
             <Button onClick={onRefresh} tone="ghost">刷新状态</Button>
         </div>
@@ -296,7 +293,7 @@ const RuntimeStatusSectionComponent = ({
             {[
                 { label: '运行 IPC 心跳', onClick: onRunHeartbeat },
                 { label: '检查原生模块', onClick: onRunNativeCheck },
-                { label: '运行 Python 探针', onClick: onRunPythonProbe },
+                { label: '运行 Agent 探针', onClick: onRunRuntimeProbe },
             ].map((action) => (
                 <Button key={action.label} onClick={action.onClick} tone="secondary">
                     {action.label}
@@ -308,13 +305,13 @@ const RuntimeStatusSectionComponent = ({
             <div className="rounded-[20px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.44)] p-4 text-sm leading-6 text-[var(--color-copy)]">
                 <p>{heartbeat ?? '等待心跳探针'}</p>
                 <p className="mt-2">{nativeStatus ?? '等待原生模块探针'}</p>
-                <p className="mt-2">{pythonProbe ?? '等待 Python 探针'}</p>
+                <p className="mt-2">{runtimeProbe ?? '等待 Agent 探针'}</p>
             </div>
             <div className="rounded-[20px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.44)] p-4 text-sm leading-6 text-[var(--color-copy)]">
                 <p>Sidecar: {runtimeStatus?.sidecarReady ? 'ready' : 'not ready'}</p>
                 <p>PID: {runtimeStatus?.sidecarPid ?? 'n/a'}</p>
                 <p>Port: {runtimeStatus?.sidecarPort ?? 'n/a'}</p>
-                <p>最后价格缓存: {cacheSummary?.latestPriceFetchAt ?? '无'}</p>
+                <p>价格快照: 由 quant-data 按需读取</p>
                 <p>同步队列: {syncStatus?.running ? 'running' : 'idle'} / {syncStatus?.queuedTasks ?? 0}</p>
             </div>
         </div>

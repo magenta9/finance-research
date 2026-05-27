@@ -442,7 +442,7 @@ export class PiManager {
       };
 
       const handleExit = (code: number | null, signal: NodeJS.Signals | null) => {
-        this.client?.dispose(new Error('Pi wrapper exited.'));
+        this.client?.dispose(new Error('Agent runtime exited.'));
         this.client = null;
         this.child = null;
 
@@ -451,7 +451,7 @@ export class PiManager {
         }
 
         this.state = 'error';
-        this.lastError = `Pi wrapper exited with code ${code ?? 'null'} signal ${signal ?? 'null'}.`;
+        this.lastError = `Agent runtime exited with code ${code ?? 'null'} signal ${signal ?? 'null'}.`;
 
         if (this.restartAttempts >= this.maxRestartAttempts) {
           return;
@@ -470,7 +470,7 @@ export class PiManager {
       child.once('error', handleError);
       child.once('exit', handleExit);
       child.stderr.on('data', (chunk) => {
-        this.logger?.warn('main', 'Pi wrapper stderr', {
+        this.logger?.warn('main', 'Agent runtime stderr', {
           message: chunk.toString('utf8').trim(),
         });
       });

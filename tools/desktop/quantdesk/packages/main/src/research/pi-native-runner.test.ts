@@ -282,11 +282,11 @@ describe('PiNativeResearchRunner', () => {
         const request = await runner.startResearch({ assetIds: ['asset-spy'], query: '研究 SPY 单股' });
 
         await expect(terminalEvent).resolves.toMatchObject({
-            error: expect.stringContaining('All Pi native research roles failed.'),
+            error: expect.stringContaining('All Agent research roles failed.'),
             type: 'request_failed',
         });
         await expect(terminalEvent).resolves.toMatchObject({
-            error: expect.stringContaining('schema_invalid - Pi native researcher response did not contain a JSON object.'),
+            error: expect.stringContaining('schema_invalid - Agent researcher response did not contain a JSON object.'),
             type: 'request_failed',
         });
         expect(repositories.researchArtifactRepository.getRequestById(request.id)?.status).toBe('failed');
@@ -342,7 +342,7 @@ describe('PiNativeResearchRunner', () => {
         const request = await runner.startResearch({ query: '研究恒生科技' });
 
         await expect(terminalEvent).resolves.toMatchObject({
-            error: 'Pi runtime unavailable for native research: Pi runtime is unavailable.',
+            error: 'Agent runtime unavailable for native research: Agent runtime is unavailable.',
             type: 'request_failed',
         });
         expect(repositories.researchArtifactRepository.getRequestById(request.id)?.status).toBe('failed');

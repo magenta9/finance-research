@@ -18,7 +18,7 @@ const findTranscriptFailure = (transcript: PiWrapperSessionTranscript): string |
   }
 
   const content = latestMessage.content.trim();
-  return content.length > 0 ? content : 'Pi 运行失败，但未返回错误详情。';
+  return content.length > 0 ? content : 'Agent 运行失败，但未返回错误详情。';
 };
 
 const getLatestInvocationTimestamp = (invocation: PiToolInvocation | null): string | null => {

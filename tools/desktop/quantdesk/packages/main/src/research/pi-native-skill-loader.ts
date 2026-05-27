@@ -8,7 +8,7 @@ export interface LoadPiNativeResearchSkillOptions {
     startDir?: string;
 }
 
-const skillRelativePath = path.join('.pi', 'skills', 'quantdesk-research', 'SKILL.md');
+const skillRelativePath = path.join('.agents', 'skills', 'quantdesk-research', 'SKILL.md');
 
 const stripFrontmatter = (content: string) => content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').trim();
 
@@ -48,7 +48,7 @@ export const resolvePiNativeResearchSkillPath = ({ cwd = process.cwd(), skillPat
             : null;
 
     if (configuredSkillPath && !existsSync(configuredSkillPath)) {
-        throw new Error(`Configured QuantDesk Pi native research skill does not exist: ${configuredSkillPath}`);
+        throw new Error(`Configured QuantDesk native research skill does not exist: ${configuredSkillPath}`);
     }
 
     const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
@@ -74,6 +74,6 @@ export const loadPiNativeResearchSkill = async (options: LoadPiNativeResearchSki
         return stripFrontmatter(await readFile(resolvedPath, 'utf8'));
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        throw new Error(`Unable to load QuantDesk Pi native research skill at ${resolvedPath}: ${message}`);
+        throw new Error(`Unable to load QuantDesk native research skill at ${resolvedPath}: ${message}`);
     }
 };

@@ -29,11 +29,11 @@ export const routeDefinitions: RouteDefinition[] = [
     sidebarTitle: '配置工坊',
   },
   {
-    label: 'Pi Agent',
+    label: 'Agent',
     path: '/pi-agent',
     shortLabel: '04',
     icon: 'agent',
-    sidebarTitle: 'Pi 本地终端',
+    sidebarTitle: '本地 Agent',
   },
   {
     label: '设置',

@@ -47,12 +47,12 @@ describe('pi native research skill loader', () => {
     test('reports the resolved path when the skill is missing', async () => {
         const skillPath = path.join(os.tmpdir(), 'missing-quantdesk-research-skill.md');
 
-        await expect(loadPiNativeResearchSkill({ skillPath })).rejects.toThrow(`Configured QuantDesk Pi native research skill does not exist: ${skillPath}`);
+        await expect(loadPiNativeResearchSkill({ skillPath })).rejects.toThrow(`Configured QuantDesk native research skill does not exist: ${skillPath}`);
     });
 
     test('resolves a packaged resourcesPath skill', async () => {
         const directory = await mkdtemp(path.join(os.tmpdir(), 'quantdesk-packaged-skill-'));
-        const skillPath = path.join(directory, '.pi', 'skills', 'quantdesk-research', 'SKILL.md');
+        const skillPath = path.join(directory, '.agents', 'skills', 'quantdesk-research', 'SKILL.md');
 
         try {
             await mkdir(path.dirname(skillPath), { recursive: true });
@@ -84,7 +84,7 @@ describe('pi native research skill loader', () => {
 
     test('resolves an unpacked packaged skill', async () => {
         const directory = await mkdtemp(path.join(os.tmpdir(), 'quantdesk-unpacked-skill-'));
-        const skillPath = path.join(directory, 'app.asar.unpacked', '.pi', 'skills', 'quantdesk-research', 'SKILL.md');
+        const skillPath = path.join(directory, 'app.asar.unpacked', '.agents', 'skills', 'quantdesk-research', 'SKILL.md');
 
         try {
             await mkdir(path.dirname(skillPath), { recursive: true });
@@ -103,6 +103,6 @@ describe('pi native research skill loader', () => {
     test('resolves the repository skill from a nested cwd', () => {
         const resolved = resolvePiNativeResearchSkillPath({ cwd: path.join(process.cwd(), 'packages', 'main', 'src') });
 
-        expect(resolved.endsWith(path.join('.pi', 'skills', 'quantdesk-research', 'SKILL.md'))).toBe(true);
+        expect(resolved.endsWith(path.join('.agents', 'skills', 'quantdesk-research', 'SKILL.md'))).toBe(true);
     });
 });

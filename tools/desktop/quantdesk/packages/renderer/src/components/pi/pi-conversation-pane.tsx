@@ -146,7 +146,7 @@ export const PiConversationPane = ({
     const currentToolLabel = runStatus?.currentTool ?? session?.lastToolName ?? '暂无工具';
     const riskMessage = (typeof approvalBlock?.input.message === 'string' ? approvalBlock.input.message : null)
         ?? riskGateState?.message
-        ?? 'Pi 可以读写本地文件并执行命令，确认后再继续。';
+        ?? 'Agent 可以读写本地文件并执行命令，确认后再继续。';
     const autoScrollKey = useMemo(() => {
         const lastItem = timeline[timeline.length - 1];
 
@@ -368,7 +368,7 @@ export const PiConversationPane = ({
                                 <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#ffb2a6]">运行失败</p>
                                 <Badge tone="danger">{runStateLabel[runStatus?.state ?? 'failed']}</Badge>
                             </div>
-                            <p className="mt-1.5 font-medium text-[#ffe0da]">最近一次 Pi 运行失败</p>
+                            <p className="mt-1.5 font-medium text-[#ffe0da]">最近一次 Agent 运行失败</p>
                             <p className="mt-1.5 whitespace-pre-wrap break-words">{latestFailureMessage}</p>
                         </div>
                     )}

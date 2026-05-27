@@ -78,11 +78,11 @@ const fakePiTypeNamespace = {
 };
 
 describe('PiWrapperRuntime.getDiagnostics', () => {
-    test('adds the project .pi skills directory to Pi SDK resource loading', async () => {
+    test('adds the project .agents skills directory to Agent resource loading', async () => {
         const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'quantdesk-pi-skills-'));
         const sessionDir = path.join(tempDir, 'sessions');
         const workspaceDir = path.join(tempDir, 'workspace', 'nested');
-        const skillDir = path.join(tempDir, '.pi', 'skills');
+        const skillDir = path.join(tempDir, '.agents', 'skills');
         fs.mkdirSync(path.join(skillDir, 'quantdesk-research'), { recursive: true });
         fs.mkdirSync(workspaceDir, { recursive: true });
         fs.writeFileSync(path.join(skillDir, 'quantdesk-research', 'SKILL.md'), [
@@ -164,17 +164,17 @@ describe('PiWrapperRuntime.getDiagnostics', () => {
         }
     });
 
-    test('lists skills from Pi resource paths', async () => {
+    test('lists skills from Agent resource paths', async () => {
         const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'quantdesk-pi-list-skills-'));
         const workspaceDir = path.join(tempDir, 'workspace', 'nested');
-        const skillDir = path.join(tempDir, '.pi', 'skills');
+        const skillDir = path.join(tempDir, '.agent', 'skills');
         const agentsSkillDir = path.join(tempDir, '.agents', 'skills');
         const agentDir = path.join(tempDir, 'config');
         fs.mkdirSync(path.join(skillDir, 'quantdesk-research'), { recursive: true });
         fs.mkdirSync(path.join(skillDir, 'macro-scan'), { recursive: true });
         fs.mkdirSync(path.join(agentsSkillDir, 'hunt'), { recursive: true });
-        fs.mkdirSync(agentDir, { recursive: true });
-        fs.symlinkSync(agentsSkillDir, path.join(agentDir, 'skills'));
+        fs.mkdirSync(path.join(agentDir, '.agents'), { recursive: true });
+        fs.symlinkSync(agentsSkillDir, path.join(agentDir, '.agents', 'skills'));
         fs.mkdirSync(workspaceDir, { recursive: true });
         fs.writeFileSync(path.join(skillDir, 'quantdesk-research', 'SKILL.md'), [
             '---',

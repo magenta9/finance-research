@@ -64,14 +64,14 @@ const ignorePiCancelRunError = (error: unknown) => {
 
 const summarizeRoleFailures = (failures: ResearcherFailureArtifact[]) => {
     if (failures.length === 0) {
-        return 'Pi native research did not run any roles.';
+        return 'Agent research did not run any roles.';
     }
 
     const summary = failures
         .map((failure) => `${failure.role}: ${failure.reasonCode ?? 'runtime_failed'} - ${failure.error}`)
         .join('; ');
 
-    return `All Pi native research roles failed. ${summary}`;
+    return `All Agent research roles failed. ${summary}`;
 };
 
 const isTerminalEventForRun = (
@@ -187,14 +187,14 @@ export class PiNativeResearchRunner {
         }
 
         if (!this.piRuntime) {
-            throw createRuntimeUnavailableError('Pi runtime is unavailable.');
+            throw createRuntimeUnavailableError('Agent runtime is unavailable.');
         }
     }
 
     private async executeResearch(requestId: string, input: ResearchRequestInput, controller: AbortController) {
         const signal = controller.signal;
         const totalTimeout = setTimeout(() => {
-            controller.abort(new Error(`Pi native research request timed out after ${this.totalTimeoutMs}ms.`));
+            controller.abort(new Error(`Agent research request timed out after ${this.totalTimeoutMs}ms.`));
         }, this.totalTimeoutMs);
 
         try {
@@ -359,7 +359,7 @@ export class PiNativeResearchRunner {
         const piRuntime = this.piRuntime;
 
         if (!piRuntime) {
-            throw createRuntimeUnavailableError('Pi runtime is unavailable.');
+            throw createRuntimeUnavailableError('Agent runtime is unavailable.');
         }
 
         const definition = getPiNativeResearchRoleDefinition(input.role);
@@ -401,7 +401,7 @@ export class PiNativeResearchRunner {
 
             const handleAbort = () => {
                 void cancelActiveRun();
-                settle(() => reject(input.signal.reason instanceof Error ? input.signal.reason : new Error('Pi native research run was aborted.')));
+                settle(() => reject(input.signal.reason instanceof Error ? input.signal.reason : new Error('Agent research run was aborted.')));
             };
 
             const handleStreamEvent = (event: PiStreamEvent) => {
@@ -452,7 +452,7 @@ export class PiNativeResearchRunner {
                 }
 
                 if (event.type === 'run_cancelled') {
-                    settle(() => reject(new Error('Pi native research run was cancelled.')));
+                    settle(() => reject(new Error('Agent research run was cancelled.')));
                     return;
                 }
 
@@ -473,7 +473,7 @@ export class PiNativeResearchRunner {
 
             timeout = setTimeout(() => {
                 void cancelActiveRun();
-                settle(() => reject(new Error(`Pi native ${input.role} role timed out after ${this.roleTimeoutMs}ms.`)));
+                settle(() => reject(new Error(`Agent ${input.role} role timed out after ${this.roleTimeoutMs}ms.`)));
             }, this.roleTimeoutMs);
 
             input.signal.addEventListener('abort', handleAbort, { once: true });

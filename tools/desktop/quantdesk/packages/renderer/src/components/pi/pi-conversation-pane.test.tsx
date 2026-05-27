@@ -138,7 +138,7 @@ describe('PiConversationPane', () => {
             />,
         );
 
-        expect(screen.getByTestId('pi-agent-run-failure-banner')).toHaveTextContent('最近一次 Pi 运行失败');
+        expect(screen.getByTestId('pi-agent-run-failure-banner')).toHaveTextContent('最近一次 Agent 运行失败');
         expect(screen.getByTestId('pi-agent-run-failure-banner')).toHaveTextContent('provider auth failed');
         expect(screen.getAllByText('失败').length).toBeGreaterThan(0);
 
@@ -209,14 +209,14 @@ describe('PiConversationPane', () => {
                     {
                         description: 'QuantDesk research skill',
                         name: 'quantdesk-research',
-                        path: '/tmp/.pi/skills/quantdesk-research/SKILL.md',
-                        source: '/tmp/.pi/skills',
+                        path: '/tmp/.agents/skills/quantdesk-research/SKILL.md',
+                        source: '/tmp/.agents/skills',
                     },
                     {
                         description: 'Macro scan skill',
                         name: 'macro-scan',
-                        path: '/tmp/.pi/skills/macro-scan/SKILL.md',
-                        source: '/tmp/.pi/skills',
+                        path: '/tmp/.agents/skills/macro-scan/SKILL.md',
+                        source: '/tmp/.agents/skills',
                     },
                 ]}
             />,

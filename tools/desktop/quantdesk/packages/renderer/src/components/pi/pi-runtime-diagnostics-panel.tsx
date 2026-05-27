@@ -61,7 +61,7 @@ export const PiRuntimeDiagnosticsPanel = ({
             ].join(' ')}
         >
             <Button
-                aria-label="关闭 Pi 运行诊断面板"
+                aria-label="关闭 Agent 运行诊断面板"
                 className={[
                     'absolute inset-0 h-full w-full rounded-none border-0 bg-[rgba(23,19,16,0.42)] px-0 py-0 shadow-none backdrop-blur-[2px] transition-opacity duration-300 hover:bg-[rgba(23,19,16,0.42)]',
                     open ? 'opacity-100' : 'opacity-0',
@@ -72,11 +72,11 @@ export const PiRuntimeDiagnosticsPanel = ({
                 tone="ghost"
                 type="button"
             >
-                <span className="sr-only">关闭 Pi 运行诊断面板</span>
+                <span className="sr-only">关闭 Agent 运行诊断面板</span>
             </Button>
 
             <aside
-                aria-label="Pi 运行与目录状态面板"
+                aria-label="Agent 运行与目录状态面板"
                 aria-modal="true"
                 className={[
                     'relative flex h-full w-full max-w-[760px] flex-col overflow-hidden border-l border-[color:var(--color-border)] bg-[linear-gradient(180deg,rgba(14,17,23,0.98),rgba(8,10,15,0.98))] shadow-[-36px_0_96px_rgba(0,0,0,0.28)] transition-transform duration-300 ease-out',
@@ -93,7 +93,7 @@ export const PiRuntimeDiagnosticsPanel = ({
                             <div>
                                 <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-[var(--color-muted)]">状态面板</p>
                                 <h2 className="mt-2 text-[1.8rem] font-semibold leading-none text-[var(--color-foreground)] sm:text-[2.1rem]">
-                                    Pi 运行与目录
+                                    Agent 运行与目录
                                 </h2>
                                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-copy)]">
                                     目录、工具和告警都放在这里，不打断正文。
@@ -104,7 +104,7 @@ export const PiRuntimeDiagnosticsPanel = ({
                                     刷新
                                 </Button>
                                 <Button
-                                    aria-label="关闭 Pi 运行诊断面板"
+                                    aria-label="关闭 Agent 运行诊断面板"
                                     className="h-11 w-11 rounded-full px-0 text-lg"
                                     onClick={onClose}
                                     size="sm"
@@ -139,7 +139,7 @@ export const PiRuntimeDiagnosticsPanel = ({
                                     确认风险
                                 </Button>
                             </div>
-                            <p className="mt-3 text-sm leading-6 text-[#ffcabf]">{riskGateState?.message ?? 'Pi 可以读写本地文件并执行命令。'}</p>
+                            <p className="mt-3 text-sm leading-6 text-[#ffcabf]">{riskGateState?.message ?? 'Agent 可以读写本地文件并执行命令。'}</p>
                         </section>
                     )}
 

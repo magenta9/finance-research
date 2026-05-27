@@ -29,7 +29,7 @@ export class UnauthorizedResearchToolError extends Error {
         runId: string | null;
         sessionId: string | null;
     }) {
-        super(`Pi researcher attempted unauthorized tool: ${input.attemptedToolName}`);
+        super(`Agent researcher attempted unauthorized tool: ${input.attemptedToolName}`);
         this.name = 'UnauthorizedResearchToolError';
         this.allowedToolNames = input.allowedToolNames;
         this.attemptedToolName = input.attemptedToolName;
@@ -79,7 +79,7 @@ const extractJsonObject = (content: string) => {
         return trimmed.slice(firstBrace, lastBrace + 1);
     }
 
-    throw new Error('Pi researcher response did not contain a JSON object.');
+    throw new Error('Agent researcher response did not contain a JSON object.');
 };
 
 const latestAssistantContent = (transcript: PiWrapperSessionTranscript) => {
@@ -88,7 +88,7 @@ const latestAssistantContent = (transcript: PiWrapperSessionTranscript) => {
         .find((entry) => entry.role === 'assistant' && entry.phase !== 'thinking' && !entry.isError && entry.content.trim().length > 0);
 
     if (!message) {
-        throw new Error('Pi researcher completed without an assistant response.');
+        throw new Error('Agent researcher completed without an assistant response.');
     }
 
     return message.content;
@@ -110,7 +110,7 @@ const enforcePiOutputEvidence = (output: ResearcherOutput): ResearcherOutput => 
         confidence: 'low',
         dataGaps: Array.from(new Set([
             ...output.dataGaps,
-            'Pi researcher output did not include verifiable data provenance.',
+            'Agent researcher output did not include verifiable data provenance.',
         ])),
         needsSecondReview: true,
     };
@@ -125,7 +125,7 @@ const buildPiResearcherMessage = ({
 }: ResearchExecutorInput) => [
     prompt.prompt,
     '',
-    'You are running inside QuantDesk Pi Agent as a real research worker.',
+    'You are running inside QuantDesk Agent as a real research worker.',
     'Use the available QuantDesk finance tools when evidence is needed. Do not invent market data, fundamentals, news, macro data, flow, sentiment, prices, probabilities, or position sizes.',
     'If a data source or tool is unavailable, report that limitation in dataGaps and lower confidence.',
     `User query: ${query}`,
@@ -234,12 +234,12 @@ export const createPiResearchExecutor = ({
 
             const handleAbort = () => {
                 cancelActiveRun();
-                settle(() => reject(input.signal?.reason instanceof Error ? input.signal.reason : new Error('Pi research run was aborted.')));
+                settle(() => reject(input.signal?.reason instanceof Error ? input.signal.reason : new Error('Agent research run was aborted.')));
             };
 
             timeout = setTimeout(() => {
                 cancelActiveRun();
-                settle(() => reject(new Error(`Pi research run timed out after ${timeoutMs}ms.`)));
+                settle(() => reject(new Error(`Agent research run timed out after ${timeoutMs}ms.`)));
             }, timeoutMs);
 
             input.signal?.addEventListener('abort', handleAbort, { once: true });
@@ -336,7 +336,7 @@ export const createPiResearchExecutor = ({
                 }
 
                 if (event.type === 'run_cancelled') {
-                    settle(() => reject(new Error('Pi research run was cancelled.')));
+                    settle(() => reject(new Error('Agent research run was cancelled.')));
                     return;
                 }
 

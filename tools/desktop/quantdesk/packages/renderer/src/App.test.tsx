@@ -213,7 +213,7 @@ describe('工作台外壳', () => {
       '仪表盘',
       '资产池',
       '配置方案',
-      'Pi Agent',
+      'Agent',
       '设置',
     ]) {
       expect(screen.getAllByRole('link', { name: new RegExp(destination, 'i') }).length).toBeGreaterThan(0);

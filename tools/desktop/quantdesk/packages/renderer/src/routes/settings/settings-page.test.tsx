@@ -233,7 +233,7 @@ describe('SettingsPage', () => {
         setApiClientOverride(null);
     });
 
-    test('显示 Pi runtime 分区和 quant-data provider 状态', async () => {
+    test('显示 Agent runtime 分区和 quant-data provider 状态', async () => {
         render(<SettingsPage />);
 
         await screen.findByTestId('settings-page');
@@ -251,7 +251,7 @@ describe('SettingsPage', () => {
         expect(mockApi.data.subscribeSyncStatus).not.toHaveBeenCalled();
     });
 
-    test('确认 Pi 高权限风险会调用 runtime API', async () => {
+    test('确认 Agent 高权限风险会调用 runtime API', async () => {
         const user = userEvent.setup();
 
         render(<SettingsPage />);
@@ -263,7 +263,7 @@ describe('SettingsPage', () => {
             expect(mockApi.piRuntime.acknowledgeHighPrivilegeRisk).toHaveBeenCalledTimes(1);
         });
 
-        expect(screen.getByText('已确认 Pi Agent 高权限风险。')).toBeInTheDocument();
+        expect(screen.getByText('已确认 Agent 高权限风险。')).toBeInTheDocument();
     });
 
     test('打开偏好编辑弹窗后保存会关闭弹窗', async () => {
@@ -334,7 +334,7 @@ describe('formatPiModelDisplay', () => {
             provider: 'minimax-cn',
             source: 'runtime',
         })).toEqual({
-            detail: 'Pi runtime active model',
+            detail: 'Agent runtime active model',
             value: 'MiniMax-M2.7-highspeed [minimax-cn]',
         });
     });

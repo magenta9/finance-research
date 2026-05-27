@@ -28,23 +28,7 @@ const formatRuntimeState = (state?: string | null) => (
 );
 
 const quantdeskResearchSkillPrompt = [
-    '# QuantDesk Research',
-    '',
-    '你现在直接执行 QuantDesk Research 指令。不要查询 ~/.agents/skills，不要加载 deep-research，也不要说 quantdesk-research 不存在；下面就是完整投研指令。',
-    '',
-    '职责：作为 QuantDesk Pi Agent 的多角色投研员，用 QuantDesk finance tools 获取证据，并输出可审计结论。',
-    '',
-    '硬规则：',
-    '- 必须优先调用 QuantDesk finance tools 获取证据。',
-    '- 不要编造行情、价格、成交量、基本面、新闻、公告、宏观、资金流、情绪、组合持仓、风险指标或概率。',
-    '- 不要把 display series 和 adjusted/calculation series 混用；工具说明口径不足时，把限制写进 dataGaps。',
-    '- 工具不可用、覆盖不足、资产歧义或数据过旧时，降低 confidence，并把缺口写入 dataGaps。',
-    '- evidence 和 dataProvenance 只能来自工具返回、QuantDesk 本地上下文或明确可追踪来源。',
-    '- 不要输出交易执行指令；actionRecommendation 只表达研究动作上限。',
-    '',
-    '角色：按 allocation / trend / macro / fundamental / risk / factor / flow_sentiment / execution 中合适的角色分别给出结论。',
-    '',
-    '输出：先给一段人类可读摘要，然后输出一个 JSON object。JSON 至少包含 requestId、role、conclusion、confidence、direction、actionRecommendation、evidence、dataGaps、dataProvenance。',
+    '/skill:quantdesk-research',
     '',
     '研究问题：',
 ].join('\n');
@@ -183,7 +167,7 @@ export const PiAgentPage = () => {
     const quickActions = useMemo(
         () => [
             { description: '通过 skill 召回多角色投研', key: 'pi-research-skill', label: '多角色投研', onClick: () => { handleUsePreset(`${quantdeskResearchSkillPrompt}恒生科技当前配置多少仓位合适？`); } },
-            { description: '先让 Pi 给出局面判断', key: 'pi-market-open', label: '今天 A 股开盘行情', onClick: () => { handleUsePreset('今天 A 股开盘行情怎么样'); } },
+            { description: '先让 Agent 给出局面判断', key: 'pi-market-open', label: '今天 A 股开盘行情', onClick: () => { handleUsePreset('今天 A 股开盘行情怎么样'); } },
             { description: '围绕科技板块深挖', key: 'pi-tech', label: '为什么科技板块涨幅居前', onClick: () => { handleUsePreset('分析一下为什么科技板块涨幅居前？'); } },
             { description: '结合命令与数据工具', key: 'pi-terminal', label: '本地拉数据并解释', onClick: () => { handleUsePreset('本地拉取最新市场数据并解释异常波动'); } },
             { description: '把想法落到组合动作', key: 'pi-plan', label: '生成今日调仓建议', onClick: () => { handleUsePreset('生成今日调仓建议'); } },

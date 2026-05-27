@@ -110,6 +110,51 @@ describe('database layer', () => {
     }
   });
 
+  test('repairs upgraded databases that are missing the fx_rates table', () => {
+    const database = new Database(':memory:');
+
+    try {
+      database.exec(`
+        CREATE TABLE assets (
+          id TEXT PRIMARY KEY,
+          symbol TEXT NOT NULL,
+          name TEXT NOT NULL,
+          market TEXT NOT NULL,
+          asset_class TEXT NOT NULL,
+          currency TEXT NOT NULL,
+          tags TEXT NOT NULL DEFAULT '[]',
+          metadata TEXT NOT NULL DEFAULT '{}',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(symbol, market)
+        );
+
+        CREATE TABLE daily_prices (
+          asset_id TEXT NOT NULL,
+          date TEXT NOT NULL,
+          close REAL,
+          source TEXT NOT NULL DEFAULT 'unknown',
+          fetched_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (asset_id, date)
+        );
+
+        PRAGMA user_version = 10;
+      `);
+
+      runMigrations(database);
+
+      const table = database
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'fx_rates'")
+        .get() as { name: string } | undefined;
+      const version = database.prepare('PRAGMA user_version').get() as { user_version: number };
+
+      expect(table?.name).toBe('fx_rates');
+      expect(version.user_version).toBe(getLatestMigrationVersion());
+    } finally {
+      database.close();
+    }
+  });
+
   test('migration 003 clears stale allocation results and backfills cadence columns', () => {
     const database = new Database(':memory:');
     try {
@@ -157,11 +202,11 @@ describe('database layer', () => {
           `,
         )
         .get() as {
-        result: string | null;
-        start_date: string | null;
-        end_date: string | null;
-        rebalance_cadence: string;
-      };
+          result: string | null;
+          start_date: string | null;
+          end_date: string | null;
+          rebalance_cadence: string;
+        };
 
       expect(row).toEqual({
         end_date: null,

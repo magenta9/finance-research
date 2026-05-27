@@ -451,7 +451,7 @@ export const reducePiAgentStreamEvent = (
         };
 
         return {
-            noticeMessage: 'Pi 运行已完成。',
+            noticeMessage: 'Agent 运行已完成。',
             sessionRecords: {
                 ...state.sessionRecords,
                 [sessionId]: nextRecord,
@@ -513,7 +513,7 @@ export const reducePiAgentStreamEvent = (
     };
 
     return {
-        noticeMessage: 'Pi 运行已取消。',
+        noticeMessage: 'Agent 运行已取消。',
         sessionRecords: {
             ...state.sessionRecords,
             [sessionId]: nextRecord,

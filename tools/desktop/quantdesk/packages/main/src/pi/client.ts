@@ -95,7 +95,7 @@ export class PiClient {
     this.detachReader = null;
 
     for (const pending of this.pending.values()) {
-      pending.reject(error ?? new Error('Pi wrapper connection closed.'));
+      pending.reject(error ?? new Error('Agent runtime connection closed.'));
     }
 
     this.pending.clear();
@@ -141,7 +141,7 @@ export class PiClient {
       if (!this.requestHandler) {
         writePiWrapperMessage(this.output, createPiWrapperErrorResponse(message.id, {
           code: 'UNSUPPORTED_REQUEST',
-          message: `Unsupported pi wrapper request: ${message.method}`,
+          message: `Unsupported Agent runtime request: ${message.method}`,
         }));
         return;
       }
@@ -156,7 +156,7 @@ export class PiClient {
         }));
       }
     } catch (error) {
-      this.logger?.warn('main', 'Failed to parse pi wrapper message.', {
+      this.logger?.warn('main', 'Failed to parse Agent runtime message.', {
         error: error instanceof Error ? error.message : String(error),
         line: line.slice(0, 300),
       });

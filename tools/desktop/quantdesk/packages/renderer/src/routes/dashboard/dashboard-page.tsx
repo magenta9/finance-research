@@ -15,8 +15,8 @@ import {
     importPositions,
     loadDashboardPageData,
     runHeartbeatCheck,
+    runAgentRuntimeProbeCheck,
     runNativeBindingsCheck,
-    runPythonProbeCheck,
     savePosition,
     subscribeToDashboardSyncStatus,
 } from './dashboard-client';
@@ -31,7 +31,6 @@ export const DashboardPage = () => {
     const [state, setState] = useState<DashboardState>({
         activePlan: null,
         assets: [],
-        cacheSummary: null,
         errorMessage: null,
         heartbeat: null,
         isImportingPositions: false,
@@ -43,7 +42,7 @@ export const DashboardPage = () => {
         positionCsvDraft: '',
         positionDraft: emptyPositionDraft(),
         positions: [],
-        pythonProbe: null,
+        runtimeProbe: null,
         runtimeStatus: null,
         syncStatus: null,
     });
@@ -54,7 +53,6 @@ export const DashboardPage = () => {
         try {
             const {
                 assets,
-                cacheSummary,
                 latestPriceByAssetId,
                 plans,
                 positions,
@@ -68,7 +66,6 @@ export const DashboardPage = () => {
                 ...current,
                 activePlan,
                 assets,
-                cacheSummary,
                 isLoading: false,
                 latestPriceByAssetId,
                 positions,
@@ -134,7 +131,7 @@ export const DashboardPage = () => {
 
         return alerts.sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta));
     }, [positionOverview, state.activePlan]);
-    const hasCacheFallback = (state.cacheSummary?.priceRowCount ?? 0) > 0;
+    const hasPriceSnapshot = Object.keys(state.latestPriceByAssetId).length > 0;
     const updatePositionDraft = useCallback((patch: Partial<DashboardState['positionDraft']>) => {
         setState((current) => ({
             ...current,
@@ -264,14 +261,14 @@ export const DashboardPage = () => {
         }
     }, []);
 
-    const runPythonProbe = useCallback(async () => {
+    const runRuntimeProbe = useCallback(async () => {
         try {
-            const result = await runPythonProbeCheck();
+            const result = await runAgentRuntimeProbeCheck();
             setState((current) => ({
                 ...current,
-                pythonProbe:
+                runtimeProbe:
                     result.exitCode === 0
-                        ? `探针成功 · ${result.stdout} · ${result.command}`
+                        ? `Agent 探针成功 · ${result.stdout}`
                         : `探针失败 · ${result.stderr} · 退出码 ${result.exitCode}`,
             }));
         } catch (error) {
@@ -318,9 +315,9 @@ export const DashboardPage = () => {
     const handleRunNativeCheckRequest = useCallback(() => {
         void runNativeCheck();
     }, [runNativeCheck]);
-    const handleRunPythonProbeRequest = useCallback(() => {
-        void runPythonProbe();
-    }, [runPythonProbe]);
+    const handleRunRuntimeProbeRequest = useCallback(() => {
+        void runRuntimeProbe();
+    }, [runRuntimeProbe]);
 
     return (
         <section className="space-y-4" data-testid="dashboard-page">
@@ -333,18 +330,18 @@ export const DashboardPage = () => {
             )}
 
             {state.runtimeStatus && !state.runtimeStatus.sidecarReady && (
-                <OfflineStateBanner hasCacheFallback={hasCacheFallback} runtimeStatus={state.runtimeStatus} />
+                <OfflineStateBanner hasPriceSnapshot={hasPriceSnapshot} runtimeStatus={state.runtimeStatus} />
             )}
 
             {state.syncStatus && (state.syncStatus.running || state.syncStatus.lastWarning) && (
-                <SyncStatusBanner cacheSummary={state.cacheSummary} hasCacheFallback={hasCacheFallback} syncStatus={state.syncStatus} />
+                <SyncStatusBanner hasPriceSnapshot={hasPriceSnapshot} syncStatus={state.syncStatus} />
             )}
 
             <div className="grid gap-3 md:grid-cols-4">
                 <DashboardMetricCard detail={state.activePlan ? `${state.activePlan.mode} · ${state.activePlan.assets.length} 个标的 · ${cadenceLabelMap[state.activePlan.rebalanceCadence ?? 'none']}` : '尚未保存配置方案'} label="活跃方案" value={state.activePlan?.name ?? '未建立'} />
                 <DashboardMetricCard detail="含手动录入与 CSV 导入持仓。" label="持仓数" value={String(state.positions.length)} />
                 <DashboardMetricCard detail="偏离阈值按 5% 权重差计算。" label="风险警报" value={String(driftAlerts.length)} />
-                <DashboardMetricCard detail="本地缓存用于离线浏览和回退显示。" label="缓存价格行" value={String(state.cacheSummary?.priceRowCount ?? 0)} />
+                <DashboardMetricCard detail="通过 quant-data 按需读取本地或 provider 行情。" label="价格快照" value={String(Object.keys(state.latestPriceByAssetId).length)} />
             </div>
 
             {!state.isLoading && state.assets.length === 0 && !state.activePlan && state.positions.length === 0 ? (
@@ -384,14 +381,13 @@ export const DashboardPage = () => {
                         <DriftAlertsPanel driftAlerts={driftAlerts} />
 
                         <RuntimeStatusSection
-                            cacheSummary={state.cacheSummary}
                             heartbeat={state.heartbeat}
                             nativeStatus={state.nativeStatus}
                             onRefresh={handleRefreshDashboard}
                             onRunHeartbeat={handleRunHeartbeatRequest}
                             onRunNativeCheck={handleRunNativeCheckRequest}
-                            onRunPythonProbe={handleRunPythonProbeRequest}
-                            pythonProbe={state.pythonProbe}
+                            onRunRuntimeProbe={handleRunRuntimeProbeRequest}
+                            runtimeProbe={state.runtimeProbe}
                             runtimeStatus={state.runtimeStatus}
                             syncStatus={state.syncStatus}
                         />
@@ -401,7 +397,7 @@ export const DashboardPage = () => {
 
             <div className="sr-only" data-testid="dashboard-position-count">{state.positions.length}</div>
             <div className="sr-only" data-testid="dashboard-drift-count">{driftAlerts.length}</div>
-            <div className="sr-only" data-testid="dashboard-cache-price-rows">{state.cacheSummary?.priceRowCount ?? 0}</div>
+            <div className="sr-only" data-testid="dashboard-price-snapshot-count">{Object.keys(state.latestPriceByAssetId).length}</div>
             <div className="sr-only" data-testid="dashboard-plan-expected-return">{state.activePlan?.result?.portfolioMetrics.expectedReturn ?? 0}</div>
         </section>
     );

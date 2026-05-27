@@ -33,6 +33,6 @@ describe('pi native research roles', () => {
     });
 
     test('rejects unknown roles explicitly', () => {
-        expect(() => getPiNativeResearchRoleDefinition('unknown' as never)).toThrow('Unknown Pi native research role');
+        expect(() => getPiNativeResearchRoleDefinition('unknown' as never)).toThrow('Unknown Agent research role');
     });
 });

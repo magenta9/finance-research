@@ -177,12 +177,12 @@ export const parsePiWrapperMessage = (line: string): PiWrapperMessage => {
   const parsed = JSON.parse(line) as unknown;
 
   if (!isRecord(parsed) || typeof parsed.kind !== 'string') {
-    throw new Error('Invalid pi wrapper message envelope.');
+    throw new Error('Invalid Agent runtime message envelope.');
   }
 
   if (parsed.kind === 'request') {
     if (typeof parsed.id !== 'string' || typeof parsed.method !== 'string') {
-      throw new Error('Invalid pi wrapper request envelope.');
+      throw new Error('Invalid Agent runtime request envelope.');
     }
 
     return parsed as unknown as PiWrapperRequest;
@@ -190,7 +190,7 @@ export const parsePiWrapperMessage = (line: string): PiWrapperMessage => {
 
   if (parsed.kind === 'response') {
     if (typeof parsed.id !== 'string' || typeof parsed.ok !== 'boolean') {
-      throw new Error('Invalid pi wrapper response envelope.');
+      throw new Error('Invalid Agent runtime response envelope.');
     }
 
     return parsed as unknown as PiWrapperResponse;
@@ -198,11 +198,11 @@ export const parsePiWrapperMessage = (line: string): PiWrapperMessage => {
 
   if (parsed.kind === 'notification') {
     if (typeof parsed.event !== 'string') {
-      throw new Error('Invalid pi wrapper notification envelope.');
+      throw new Error('Invalid Agent runtime notification envelope.');
     }
 
     return parsed as unknown as PiWrapperNotification;
   }
 
-  throw new Error(`Unknown pi wrapper message kind: ${String(parsed.kind)}`);
+  throw new Error(`Unknown Agent runtime message kind: ${String(parsed.kind)}`);
 };
