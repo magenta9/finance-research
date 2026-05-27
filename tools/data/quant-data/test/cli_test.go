@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"quant-data/internal/app"
+	"quant-data/internal/store"
 )
 
 func TestHelpJSON(t *testing.T) {
@@ -28,6 +30,99 @@ func TestHelpJSON(t *testing.T) {
 	}
 }
 
+func TestHelpFixtureMatchesRuntimeMethods(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "contracts", "quant-data-cli", "fixtures", "help.json"))
+	if err != nil {
+		t.Fatalf("read help fixture: %v", err)
+	}
+	var help app.HelpDocument
+	if err := json.Unmarshal(content, &help); err != nil {
+		t.Fatalf("invalid help fixture JSON: %v", err)
+	}
+
+	if help.ContractVersion != app.ContractVersion {
+		t.Fatalf("fixture contract version = %q, want %q", help.ContractVersion, app.ContractVersion)
+	}
+	if len(help.Methods) != len(app.RequiredMethods) {
+		t.Fatalf("fixture method count = %d, want %d", len(help.Methods), len(app.RequiredMethods))
+	}
+	for index, method := range app.RequiredMethods {
+		if help.Methods[index].Name != method {
+			t.Fatalf("fixture method[%d] = %q, want %q", index, help.Methods[index].Name, method)
+		}
+	}
+}
+
+func TestDocsListRequiredMethods(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "docs", "quant-data-cli.md"))
+	if err != nil {
+		t.Fatalf("read quant-data docs: %v", err)
+	}
+	docs := string(content)
+	for _, method := range app.RequiredMethods {
+		if !strings.Contains(docs, "- `"+method+"`") {
+			t.Fatalf("docs missing required method %q", method)
+		}
+	}
+}
+
+func TestEnvelopeSchemaMatchesKnownMaintenanceCodes(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "contracts", "quant-data-cli", "envelope.schema.json"))
+	if err != nil {
+		t.Fatalf("read envelope schema: %v", err)
+	}
+	var schema map[string]any
+	if err := json.Unmarshal(content, &schema); err != nil {
+		t.Fatalf("parse envelope schema: %v", err)
+	}
+
+	properties := schema["properties"].(map[string]any)
+	maintenanceError := properties["maintenanceError"].(map[string]any)
+	errorProperties := maintenanceError["properties"].(map[string]any)
+	codeProperty := errorProperties["code"].(map[string]any)
+	enumValues := codeProperty["enum"].([]any)
+	codes := map[string]bool{}
+	for _, value := range enumValues {
+		codes[value.(string)] = true
+	}
+
+	if len(codes) != len(app.MaintenanceErrorCodes) {
+		t.Fatalf("schema maintenance code count = %d, want %d", len(codes), len(app.MaintenanceErrorCodes))
+	}
+	for _, code := range app.MaintenanceErrorCodes {
+		if !codes[code] {
+			t.Fatalf("envelope schema missing maintenanceError code %s", code)
+		}
+	}
+}
+
+func TestEnvelopeFixturesUseKnownMaintenanceCodes(t *testing.T) {
+	knownCodes := map[string]bool{}
+	for _, code := range app.MaintenanceErrorCodes {
+		knownCodes[code] = true
+	}
+	paths, err := filepath.Glob(filepath.Join("..", "contracts", "quant-data-cli", "fixtures", "*.response.json"))
+	if err != nil {
+		t.Fatalf("glob response fixtures: %v", err)
+	}
+	for _, path := range paths {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read fixture %s: %v", path, err)
+		}
+		var envelope app.Envelope
+		if err := json.Unmarshal(content, &envelope); err != nil {
+			t.Fatalf("invalid fixture JSON %s: %v", path, err)
+		}
+		if envelope.MaintenanceError == nil {
+			continue
+		}
+		if !knownCodes[envelope.MaintenanceError.Code] {
+			t.Fatalf("fixture %s uses unknown maintenance code %s", path, envelope.MaintenanceError.Code)
+		}
+	}
+}
+
 func TestDataMethodReturnsConfigRequiredEnvelope(t *testing.T) {
 	t.Setenv("QUANT_DATA_HOME", t.TempDir())
 
@@ -35,9 +130,61 @@ func TestDataMethodReturnsConfigRequiredEnvelope(t *testing.T) {
 	if envelope.OK {
 		t.Fatalf("expected ok=false envelope")
 	}
-	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != "CONFIG_REQUIRED" {
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeConfigRequired {
 		t.Fatalf("expected CONFIG_REQUIRED, got %#v", envelope.MaintenanceError)
 	}
+}
+
+func TestDataMethodRejectsMalformedJSONAsInvalidInput(t *testing.T) {
+	t.Setenv("QUANT_DATA_HOME", t.TempDir())
+
+	envelope := runJSONCommand(t, "search-assets", `{"query":`)
+	if envelope.OK {
+		t.Fatalf("expected ok=false envelope")
+	}
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeInvalidCommandInput {
+		t.Fatalf("expected INVALID_COMMAND_INPUT, got %#v", envelope.MaintenanceError)
+	}
+}
+
+func TestDataMethodRejectsTrailingJSONAsInvalidInput(t *testing.T) {
+	t.Setenv("QUANT_DATA_HOME", t.TempDir())
+
+	envelope := runJSONCommand(t, "search-assets", `{"query":"SPY"}{"query":"QQQ"}`)
+	if envelope.OK {
+		t.Fatalf("expected ok=false envelope")
+	}
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeInvalidCommandInput {
+		t.Fatalf("expected INVALID_COMMAND_INPUT, got %#v", envelope.MaintenanceError)
+	}
+}
+
+func TestProviderMethodRejectsInvalidInputBeforeStoreOpen(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+	t.Setenv("QUANT_DATA_HOME", path)
+
+	envelope := runJSONCommand(t, "get-price-series", `{"symbol":"510300","start":"20250101","end":"2025-01-31"}`)
+	if envelope.OK {
+		t.Fatalf("expected ok=false envelope")
+	}
+	assertMaintenanceField(t, envelope, app.MaintenanceCodeInvalidCommandInput, "start")
+}
+
+func TestStoreOnlyMethodRejectsInvalidInputBeforeStoreOpen(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+	t.Setenv("QUANT_DATA_HOME", path)
+
+	envelope := runJSONCommand(t, "read-prices", `{"assetId":"asset-1","start":"2026-01-01"}`)
+	if envelope.OK {
+		t.Fatalf("expected ok=false envelope")
+	}
+	assertMaintenanceField(t, envelope, app.MaintenanceCodeInvalidCommandInput, "end")
 }
 
 func TestDataMethodHardensInsecureConfig(t *testing.T) {
@@ -54,7 +201,7 @@ func TestDataMethodHardensInsecureConfig(t *testing.T) {
 	}
 
 	envelope := runJSONCommand(t, "search-assets", `{"query":"沪深300"}`)
-	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != "CONFIG_REQUIRED" {
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeConfigRequired {
 		t.Fatalf("expected CONFIG_REQUIRED for missing TUSHARE_TOKEN, got %#v", envelope.MaintenanceError)
 	}
 	info, err := os.Stat(configPath)
@@ -66,7 +213,28 @@ func TestDataMethodHardensInsecureConfig(t *testing.T) {
 	}
 }
 
-func TestFixtureProviderBypassesConfigForE2E(t *testing.T) {
+func TestPriceSeriesEnvelopeIncludesRoutingProvenance(t *testing.T) {
+	t.Setenv("QUANT_DATA_HOME", t.TempDir())
+	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "1")
+
+	envelope := runJSONCommand(t, "get-price-series", `{"symbol":"SPY","market":"US","start":"2026-05-01","end":"2026-05-03"}`)
+	if !envelope.OK {
+		t.Fatalf("expected ok=true envelope, got error %#v", envelope.MaintenanceError)
+	}
+	provenance := envelope.ResultProvenance
+	if provenance["sourceId"] != "quant-data-fixture" {
+		t.Fatalf("sourceId = %#v, want quant-data-fixture", provenance["sourceId"])
+	}
+	if provenance["selectedSource"] != "quant-data-fixture" {
+		t.Fatalf("selectedSource = %#v, want quant-data-fixture", provenance["selectedSource"])
+	}
+	attempted := provenance["attemptedProviders"].([]any)
+	if len(attempted) != 1 || attempted[0] != "quant-data-fixture" {
+		t.Fatalf("attemptedProviders = %#v, want [quant-data-fixture]", attempted)
+	}
+}
+
+func TestSearchAssetsEnvelopeIncludesRoutingProvenance(t *testing.T) {
 	t.Setenv("QUANT_DATA_HOME", t.TempDir())
 	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "1")
 
@@ -74,9 +242,25 @@ func TestFixtureProviderBypassesConfigForE2E(t *testing.T) {
 	if !envelope.OK {
 		t.Fatalf("expected ok=true envelope, got error %#v", envelope.MaintenanceError)
 	}
+	if assets := envelope.Data.([]any); len(assets) != 1 {
+		t.Fatalf("expected data to remain an asset array, got %#v", envelope.Data)
+	}
+	provenance := envelope.ResultProvenance
+	if provenance["sourceId"] != "quant-data-fixture" {
+		t.Fatalf("sourceId = %#v, want quant-data-fixture", provenance["sourceId"])
+	}
+	if provenance["selectedSource"] != "quant-data-fixture" {
+		t.Fatalf("selectedSource = %#v, want quant-data-fixture", provenance["selectedSource"])
+	}
+	attempted := provenance["attemptedProviders"].([]any)
+	if len(attempted) != 1 || attempted[0] != "quant-data-fixture" {
+		t.Fatalf("attemptedProviders = %#v, want [quant-data-fixture]", attempted)
+	}
 }
 
 func TestCommandValidationRejectsInvalidInput(t *testing.T) {
+	t.Setenv("QUANT_DATA_HOME", t.TempDir())
+
 	tests := []struct {
 		name   string
 		method string
@@ -84,11 +268,15 @@ func TestCommandValidationRejectsInvalidInput(t *testing.T) {
 		field  string
 	}{
 		{name: "search missing query", method: "search-assets", input: `{}`, field: "query"},
+		{name: "search malformed query", method: "search-assets", input: `{"query":true}`, field: "query"},
+		{name: "search malformed exact match", method: "search-assets", input: `{"query":"SPY","exactMatch":"true"}`, field: "exactMatch"},
 		{name: "price missing symbol", method: "get-price-series", input: `{"start":"2025-01-01","end":"2025-01-31"}`, field: "symbol"},
 		{name: "price invalid start", method: "get-price-series", input: `{"symbol":"510300","start":"20250101","end":"2025-01-31"}`, field: "start"},
 		{name: "price invalid range", method: "get-price-series", input: `{"symbol":"510300","start":"2025-02-01","end":"2025-01-31"}`, field: "end"},
 		{name: "fx missing pair", method: "get-fx-rates", input: `{"start":"2025-01-01","end":"2025-01-31"}`, field: "pair"},
 		{name: "fx invalid pair", method: "get-fx-rates", input: `{"pair":"USDCNY","start":"2025-01-01","end":"2025-01-31"}`, field: "pair"},
+		{name: "fx incomplete pair", method: "get-fx-rates", input: `{"pair":"USD/","start":"2025-01-01","end":"2025-01-31"}`, field: "pair"},
+		{name: "fx multi slash pair", method: "get-fx-rates", input: `{"pair":"USD/CNY/JPY","start":"2025-01-01","end":"2025-01-31"}`, field: "pair"},
 		{name: "fundamentals missing symbol", method: "get-fundamentals", input: `{}`, field: "symbol"},
 		{name: "flow missing symbol", method: "get-flow-sentiment", input: `{}`, field: "symbol"},
 		{name: "news missing symbol", method: "search-news-catalysts", input: `{}`, field: "symbol"},
@@ -102,7 +290,7 @@ func TestCommandValidationRejectsInvalidInput(t *testing.T) {
 			if envelope.OK {
 				t.Fatalf("expected ok=false envelope")
 			}
-			assertMaintenanceField(t, envelope, "INVALID_COMMAND_INPUT", test.field)
+			assertMaintenanceField(t, envelope, app.MaintenanceCodeInvalidCommandInput, test.field)
 		})
 	}
 }
@@ -119,7 +307,9 @@ func TestReadCommandValidationRejectsInvalidInput(t *testing.T) {
 		{name: "read prices missing asset", method: "read-prices", input: `{}`, field: "assetId"},
 		{name: "read prices partial range", method: "read-prices", input: `{"assetId":"asset-1","start":"2026-01-01"}`, field: "end"},
 		{name: "read price freshness invalid max age", method: "read-price-freshness", input: `{"assetId":"asset-1","maxAgeHours":0}`, field: "maxAgeHours"},
+		{name: "read price freshness malformed max age", method: "read-price-freshness", input: `{"assetId":"asset-1","maxAgeHours":"abc"}`, field: "maxAgeHours"},
 		{name: "read fx rates invalid pair", method: "read-fx-rates", input: `{"pair":"USDCNY","start":"2026-01-01","end":"2026-01-02"}`, field: "pair"},
+		{name: "read fx latest incomplete pair", method: "read-fx-latest", input: `{"pair":"/CNY","onOrBeforeDate":"2026-01-01"}`, field: "pair"},
 		{name: "read fx latest invalid date", method: "read-fx-latest", input: `{"pair":"USD/CNY","onOrBeforeDate":"20260101"}`, field: "onOrBeforeDate"},
 	}
 
@@ -129,7 +319,7 @@ func TestReadCommandValidationRejectsInvalidInput(t *testing.T) {
 			if envelope.OK {
 				t.Fatalf("expected ok=false envelope")
 			}
-			assertMaintenanceField(t, envelope, "INVALID_COMMAND_INPUT", test.field)
+			assertMaintenanceField(t, envelope, app.MaintenanceCodeInvalidCommandInput, test.field)
 		})
 	}
 }
@@ -137,18 +327,7 @@ func TestReadCommandValidationRejectsInvalidInput(t *testing.T) {
 func TestReadCommandsReturnPersistedRowsWithoutProviderConfig(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("QUANT_DATA_HOME", home)
-	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "1")
-
-	priceInput := `{"assetId":"asset-510300","symbol":"510300","market":"A","start":"2026-05-11","end":"2026-05-14"}`
-	if envelope := runJSONCommand(t, "get-price-series", priceInput); !envelope.OK {
-		t.Fatalf("expected get-price-series ok=true, got %#v", envelope.MaintenanceError)
-	}
-	fxInput := `{"pair":"USD/CNY","start":"2026-05-11","end":"2026-05-14"}`
-	if envelope := runJSONCommand(t, "get-fx-rates", fxInput); !envelope.OK {
-		t.Fatalf("expected get-fx-rates ok=true, got %#v", envelope.MaintenanceError)
-	}
-
-	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "")
+	seedPersistedRows(t, home)
 
 	readEnvelope := runJSONCommand(t, "read-prices", `{"assetId":"asset-510300","start":"2026-05-11","end":"2026-05-14"}`)
 	if !readEnvelope.OK {
@@ -178,7 +357,7 @@ func TestReadCommandsReturnPersistedRowsWithoutProviderConfig(t *testing.T) {
 		t.Fatalf("expected persisted fx rates, got %#v", fxData)
 	}
 
-	latestFxEnvelope := runJSONCommand(t, "read-fx-latest", `{"pair":"USD/CNY","onOrBeforeDate":"2026-05-14"}`)
+	latestFxEnvelope := runJSONCommand(t, "read-fx-latest", `{"pair":" usd / cny ","onOrBeforeDate":"2026-05-14"}`)
 	latestFxData := latestFxEnvelope.Data.(map[string]any)
 	if latestFxData["rate"] == nil {
 		t.Fatalf("expected latest fx rate, got %#v", latestFxData)
@@ -212,16 +391,7 @@ func TestStatusReturnsSuccessfulEnvelope(t *testing.T) {
 
 func TestStatusReturnsExternalDataStats(t *testing.T) {
 	t.Setenv("QUANT_DATA_HOME", t.TempDir())
-	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "1")
-
-	priceInput := `{"assetId":"asset-510300","symbol":"510300","market":"A","start":"2026-05-11","end":"2026-05-14"}`
-	if envelope := runJSONCommand(t, "get-price-series", priceInput); !envelope.OK {
-		t.Fatalf("expected get-price-series ok=true, got %#v", envelope.MaintenanceError)
-	}
-	fxInput := `{"pair":"USD/CNY","start":"2026-05-11","end":"2026-05-14"}`
-	if envelope := runJSONCommand(t, "get-fx-rates", fxInput); !envelope.OK {
-		t.Fatalf("expected get-fx-rates ok=true, got %#v", envelope.MaintenanceError)
-	}
+	seedPersistedRows(t, os.Getenv("QUANT_DATA_HOME"))
 
 	envelope := runJSONCommand(t, "status", "")
 	if !envelope.OK {
@@ -254,12 +424,7 @@ func TestRebuildUpdatesMaintenanceStatus(t *testing.T) {
 
 func TestDeletePricesRemovesPersistedFixtureRows(t *testing.T) {
 	t.Setenv("QUANT_DATA_HOME", t.TempDir())
-	t.Setenv("QUANT_DATA_FIXTURE_PROVIDER", "1")
-
-	fetchInput := `{"assetId":"asset-510300","symbol":"510300","market":"A","start":"2026-05-11","end":"2026-05-14"}`
-	if envelope := runJSONCommand(t, "get-price-series", fetchInput); !envelope.OK {
-		t.Fatalf("expected get-price-series ok=true, got %#v", envelope.MaintenanceError)
-	}
+	seedPersistedRows(t, os.Getenv("QUANT_DATA_HOME"))
 
 	deleteInput := `{"assetId":"asset-510300","start":"2026-05-11","end":"2026-05-14"}`
 	envelope := runJSONCommand(t, "delete-prices", deleteInput)
@@ -279,15 +444,15 @@ func TestDeletePricesRequiresDateRange(t *testing.T) {
 	if envelope.OK {
 		t.Fatalf("expected ok=false envelope")
 	}
-	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != "INVALID_COMMAND_INPUT" {
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeInvalidCommandInput {
 		t.Fatalf("expected INVALID_COMMAND_INPUT, got %#v", envelope.MaintenanceError)
 	}
 }
 
 func TestUnknownMethodReturnsEnvelope(t *testing.T) {
 	envelope := runJSONCommand(t, "unknown-method", "")
-	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != "STORE_REPAIR_REQUIRED" {
-		t.Fatalf("expected STORE_REPAIR_REQUIRED, got %#v", envelope.MaintenanceError)
+	if envelope.MaintenanceError == nil || envelope.MaintenanceError.Code != app.MaintenanceCodeInvalidCommandInput {
+		t.Fatalf("expected INVALID_COMMAND_INPUT, got %#v", envelope.MaintenanceError)
 	}
 }
 
@@ -319,5 +484,38 @@ func assertMaintenanceField(t *testing.T, envelope app.Envelope, code string, fi
 	details := envelope.MaintenanceError.Details.(map[string]any)
 	if details["field"] != field {
 		t.Fatalf("field = %#v, want %s", details["field"], field)
+	}
+}
+
+func seedPersistedRows(t *testing.T, home string) {
+	t.Helper()
+
+	dataStore, err := store.Open(home, app.StoreVersion)
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer dataStore.Close()
+
+	closeValue := 3.21
+	adjustedCloseValue := 3.18
+	if err := dataStore.SavePrices([]store.PriceInput{{
+		AssetID:       "asset-510300",
+		Date:          "2026-05-11",
+		Open:          &closeValue,
+		High:          &closeValue,
+		Low:           &closeValue,
+		Close:         &closeValue,
+		AdjustedClose: &adjustedCloseValue,
+		Source:        "seed-test",
+	}}); err != nil {
+		t.Fatalf("save prices: %v", err)
+	}
+	if err := dataStore.SaveFxRates([]store.FxRateInput{{
+		Pair:   "USD/CNY",
+		Date:   "2026-05-11",
+		Rate:   7.25,
+		Source: "seed-test",
+	}}); err != nil {
+		t.Fatalf("save fx rates: %v", err)
 	}
 }

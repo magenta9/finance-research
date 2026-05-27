@@ -88,8 +88,9 @@ func Run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int
 			return writeEnvelope(stdout, Envelope{
 				OK: false,
 				MaintenanceError: &MaintenanceError{
-					Code:    "STORE_REPAIR_REQUIRED",
+					Code:    MaintenanceCodeInvalidCommandInput,
 					Message: fmt.Sprintf("Unknown quant-data method: %s", args[0]),
+					Details: map[string]any{"method": args[0]},
 				},
 				MaintenanceStatus: emptyMaintenanceStatus(),
 			})
@@ -202,11 +203,40 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "STORE_REPAIR_REQUIRED",
+				Code:    MaintenanceCodeInvalidCommandInput,
 				Message: fmt.Sprintf("Invalid JSON input: %v", err),
+				Details: map[string]any{"method": method},
 			},
 			MaintenanceStatus: emptyMaintenanceStatus(),
 		})
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		return writeEnvelope(stdout, Envelope{
+			OK: false,
+			MaintenanceError: &MaintenanceError{
+				Code:    MaintenanceCodeInvalidCommandInput,
+				Message: "Invalid JSON input: expected a single JSON object",
+				Details: map[string]any{"method": method},
+			},
+			MaintenanceStatus: emptyMaintenanceStatus(),
+		})
+	}
+
+	normalizedInput, normalizationError := normalizeCommandInput(method, input)
+	if normalizationError != nil {
+		return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: normalizationError, MaintenanceStatus: emptyMaintenanceStatus()})
+	}
+	input = normalizedInput
+
+	if isStoreOnlyMethod(method) {
+		if validationError := validateStoreOnlyCommandInput(method, input); validationError != nil {
+			return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: emptyMaintenanceStatus()})
+		}
+	} else {
+		if validationError := validateCommandInput(method, input); validationError != nil {
+			return writeEnvelope(stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: emptyMaintenanceStatus()})
+		}
 	}
 
 	dataStore, err := openStore()
@@ -220,83 +250,77 @@ func runDataMethod(method string, stdin io.Reader, stdout io.Writer) int {
 		return writeStoreError(stdout, err)
 	}
 
-	useFixtureProvider := os.Getenv("QUANT_DATA_FIXTURE_PROVIDER") == "1"
-	if !useFixtureProvider {
-		if isStoreOnlyMethod(method) {
-			return runStoreOnlyMethod(method, input, dataStore, maintenanceStatus, stdout)
-		}
-
-		configStatus, err := store.CheckProviderConfig(dataStore.ConfigDir())
-		if err != nil {
-			return writeStoreError(stdout, err)
-		}
-		if !configStatus.Exists {
-			return writeEnvelope(stdout, Envelope{
-				OK: false,
-				MaintenanceError: &MaintenanceError{
-					Code:    "CONFIG_REQUIRED",
-					Message: "Configure provider credentials under ~/.quant_data/config before using data methods.",
-					Details: map[string]any{
-						"method":    method,
-						"configDir": dataStore.ConfigDir(),
-					},
-				},
-				MaintenanceStatus: maintenanceStatus,
-			})
-		}
-		if !configStatus.Secure {
-			return writeEnvelope(stdout, Envelope{
-				OK: false,
-				MaintenanceError: &MaintenanceError{
-					Code:    "CONFIG_INSECURE",
-					Message: "Provider config files must not be readable or writable by group/other users.",
-					Details: map[string]any{
-						"method": method,
-						"paths":  configStatus.InsecurePaths,
-					},
-				},
-				MaintenanceStatus: maintenanceStatus,
-			})
-		}
-
-		providerConfig, err := store.LoadProviderConfig(dataStore.ConfigDir())
-		if err != nil {
-			return writeEnvelope(stdout, Envelope{
-				OK: false,
-				MaintenanceError: &MaintenanceError{
-					Code:    "CONFIG_REQUIRED",
-					Message: err.Error(),
-					Details: map[string]any{
-						"method":    method,
-						"configDir": dataStore.ConfigDir(),
-					},
-				},
-				MaintenanceStatus: maintenanceStatus,
-			})
-		}
-
-		policy, err := provider.LoadPolicy()
-		if err != nil {
-			return writeEnvelope(stdout, Envelope{
-				OK: false,
-				MaintenanceError: &MaintenanceError{
-					Code:    "PROVIDER_UNAVAILABLE",
-					Message: fmt.Sprintf("Provider policy is invalid: %v", err),
-					Details: map[string]any{"method": method},
-				},
-				MaintenanceStatus: maintenanceStatus,
-			})
-		}
-
-		tushareConfig := providerConfig.Provider("tushare")
-		return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewLiveProviderWithPolicy(provider.LiveConfig{TushareToken: tushareConfig.Token}, policy))
-	}
-
 	if isStoreOnlyMethod(method) {
 		return runStoreOnlyMethod(method, input, dataStore, maintenanceStatus, stdout)
 	}
+	if os.Getenv("QUANT_DATA_FIXTURE_PROVIDER") == "1" {
+		return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewFixtureProvider())
+	}
 
-	return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewFixtureProvider())
+	configStatus, err := store.CheckProviderConfig(dataStore.ConfigDir())
+	if err != nil {
+		return writeStoreError(stdout, err)
+	}
+	if !configStatus.Exists {
+		return writeEnvelope(stdout, Envelope{
+			OK: false,
+			MaintenanceError: &MaintenanceError{
+				Code:    MaintenanceCodeConfigRequired,
+				Message: "Configure provider credentials under ~/.quant_data/config before using data methods.",
+				Details: map[string]any{
+					"method":    method,
+					"configDir": dataStore.ConfigDir(),
+				},
+			},
+			MaintenanceStatus: maintenanceStatus,
+		})
+	}
+	if !configStatus.Secure {
+		return writeEnvelope(stdout, Envelope{
+			OK: false,
+			MaintenanceError: &MaintenanceError{
+				Code:    MaintenanceCodeConfigInsecure,
+				Message: "Provider config files must not be readable or writable by group/other users.",
+				Details: map[string]any{
+					"method": method,
+					"paths":  configStatus.InsecurePaths,
+				},
+			},
+			MaintenanceStatus: maintenanceStatus,
+		})
+	}
+
+	providerConfig, err := store.LoadProviderConfig(dataStore.ConfigDir())
+	if err != nil {
+		return writeEnvelope(stdout, Envelope{
+			OK: false,
+			MaintenanceError: &MaintenanceError{
+				Code:    MaintenanceCodeConfigRequired,
+				Message: err.Error(),
+				Details: map[string]any{
+					"method":    method,
+					"configDir": dataStore.ConfigDir(),
+				},
+			},
+			MaintenanceStatus: maintenanceStatus,
+		})
+	}
+
+	policy, err := provider.LoadPolicy()
+	if err != nil {
+		return writeEnvelope(stdout, Envelope{
+			OK: false,
+			MaintenanceError: &MaintenanceError{
+				Code:    MaintenanceCodeProviderUnavailable,
+				Message: fmt.Sprintf("Provider policy is invalid: %v", err),
+				Details: map[string]any{"method": method},
+			},
+			MaintenanceStatus: maintenanceStatus,
+		})
+	}
+
+	tushareConfig := providerConfig.Provider("tushare")
+	return runProviderMethod(method, input, dataStore, maintenanceStatus, stdout, provider.NewLiveProviderWithPolicy(provider.LiveConfig{TushareToken: tushareConfig.Token}, policy))
 }
 
 func runStoreOnlyMethod(method string, input map[string]any, dataStore *store.Store, maintenanceStatus map[string]any, stdout io.Writer) int {
@@ -325,12 +349,20 @@ func runStoreOnlyMethod(method string, input map[string]any, dataStore *store.St
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "STORE_REPAIR_REQUIRED",
+				Code:    MaintenanceCodeInvalidCommandInput,
 				Message: fmt.Sprintf("Unknown store-only method: %s", method),
+				Details: map[string]any{"method": method},
 			},
 			MaintenanceStatus: maintenanceStatus,
 		})
 	}
+}
+
+func validateStoreOnlyCommandInput(method string, input map[string]any) *MaintenanceError {
+	if method == "delete-prices" {
+		return validateDeletePricesInput(input)
+	}
+	return validateReadCommandInput(method, input)
 }
 
 func runDeletePrices(input map[string]any, dataStore *store.Store, maintenanceStatus map[string]any, stdout io.Writer) int {
@@ -344,7 +376,7 @@ func runDeletePrices(input map[string]any, dataStore *store.Store, maintenanceSt
 		return writeEnvelope(stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "STORE_REPAIR_REQUIRED",
+				Code:    MaintenanceCodeStoreRepairRequired,
 				Message: err.Error(),
 			},
 			MaintenanceStatus: maintenanceStatus,
@@ -499,6 +531,17 @@ func readString(input map[string]any, key string) string {
 	return strings.TrimSpace(fmt.Sprint(value))
 }
 
+func readBool(input map[string]any, key string) bool {
+	value, ok := input[key]
+	if !ok || value == nil {
+		return false
+	}
+	if b, ok := value.(bool); ok {
+		return b
+	}
+	return false
+}
+
 func readNumber(input map[string]any, key string) float64 {
 	value, ok := input[key]
 	if !ok || value == nil {
@@ -518,7 +561,7 @@ func writeStoreReadError(stdout io.Writer, err error, maintenanceStatus map[stri
 	return writeEnvelope(stdout, Envelope{
 		OK: false,
 		MaintenanceError: &MaintenanceError{
-			Code:    "STORE_REPAIR_REQUIRED",
+			Code:    MaintenanceCodeStoreRepairRequired,
 			Message: err.Error(),
 		},
 		MaintenanceStatus: maintenanceStatus,
@@ -538,7 +581,7 @@ func writeStoreError(stdout io.Writer, err error) int {
 	return writeEnvelope(stdout, Envelope{
 		OK: false,
 		MaintenanceError: &MaintenanceError{
-			Code:    "STORE_REPAIR_REQUIRED",
+			Code:    MaintenanceCodeStoreRepairRequired,
 			Message: err.Error(),
 		},
 		MaintenanceStatus: emptyMaintenanceStatus(),

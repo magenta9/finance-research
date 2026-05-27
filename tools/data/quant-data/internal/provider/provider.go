@@ -8,6 +8,6 @@ type Adapter interface {
 	GetFxRates(pair string, start string, end string) FxRatesResult
 	GetPriceSeries(symbol string, market string, start string, end string) PriceSeriesResult
 	Mode() string
-	SearchAssets(query string, market string) []Asset
+	SearchAssets(query string, market string, assetClass string, exactMatch bool) AssetSearchResult
 	Source() string
 }

@@ -35,6 +35,7 @@
                         "PROVIDER_UNAVAILABLE",
                         "NETWORK_UNAVAILABLE",
                         "INSTRUMENT_NOT_FOUND",
+                        "INVALID_COMMAND_INPUT",
                         "INSUFFICIENT_CALCULATION_COVERAGE",
                         "TIMEOUT",
                         "STORE_REPAIR_REQUIRED"

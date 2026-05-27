@@ -21,6 +21,7 @@ type commandResult struct {
 	data          any
 	qualityStatus string
 	implemented   bool
+	provenance    map[string]any
 	storeErr      error
 }
 
@@ -37,16 +38,12 @@ func runProviderMethod(method string, input map[string]any, dataStore *store.Sto
 }
 
 func (executor commandExecutor) Run() int {
-	if validationError := validateCommandInput(executor.method, executor.input); validationError != nil {
-		return writeEnvelope(executor.stdout, Envelope{OK: false, MaintenanceError: validationError, MaintenanceStatus: executor.maintenanceStatus})
-	}
-
 	result := executor.invoke()
 	if !result.implemented {
 		return writeEnvelope(executor.stdout, Envelope{
 			OK: false,
 			MaintenanceError: &MaintenanceError{
-				Code:    "PROVIDER_UNAVAILABLE",
+				Code:    MaintenanceCodeProviderUnavailable,
 				Message: fmt.Sprintf("Provider method is not implemented: %s", executor.method),
 			},
 			MaintenanceStatus: executor.maintenanceStatus,
@@ -65,16 +62,20 @@ func (executor commandExecutor) Run() int {
 			"provider": executor.dataProvider.Source(),
 			"mode":     executor.dataProvider.Mode(),
 		},
-		ResultProvenance: map[string]any{
-			"sourceId": executor.dataProvider.Source(),
-		},
+		ResultProvenance: resultProvenance(executor.dataProvider.Source(), result.provenance),
 	})
 }
 
 func (executor commandExecutor) invoke() commandResult {
 	switch executor.method {
 	case "search-assets":
-		return commandResult{data: executor.dataProvider.SearchAssets(readString(executor.input, "query"), readString(executor.input, "market")), qualityStatus: "available", implemented: true}
+		result := executor.dataProvider.SearchAssets(
+			readString(executor.input, "query"),
+			readString(executor.input, "market"),
+			readString(executor.input, "assetClass"),
+			readBool(executor.input, "exactMatch"),
+		)
+		return commandResult{data: result.Assets, qualityStatus: "available", implemented: true, provenance: assetSearchProvenance(result)}
 	case "get-price-series":
 		result := executor.dataProvider.GetPriceSeries(readString(executor.input, "symbol"), readString(executor.input, "market"), readString(executor.input, "start"), readString(executor.input, "end"))
 		if assetID := readString(executor.input, "assetId"); assetID != "" {
@@ -82,13 +83,13 @@ func (executor commandExecutor) invoke() commandResult {
 				return commandResult{implemented: true, storeErr: err}
 			}
 		}
-		return commandResult{data: result, qualityStatus: "available", implemented: true}
+		return commandResult{data: result, qualityStatus: "available", implemented: true, provenance: priceSeriesProvenance(result)}
 	case "get-fx-rates":
 		result := executor.dataProvider.GetFxRates(readString(executor.input, "pair"), readString(executor.input, "start"), readString(executor.input, "end"))
 		if err := executor.saveFxRates(result.Pair, result.Rates); err != nil {
 			return commandResult{implemented: true, storeErr: err}
 		}
-		return commandResult{data: result, qualityStatus: "available", implemented: true}
+		return commandResult{data: result, qualityStatus: "available", implemented: true, provenance: fxRatesProvenance(result)}
 	case "get-fundamentals":
 		return commandResult{data: executor.dataProvider.EmptyFundamentals(readString(executor.input, "symbol"), readString(executor.input, "market")), qualityStatus: "degraded", implemented: true}
 	case "get-flow-sentiment":
@@ -102,6 +103,47 @@ func (executor commandExecutor) invoke() commandResult {
 	default:
 		return commandResult{}
 	}
+}
+
+func assetSearchProvenance(result provider.AssetSearchResult) map[string]any {
+	provenance := map[string]any{
+		"attemptedProviders": result.AttemptedSources,
+		"warnings":           result.Warnings,
+	}
+	if len(result.Assets) > 0 {
+		provenance["selectedSource"] = result.Assets[0].Source
+	}
+	return provenance
+}
+
+func resultProvenance(sourceID string, extra map[string]any) map[string]any {
+	provenance := map[string]any{"sourceId": sourceID}
+	for key, value := range extra {
+		provenance[key] = value
+	}
+	return provenance
+}
+
+func priceSeriesProvenance(result provider.PriceSeriesResult) map[string]any {
+	provenance := map[string]any{
+		"attemptedProviders": result.AttemptedSources,
+		"warnings":           result.Warnings,
+	}
+	if len(result.Prices) > 0 {
+		provenance["selectedSource"] = result.Prices[0].Source
+	}
+	return provenance
+}
+
+func fxRatesProvenance(result provider.FxRatesResult) map[string]any {
+	provenance := map[string]any{
+		"attemptedProviders": result.AttemptedSources,
+		"warnings":           result.Warnings,
+	}
+	if len(result.Rates) > 0 {
+		provenance["selectedSource"] = result.Rates[0].Source
+	}
+	return provenance
 }
 
 func (executor commandExecutor) savePrices(assetID string, prices []provider.PriceRow) error {

@@ -10,7 +10,25 @@
             "name": "get-price-series"
         },
         {
+            "name": "read-prices"
+        },
+        {
+            "name": "read-price-bounds"
+        },
+        {
+            "name": "read-price-freshness"
+        },
+        {
             "name": "get-fx-rates"
+        },
+        {
+            "name": "read-fx-rates"
+        },
+        {
+            "name": "read-fx-latest"
+        },
+        {
+            "name": "read-fx-bounds"
         },
         {
             "name": "delete-prices"

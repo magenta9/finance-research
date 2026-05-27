@@ -10,49 +10,6 @@ import (
 	"time"
 )
 
-type Asset struct {
-	Symbol     string         `json:"symbol"`
-	Name       string         `json:"name"`
-	Market     string         `json:"market"`
-	AssetClass string         `json:"assetClass"`
-	Currency   string         `json:"currency"`
-	Exchange   string         `json:"exchange,omitempty"`
-	Source     string         `json:"source"`
-	Metadata   map[string]any `json:"metadata"`
-}
-
-type PriceRow struct {
-	AdjustedClose    *float64 `json:"adjustedClose"`
-	CalculationClose *float64 `json:"calculationClose,omitempty"`
-	Close            *float64 `json:"close"`
-	Date             string   `json:"date"`
-	High             *float64 `json:"high"`
-	Low              *float64 `json:"low"`
-	Open             *float64 `json:"open"`
-	Source           string   `json:"source"`
-	Volume           *float64 `json:"volume"`
-}
-
-type FxRateRow struct {
-	Date   string  `json:"date"`
-	Rate   float64 `json:"rate"`
-	Source string  `json:"source"`
-}
-
-type PriceSeriesResult struct {
-	AttemptedSources []string   `json:"attemptedSources"`
-	Prices           []PriceRow `json:"prices"`
-	Symbol           string     `json:"symbol"`
-	Warnings         []string   `json:"warnings"`
-}
-
-type FxRatesResult struct {
-	AttemptedSources []string    `json:"attemptedSources"`
-	Pair             string      `json:"pair"`
-	Rates            []FxRateRow `json:"rates"`
-	Warnings         []string    `json:"warnings"`
-}
-
 const FixtureSource = "quant-data-fixture"
 
 type FixtureProvider struct{}
@@ -79,20 +36,31 @@ var fixtureAssets = []Asset{
 	{Symbol: "001717", Name: "工银前沿医疗股票A", Market: "A", AssetClass: "equity", Currency: "CNY", Exchange: "基金", Source: FixtureSource, Metadata: map[string]any{"provider": FixtureSource, "instrumentType": "fund", "issueDate": "2016-02-03", "issueDateSource": FixtureSource, "tsCode": "001717.OF"}},
 }
 
-func SearchAssets(query string, market string) []Asset {
-	return NewFixtureProvider().SearchAssets(query, market)
+func SearchAssets(query string, market string, assetClass string, exactMatch bool) []Asset {
+	return NewFixtureProvider().SearchAssets(query, market, assetClass, exactMatch).Assets
 }
 
-func (FixtureProvider) SearchAssets(query string, market string) []Asset {
+func (FixtureProvider) SearchAssets(query string, market string, assetClass string, exactMatch bool) AssetSearchResult {
 	query = strings.ToLower(strings.TrimSpace(query))
 	market = strings.ToUpper(strings.TrimSpace(market))
 	matches := make([]Asset, 0, len(fixtureAssets))
 
 	for _, asset := range fixtureAssets {
+		if assetClass != "" && assetClass != "default" && asset.AssetClass != assetClass {
+			continue
+		}
 		if market != "" && market != "ALL" && strings.ToUpper(asset.Market) != market {
 			continue
 		}
-		if query == "" || strings.Contains(strings.ToLower(asset.Symbol), query) || strings.Contains(strings.ToLower(asset.Name), query) || strings.Contains(strings.ToLower(fmt.Sprint(asset.Metadata["tsCode"])), query) {
+		if query == "" {
+			matches = append(matches, asset)
+			continue
+		}
+		if exactMatch {
+			if strings.EqualFold(asset.Symbol, query) || strings.EqualFold(asset.Name, query) {
+				matches = append(matches, asset)
+			}
+		} else if strings.Contains(strings.ToLower(asset.Symbol), query) || strings.Contains(strings.ToLower(asset.Name), query) || strings.Contains(strings.ToLower(fmt.Sprint(asset.Metadata["tsCode"])), query) {
 			matches = append(matches, asset)
 		}
 	}
@@ -103,7 +71,7 @@ func (FixtureProvider) SearchAssets(query string, market string) []Asset {
 		}
 		return matches[i].Market < matches[j].Market
 	})
-	return matches
+	return AssetSearchResult{Assets: matches, AttemptedSources: []string{FixtureSource}, Warnings: []string{}}
 }
 
 func GetPriceSeries(symbol string, market string, start string, end string) PriceSeriesResult {
@@ -132,7 +100,7 @@ func (FixtureProvider) GetPriceSeries(symbol string, market string, start string
 		lowValue := round4(closeValue * 0.989)
 		volumeValue := float64(700000 + index*3500 + int(seed%1000))
 		adjusted := closeValue
-		rows = append(rows, PriceRow{
+		rows = append(rows, withCalculationClose(PriceRow{
 			AdjustedClose: &adjusted,
 			Close:         &closeValue,
 			Date:          date,
@@ -141,7 +109,7 @@ func (FixtureProvider) GetPriceSeries(symbol string, market string, start string
 			Open:          &openValue,
 			Source:        FixtureSource,
 			Volume:        &volumeValue,
-		})
+		}))
 	}
 
 	return PriceSeriesResult{

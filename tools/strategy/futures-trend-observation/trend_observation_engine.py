@@ -461,16 +461,21 @@ def analyze_rows(
     timeframes = [
         label_timeframe(analyze_timeframe(rows, timeframe)) for timeframe in TIMEFRAMES
     ]
-    data = envelope.get("data") or {}
-    data_gaps = [
-        f"quant-data warning: {warning}" for warning in data.get("warnings") or []
-    ]
+    data = envelope.get("data")
+    if not isinstance(data, dict):
+        data = {}
+    warnings = data.get("warnings")
+    if not isinstance(warnings, list):
+        warnings = []
+    data_gaps = [f"quant-data warning: {warning}" for warning in warnings]
     data_gaps.extend(gap for item in timeframes for gap in item["dataGaps"])
     return {
         "dataGaps": data_gaps,
         "meta": {
             "assetId": asset_id or None,
-            "attemptedSources": data.get("attemptedSources") or [],
+            "attemptedSources": data.get("attemptedSources")
+            if isinstance(data.get("attemptedSources"), list)
+            else [],
             "dataQualityStatus": envelope.get("dataQualityStatus"),
             "end": end,
             "generatedAt": datetime.now(timezone.utc).isoformat(),
