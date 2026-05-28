@@ -661,7 +661,48 @@ Full confirmation：
 
 结论：第 86 轮 full confirmation 高于第 81 轮当前默认机制 full baseline（combined 72.3732 > 71.7800），且 meanScore 提升。p10Score 略低于第 81 轮但满足 90% 保护条件，因此提升为当前默认机制并 commit。连续未改进计数重置为 0。
 
-## 31. 最终结论
+## 31. 第 87 轮顺序迭代
+
+第 87 轮搜索方向：高相关同向簇内按风险调整动量选择代表资产。
+
+搜索依据：第 86 轮证明高相关簇只保留一个代表有效，但最大权重代表偏向当前风险模型最防守的表达。第 87 轮测试在保持簇预算现金化不变的前提下，将代表选择改为簇内风险调整动量最高者。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 87 | 簇内风险调整动量代表 | 72.8972 | 51.0020 | 66.3286 | discard |
+
+结论：第 87 轮显著低于当前 budget baseline（mean 76.3154 / p10 55.0343 / combined 69.9311），说明第 86 轮保留最大权重代表优于改选风险调整动量代表。不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：1。
+
+## 32. 第 88 轮顺序迭代
+
+第 88 轮搜索方向：部分减仓预算冷却为现金。
+
+搜索依据：第 79 轮只冷却完全退出或翻向释放的预算。第 88 轮补上另一个预算来源：同方向持仓仍保留但目标权重下降时，释放出来的部分减仓预算不立刻再部署给其他增仓，而是先进入现金。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 88 | 部分减仓预算冷却 | 76.4591 | 55.4206 | 70.1475 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 88 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 78.3425 |
+| p10Score | 59.0348 |
+| p50Score | 77.6323 |
+| p90Score | 97.3012 |
+| combinedScore | 72.5502 |
+
+结论：第 88 轮 full confirmation 的 mean、p10、combined 均高于第 86 轮当前默认机制 full baseline（78.2198 / 58.7312 / 72.3732），提升为当前默认机制并 commit。连续未改进计数重置为 0。
+
+## 33. 最终结论
 
 当前推荐保留的新机制为：
 
@@ -677,6 +718,7 @@ Full confirmation：
 10. 当组合层同时持有多头和空头 gross exposure 时，压缩互相抵消的双边预算并转入现金，保留净方向但降低低效率 gross exposure。
 11. 同方向持仓若在近期窗口内高度相关，将相关簇预算压缩到最大单仓权重，其余预算转现金，降低伪分散暴露。
 12. 对高相关同向簇只保留当前最大权重代表资产，簇内其余碎片仓位继续现金化，减少同质仓位残留。
+13. 同方向部分减仓释放出的预算也先冷却为现金，避免降风险信号被立刻再部署成横截面追涨。
 
 相对 ADM V1 baseline：
 
@@ -694,13 +736,13 @@ Full confirmation：
 | p10Score | +0.2037 |
 | combinedScore | +0.4954 |
 
-Sharpe ceiling 2 新评分口径下，第 86 轮相对重算 full baseline：
+Sharpe ceiling 2 新评分口径下，第 88 轮相对重算 full baseline：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +9.2750 |
-| p10Score | +7.3413 |
-| combinedScore | +8.6949 |
+| meanScore | +9.3977 |
+| p10Score | +7.6449 |
+| combinedScore | +8.8719 |
 
 研究解释：
 
@@ -714,10 +756,11 @@ Sharpe ceiling 2 新评分口径下，第 86 轮相对重算 full baseline：
 - 跨多空抵消预算现金化说明低净敞口不需要依赖高双边 gross exposure 实现；在新评分口径下，它显著改善 mean、p10 和 combined。
 - 高相关同向预算去重进一步降低了伪分散风险，在默认 full Eval 中把 p10Score 从 55.8955 提升到 58.9542。
 - 高相关簇代表资产保留提升了 meanScore 和 combinedScore，说明第 81 轮的相关簇保留方式仍有碎片化拖累。
+- 部分减仓预算冷却继续提升了 mean、p10 和 combined，说明“降风险释放的预算先现金化”不仅适用于退出，也适用于同向减仓。
 - 25% 现金缓冲进一步降低跨品种随机篮子中的尾部暴露，同时没有牺牲 meanScore。
 - 单独的小幅变化保持带在非标准抽样中表现很好，但标准 full confirmation 不如第 45 轮稳健，因此没有进入最终默认机制。
 
-## 32. 证据路径
+## 34. 证据路径
 
 - 标准 50 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter11-60-mechanism-sweep-standard-cases/`
 - 第 45 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter45-downside-risk-larger-cash-standard-cases/`
@@ -771,9 +814,14 @@ Sharpe ceiling 2 新评分口径下，第 86 轮相对重算 full baseline：
 - 第 86 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter86-correlated-same-direction-cluster-representative/`
 - 第 86 轮默认机制 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-baseline-final-default-iter86-correlated-same-direction-cluster-representative-rerun/`
 - 第 86 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter86-correlated-same-direction-cluster-representative/`
+- 第 87 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter87-correlated-cluster-risk-adjusted-representative-budget/`
+- 第 88 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter88-risk-trim-redeployment-cooldown-budget/`
+- 第 88 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter88-risk-trim-redeployment-cooldown/`
+- 第 88 轮默认机制 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-baseline-final-default-iter88-risk-trim-redeployment-cooldown/`
+- 第 88 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter88-risk-trim-redeployment-cooldown-rerun/`
 - 迭代日志：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-mechanism-results.tsv`
 
-## 33. 后续建议
+## 35. 后续建议
 
 下一轮机制研究可以优先围绕第 63 轮继续做三类验证：
 

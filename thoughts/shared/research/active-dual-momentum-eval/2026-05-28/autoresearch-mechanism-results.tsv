@@ -58,3 +58,6 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 85	searched direction: correlation diversified replacement	76.3431	52.7740	69.2724	below current budget baseline	discard	not committed
 86	searched direction: correlated same-direction cluster representative	76.3154	55.0343	69.9311	budget eval passed	keep candidate	pending
 86f	correlated same-direction cluster representative full eval	78.2198	58.7312	72.3732	full eval passed	keep	pending
+87	searched direction: correlated cluster risk-adjusted representative	72.8972	51.0020	66.3286	below current budget baseline	discard	not committed
+88	searched direction: risk-trim redeployment cooldown	76.4591	55.4206	70.1475	budget eval passed	keep candidate	pending
+88f	risk-trim redeployment cooldown full eval	78.3425	59.0348	72.5502	full eval passed	keep	pending

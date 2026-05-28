@@ -34,6 +34,7 @@ export interface ActiveDualMomentumResearchProfile {
     rebalanceStep?: number;
     rebalanceWeightHoldBand?: number;
     riskExitRedeploymentCooldown?: boolean;
+    riskTrimRedeploymentCooldown?: boolean;
     riskMode?: 'inverseVolatility' | 'inverseDownsideVolatility' | 'sqrtInverseVolatility' | 'equalWeight';
     shockToCash?: boolean;
 }

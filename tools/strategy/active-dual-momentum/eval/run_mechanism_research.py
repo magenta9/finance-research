@@ -33,9 +33,9 @@ from run_eval import (
 
 
 CURRENT_REFERENCE_BUDGET = {
-    "meanScore": 76.3154,
-    "p10Score": 55.0343,
-    "combinedScore": 69.9311,
+    "meanScore": 76.4591,
+    "p10Score": 55.4206,
+    "combinedScore": 70.1475,
 }
 
 REFERENCE_GUARD_MULTIPLIER = 0.9
@@ -230,6 +230,11 @@ def mechanism_candidates(limit: int) -> list[MechanismCandidate]:
             "correlated-same-direction-cluster-representative",
             {"correlatedSameDirectionClusterRepresentative": True},
             "Keep only the largest-weight representative inside each highly correlated same-direction cluster and cash out the rest.",
+        ),
+        MechanismCandidate(
+            "risk-trim-redeployment-cooldown",
+            {"riskTrimRedeploymentCooldown": True},
+            "Route risk budget released by partial same-direction trims to cash instead of immediately redeploying it.",
         ),
     ]
     combo_indexes = [

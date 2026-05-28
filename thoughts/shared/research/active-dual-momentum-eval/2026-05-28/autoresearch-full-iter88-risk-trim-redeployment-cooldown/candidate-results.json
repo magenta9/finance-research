@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "risk-trim-redeployment-cooldown",
+    "thesis": "Route risk budget released by partial same-direction trims to cash instead of immediately redeploying it.",
+    "profile": {
+      "riskTrimRedeploymentCooldown": true
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 600,
+      "successCount": 600,
+      "failureCount": 0,
+      "meanScore": 78.3425,
+      "p10Score": 59.0348,
+      "p50Score": 77.6323,
+      "p90Score": 97.3012,
+      "combinedScore": 72.5502
+    }
+  }
+]
