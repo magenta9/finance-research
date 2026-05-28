@@ -280,7 +280,9 @@ def load_quant_data_price_cache(
     validate_dry_run(quant_data_bin)
     prices_by_symbol: dict[str, Any] = {}
     for index, candidate in enumerate(candidates, start=1):
-        sys.stderr.write(f"fetching price series {index}/{len(candidates)} {candidate.symbol}\n")
+        sys.stderr.write(
+            f"fetching price series {index}/{len(candidates)} {candidate.symbol}\n"
+        )
         envelope = call_quant_data(
             quant_data_bin,
             "get-price-series",
