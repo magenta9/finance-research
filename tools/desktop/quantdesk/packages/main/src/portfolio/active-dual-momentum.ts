@@ -14,6 +14,7 @@ import { buildScenarioAnalysis } from './scenarios';
 import { correlationMatrix } from './statistics';
 import {
     activeDualMomentumTradingDaysPerWeek,
+    isActiveDualMomentumFuturesAsset,
     mergeActiveDualMomentumSleeves,
     normalizeActiveDualMomentumConfig,
     selectActiveDualMomentumSleeve,
@@ -97,6 +98,31 @@ const turnoverBetween = (previousPositions: ActiveDualMomentumPosition[], nextPo
     }
 
     return turnover;
+};
+
+const positiveNonFuturesMomentumBreadth = (prepared: PreparedAllocationData, rebalanceIndex: number, lookbackDays: number) => {
+    let eligibleCount = 0;
+    let positiveCount = 0;
+
+    prepared.series.forEach((entry) => {
+        if (isActiveDualMomentumFuturesAsset(entry.asset)) {
+            return;
+        }
+
+        const previousPrice = entry.prices[rebalanceIndex - lookbackDays] ?? 0;
+        const currentPrice = entry.prices[rebalanceIndex] ?? 0;
+
+        if (previousPrice <= 0 || currentPrice <= 0) {
+            return;
+        }
+
+        eligibleCount += 1;
+        if (currentPrice / previousPrice - 1 > 0) {
+            positiveCount += 1;
+        }
+    });
+
+    return eligibleCount > 0 ? positiveCount / eligibleCount : 1;
 };
 
 const latestAllocations = (prepared: PreparedAllocationData, positions: ActiveDualMomentumPosition[], annualizedReturns: number[], annualizedVolatility: number[]): AllocationAssetWeight[] =>
@@ -254,7 +280,16 @@ export const runActiveDualMomentumBacktest = ({
                 rebalanceIndex: dayIndex,
                 sleeve: 'long',
             });
-            const nextPositions = mergeActiveDualMomentumSleeves(shortSleeve, longSleeve);
+            const breadth = positiveNonFuturesMomentumBreadth(
+                prepared,
+                dayIndex,
+                config.shortLookbackWeeks * activeDualMomentumTradingDaysPerWeek,
+            );
+            const breadthExposureScale = breadth < 0.4 ? 0.5 : 1;
+            const unscaledPositions = mergeActiveDualMomentumSleeves(shortSleeve, longSleeve);
+            const scaledOutWeight = unscaledPositions.reduce((sum, position) => sum + position.weight * (1 - breadthExposureScale), 0);
+            const nextPositions = unscaledPositions
+                .map((position) => ({ ...position, weight: position.weight * breadthExposureScale }));
             const turnover = turnoverBetween(currentPositions, nextPositions, prepared.series.length);
             const cost = turnover * (config.transactionCostBps + config.slippageBps) / 10_000;
 
@@ -272,7 +307,7 @@ export const runActiveDualMomentumBacktest = ({
                 }));
             }
 
-            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight;
+            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight + scaledOutWeight;
             if (isCalculationRebalance) {
                 rebalanceRecords.push({
                     cashWeight,
