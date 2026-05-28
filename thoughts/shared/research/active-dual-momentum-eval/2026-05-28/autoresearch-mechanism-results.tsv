@@ -8,3 +8,4 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 5	long-horizon futures short separation	57.8644	30.2848	49.5905	p10 regressed	discard	eca63bd
 5r	negative futures route to cash	56.9955	28.0330	48.3068	p10 regressed	discard	d6f7e37
 6	asset class candidate cap	61.5761	24.2506	50.3785	p10 regressed	discard	3dafc6d/fa9df64
+7	standing 20 percent cash buffer	61.2313	34.3947	53.1803	budget eval passed	keep candidate	fcecafb/1b45798
