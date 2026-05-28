@@ -59,20 +59,29 @@ describe('active dual momentum rules', () => {
         ]));
     });
 
-    test('merges short and long sleeves into net directional positions', () => {
+    test('drops positions when short and long sleeves disagree on direction', () => {
         const merged = mergeActiveDualMomentumSleeves(
             { cashWeight: 0, filtered: [], positions: [{ assetIndex: 0, direction: 'short', shortMomentum: -0.2, source: 'short', weight: 0.4 }] },
             { cashWeight: 0, filtered: [], positions: [{ assetIndex: 0, direction: 'long', longMomentum: 0.1, source: 'long', weight: 0.1 }] },
         );
 
+        expect(merged).toEqual([]);
+    });
+
+    test('adds sleeve weights when short and long sleeves agree on direction', () => {
+        const merged = mergeActiveDualMomentumSleeves(
+            { cashWeight: 0, filtered: [], positions: [{ assetIndex: 0, direction: 'long', shortMomentum: 0.2, source: 'short', weight: 0.4 }] },
+            { cashWeight: 0, filtered: [], positions: [{ assetIndex: 0, direction: 'long', longMomentum: 0.1, source: 'long', weight: 0.1 }] },
+        );
+
         expect(merged[0]).toEqual(expect.objectContaining({
             assetIndex: 0,
-            direction: 'short',
+            direction: 'long',
             longMomentum: 0.1,
-            shortMomentum: -0.2,
+            shortMomentum: 0.2,
             source: 'both',
         }));
-        expect(merged[0]?.weight).toBeCloseTo(0.3, 6);
+        expect(merged[0]?.weight).toBeCloseTo(0.5, 6);
     });
 
 });
