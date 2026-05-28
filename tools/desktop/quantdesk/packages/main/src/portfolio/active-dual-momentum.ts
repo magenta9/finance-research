@@ -420,10 +420,14 @@ export const runActiveDualMomentumBacktest = ({
             }
 
             const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight + cashBufferWeight;
-            currentCashWeight = cashWeight;
+            const residualCashWeight = Math.max(0, 1 - nextPositions.reduce((sum, position) => sum + position.weight, 0));
+            const resolvedCashWeight = config.researchProfile?.nettedResidualCashReturn !== false
+                ? Math.max(cashWeight, residualCashWeight)
+                : cashWeight;
+            currentCashWeight = resolvedCashWeight;
             if (isCalculationRebalance) {
                 rebalanceRecords.push({
-                    cashWeight,
+                    cashWeight: resolvedCashWeight,
                     date: prepared.alignedDates[dayIndex],
                     holdings: nextPositions.map((position) => {
                         const entry = prepared.series[position.assetIndex];

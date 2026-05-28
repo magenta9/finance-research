@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "excess-cash-hurdle-rank",
+    "thesis": "Rank and long-filter candidates by momentum above the base-currency cash hurdle.",
+    "profile": {
+      "rankMode": "excessDownsideRiskAdjusted"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 74.3826,
+      "p10Score": 50.3066,
+      "p50Score": 77.5154,
+      "p90Score": 93.2624,
+      "combinedScore": 67.1598
+    }
+  }
+]

@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "netted-residual-cash-return",
+    "thesis": "Accrue cash return on residual fully-funded capital after netted positions.",
+    "profile": {
+      "nettedResidualCashReturn": true
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 600,
+      "successCount": 600,
+      "failureCount": 0,
+      "meanScore": 76.8599,
+      "p10Score": 56.0802,
+      "p50Score": 80.4665,
+      "p90Score": 94.5625,
+      "combinedScore": 70.626
+    }
+  }
+]

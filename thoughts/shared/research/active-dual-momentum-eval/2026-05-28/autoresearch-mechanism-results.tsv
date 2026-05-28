@@ -29,3 +29,10 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 67	searched direction: signed correlation stress gate	72.2384	45.1597	64.1148	below current budget baseline	discard	not committed
 68	searched direction: risk-free cash return accrual	74.5776	50.5527	67.3701	budget eval passed	keep candidate	pending
 68f	risk-free cash return accrual full eval	76.8205	56.0719	70.5959	full eval passed	keep	pending
+69	searched direction: incumbent selection hysteresis	75.1859	49.0773	67.3533	combined slightly below current budget baseline and p10 regressed	discard	not committed
+70	searched direction: portfolio risk budget reuse	74.1313	49.5062	66.7438	below current budget baseline	discard	not committed
+71	searched direction: futures collateral return accrual	75.0740	51.6794	68.0556	budget eval passed	keep candidate	not committed
+71f	futures collateral return accrual full eval	76.2422	54.2613	69.6479	full eval below current full baseline	discard	not committed
+72	searched direction: excess cash hurdle rank	74.3826	50.3066	67.1598	below current budget baseline	discard	not committed
+73	searched direction: netted residual cash return	74.6236	50.6345	67.4269	budget eval passed	keep candidate	pending
+73f	netted residual cash return full eval	76.8599	56.0802	70.6260	full eval passed	keep	pending

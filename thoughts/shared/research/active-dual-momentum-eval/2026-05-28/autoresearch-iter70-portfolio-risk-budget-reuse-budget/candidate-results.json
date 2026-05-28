@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "portfolio-risk-budget-reuse",
+    "thesis": "Reuse half of downside-vol overlay risk budget in low-downside-vol positive long holdings.",
+    "profile": {
+      "portfolioRiskBudgetReuse": true
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 74.1313,
+      "p10Score": 49.5062,
+      "p50Score": 76.1392,
+      "p90Score": 93.2624,
+      "combinedScore": 66.7438
+    }
+  }
+]

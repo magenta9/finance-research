@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	incumbent-selection-hysteresis	75.1859	49.0773	78.704	95.363	67.3533	discard	Retain eligible incumbent holdings when ranking noise only reshuffles the weakest selected slot.	"{""incumbentSelectionHysteresis"": true}"

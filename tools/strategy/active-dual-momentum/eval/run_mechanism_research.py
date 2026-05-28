@@ -33,9 +33,9 @@ from run_eval import (
 
 
 CURRENT_REFERENCE_BUDGET = {
-    "meanScore": 74.5776,
-    "p10Score": 50.5527,
-    "combinedScore": 67.3701,
+    "meanScore": 74.6236,
+    "p10Score": 50.6345,
+    "combinedScore": 67.4269,
 }
 
 
@@ -199,6 +199,11 @@ def mechanism_candidates(limit: int) -> list[MechanismCandidate]:
             {"cashReturnMode": "riskFreeRate"},
             "Accrue base-currency risk-free return on existing ADM cash weight.",
         ),
+        MechanismCandidate(
+            "netted-residual-cash-return",
+            {"nettedResidualCashReturn": True},
+            "Accrue cash return on residual fully-funded capital after netted positions.",
+        ),
     ]
     combo_indexes = [
         (0, 5),
@@ -351,10 +356,8 @@ def main() -> int:
                 isinstance(summary.get("meanScore"), (int, float))
                 and isinstance(summary.get("p10Score"), (int, float))
                 and isinstance(combined, float)
-                and float(summary["meanScore"])
-                >= CURRENT_REFERENCE_BUDGET["meanScore"]
-                and float(summary["p10Score"])
-                >= CURRENT_REFERENCE_BUDGET["p10Score"]
+                and float(summary["meanScore"]) >= CURRENT_REFERENCE_BUDGET["meanScore"]
+                and float(summary["p10Score"]) >= CURRENT_REFERENCE_BUDGET["p10Score"]
                 and combined > CURRENT_REFERENCE_BUDGET["combinedScore"]
             )
             else "discard"

@@ -24,6 +24,7 @@ export interface ActiveDualMomentumResearchProfile {
     etfHighWaterFilter?: boolean;
     futuresShortWeightMultiplier?: number;
     maxPositionWeight?: number;
+    nettedResidualCashReturn?: boolean;
     portfolioDownsideVolTarget?: boolean;
     rankMode?: 'default' | 'riskAdjusted' | 'downsideRiskAdjusted' | 'drawdownPenalty' | 'momentumSlope' | 'positiveFuturesBias';
     rebalanceStep?: number;
