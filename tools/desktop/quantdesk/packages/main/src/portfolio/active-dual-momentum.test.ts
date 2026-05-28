@@ -62,6 +62,7 @@ describe('runActiveDualMomentumBacktest', () => {
             annualizedVolatility: [0.16, 0.12, 0.28, 0.31],
             baseCurrency: 'USD',
             calculationDateRange: { startDate: prepared.alignedDates[0], endDate: prepared.alignedDates.at(-1) ?? prepared.alignedDates[0] },
+            config: { researchProfile: { crossSignOffsetCash: false } } as Parameters<typeof runActiveDualMomentumBacktest>[0]['config'],
             covariance: buildCovariance(assets.length),
             prepared,
         });

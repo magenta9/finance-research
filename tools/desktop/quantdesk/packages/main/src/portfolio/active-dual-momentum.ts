@@ -154,6 +154,31 @@ const applyRiskExitRedeploymentCooldown = ({
     return { cashWeight: cooldownWeight, positions };
 };
 
+const applyCrossSignOffsetCash = (positions: ActiveDualMomentumPosition[]) => {
+    const longGross = positions
+        .filter((position) => position.direction === 'long')
+        .reduce((sum, position) => sum + position.weight, 0);
+    const shortGross = positions
+        .filter((position) => position.direction === 'short')
+        .reduce((sum, position) => sum + position.weight, 0);
+    const offsetWeight = Math.min(longGross, shortGross);
+
+    if (offsetWeight <= 0 || longGross <= 0 || shortGross <= 0) {
+        return { cashWeight: 0, positions };
+    }
+
+    const longRetainedRatio = (longGross - offsetWeight) / longGross;
+    const shortRetainedRatio = (shortGross - offsetWeight) / shortGross;
+    const compressedPositions = positions.flatMap((position) => {
+        const retainedRatio = position.direction === 'long' ? longRetainedRatio : shortRetainedRatio;
+        const weight = position.weight * retainedRatio;
+
+        return weight >= 0.000001 ? [{ ...position, weight }] : [];
+    });
+
+    return { cashWeight: offsetWeight * 2, positions: compressedPositions };
+};
+
 const portfolioDownsideVolatility = ({
     endIndex,
     positions,
@@ -450,13 +475,16 @@ export const runActiveDualMomentumBacktest = ({
             });
             const cashBufferWeight = grossPositions.reduce((sum, position) => sum + position.weight * (1 - cashBufferMultiplier), 0);
             const baseTargetPositions = grossPositions.map((position) => ({ ...position, weight: position.weight * cashBufferMultiplier }));
+            const crossSignOffset = config.researchProfile?.crossSignOffsetCash !== false
+                ? applyCrossSignOffsetCash(baseTargetPositions)
+                : { cashWeight: 0, positions: baseTargetPositions };
             const cooldown = config.researchProfile?.riskExitRedeploymentCooldown !== false
                 ? applyRiskExitRedeploymentCooldown({
                     assetCount: prepared.series.length,
                     previousPositions: currentPositions,
-                    targetPositions: baseTargetPositions,
+                    targetPositions: crossSignOffset.positions,
                 })
-                : { cashWeight: 0, positions: baseTargetPositions };
+                : { cashWeight: 0, positions: crossSignOffset.positions };
             const targetPositions = cooldown.positions;
             const nextPositions = smoothRebalancePositions({
                 assetCount: prepared.series.length,
@@ -482,7 +510,7 @@ export const runActiveDualMomentumBacktest = ({
                 }));
             }
 
-            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight + mergedSleeves.cashWeight + cashBufferWeight + cooldown.cashWeight;
+            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight + mergedSleeves.cashWeight + cashBufferWeight + crossSignOffset.cashWeight + cooldown.cashWeight;
             const residualCashWeight = Math.max(0, 1 - nextPositions.reduce((sum, position) => sum + position.weight, 0));
             const resolvedCashWeight = config.researchProfile?.nettedResidualCashReturn !== false
                 ? Math.max(cashWeight, residualCashWeight)

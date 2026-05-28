@@ -45,3 +45,5 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 79	searched direction: risk-exit redeployment cooldown	82.3529	64.0293	76.8558	budget eval passed	keep candidate	pending
 79f	risk-exit redeployment cooldown full eval	84.7084	66.1378	79.1372	full eval passed	keep	pending
 79s	sharpe ceiling 2 scoring baseline reset	71.9568	54.1614	66.6182	new scoring baseline	baseline	pending
+80	searched direction: cross-sign offset cash	72.7483	54.8798	67.3877	budget eval passed	keep candidate	pending
+80f	cross-sign offset cash full eval	74.9330	55.8955	69.2218	full eval passed	keep	pending

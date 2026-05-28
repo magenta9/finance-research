@@ -33,9 +33,9 @@ from run_eval import (
 
 
 CURRENT_REFERENCE_BUDGET = {
-    "meanScore": 71.9568,
-    "p10Score": 54.1614,
-    "combinedScore": 66.6182,
+    "meanScore": 72.7483,
+    "p10Score": 54.8798,
+    "combinedScore": 67.3877,
 }
 
 REFERENCE_GUARD_MULTIPLIER = 0.9
@@ -216,6 +216,11 @@ def mechanism_candidates(limit: int) -> list[MechanismCandidate]:
             {"riskExitRedeploymentCooldown": True},
             "Route exited or flipped risk budget to cash for the current rebalance instead of immediately redeploying it.",
         ),
+        MechanismCandidate(
+            "cross-sign-offset-cash",
+            {"crossSignOffsetCash": True},
+            "Compress offsetting long and short gross exposure into cash while keeping the portfolio net direction.",
+        ),
     ]
     combo_indexes = [
         (0, 5),
@@ -368,8 +373,10 @@ def main() -> int:
                 isinstance(summary.get("meanScore"), (int, float))
                 and isinstance(summary.get("p10Score"), (int, float))
                 and isinstance(combined, float)
-                and float(summary["meanScore"]) >= CURRENT_REFERENCE_BUDGET["meanScore"] * REFERENCE_GUARD_MULTIPLIER
-                and float(summary["p10Score"]) >= CURRENT_REFERENCE_BUDGET["p10Score"] * REFERENCE_GUARD_MULTIPLIER
+                and float(summary["meanScore"])
+                >= CURRENT_REFERENCE_BUDGET["meanScore"] * REFERENCE_GUARD_MULTIPLIER
+                and float(summary["p10Score"])
+                >= CURRENT_REFERENCE_BUDGET["p10Score"] * REFERENCE_GUARD_MULTIPLIER
                 and combined > CURRENT_REFERENCE_BUDGET["combinedScore"]
             )
             else "discard"

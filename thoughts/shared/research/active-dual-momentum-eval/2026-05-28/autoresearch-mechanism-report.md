@@ -498,7 +498,34 @@ Full confirmation：
 
 后续 budget 闸门同步使用用户指定的保护条件：meanScore 不低于当前 baseline 的 90%，p10Score 不低于当前 baseline 的 90%，且 combinedScore 高于当前 baseline。
 
-## 24. 最终结论
+## 24. 第 80 轮顺序迭代
+
+第 80 轮搜索方向：跨资产多空抵消预算现金化。
+
+搜索依据：第 77 和第 79 轮都指向同一个机制事实：低置信度或重复释放出来的风险预算更适合现金化。第 80 轮把这个逻辑推到组合层，当合并后同时存在多头与空头 gross exposure 时，将 `min(longGross, shortGross)` 对应的双边抵消预算按方向内权重比例同步削减，并把释放出来的名义风险预算转入现金，保留组合净方向但降低互相抵消的 gross exposure。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 80 | 跨多空抵消预算现金化 | 72.7483 | 54.8798 | 67.3877 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 80 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 74.9330 |
+| p10Score | 55.8955 |
+| p50Score | 73.2058 |
+| p90Score | 96.5617 |
+| combinedScore | 69.2218 |
+
+结论：第 80 轮高于 Sharpe ceiling 2 新 full baseline（mean 68.9448 / p10 51.3899 / combined 63.6783），提升为当前默认机制并 commit。连续未改进计数重置为 0。
+
+## 25. 最终结论
 
 当前推荐保留的新机制为：
 
@@ -511,6 +538,7 @@ Full confirmation：
 7. 净额化后按 fully funded 口径将 residual capital 视为现金，并纳入现金收益路径。
 8. 当两个 sleeve 同向选中同一资产时，只保留较大 sleeve 权重，重复预算转现金，避免把同一趋势证据重复加杠杆。
 9. 旧仓位退出或反向时，将对应退出预算在本轮调仓先冷却为现金，避免立即再部署给新开仓或增配仓。
+10. 当组合层同时持有多头和空头 gross exposure 时，压缩互相抵消的双边预算并转入现金，保留净方向但降低低效率 gross exposure。
 
 相对 ADM V1 baseline：
 
@@ -528,6 +556,14 @@ Full confirmation：
 | p10Score | +0.2037 |
 | combinedScore | +0.4954 |
 
+Sharpe ceiling 2 新评分口径下，第 80 轮相对重算 full baseline：
+
+| 指标 | 改善 |
+|---|---:|
+| meanScore | +5.9882 |
+| p10Score | +4.5056 |
+| combinedScore | +5.5435 |
+
 研究解释：
 
 - 下行波动调整排序比单纯追逐动量更能区分“上涨但回撤质量差”的标的，尤其提升 p10 tail cases。
@@ -537,10 +573,11 @@ Full confirmation：
 - 净额 residual cash 入账进一步修正 fully funded 资本口径，提升幅度很小，但 full Eval 的 mean、p10 和 combined 均高于第 68 轮。
 - 同标的同向 sleeve 预算去重是第 77 轮最大新增改善，说明当前 ADM 的 10 周和 25 周共识更适合作为确认信号，而不是重复加仓信号。
 - 风险退出预算冷却进一步验证了“释放出来的预算先现金化”优于立即再部署，full Eval 的 mean、p10 和 combined 均继续改善。
+- 跨多空抵消预算现金化说明低净敞口不需要依赖高双边 gross exposure 实现；在新评分口径下，它显著改善 mean、p10 和 combined。
 - 25% 现金缓冲进一步降低跨品种随机篮子中的尾部暴露，同时没有牺牲 meanScore。
 - 单独的小幅变化保持带在非标准抽样中表现很好，但标准 full confirmation 不如第 45 轮稳健，因此没有进入最终默认机制。
 
-## 25. 证据路径
+## 26. 证据路径
 
 - 标准 50 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter11-60-mechanism-sweep-standard-cases/`
 - 第 45 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter45-downside-risk-larger-cash-standard-cases/`
@@ -577,9 +614,12 @@ Full confirmation：
 - 第 79 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter79-risk-exit-redeployment-cooldown/`
 - Sharpe ceiling 2 新 budget baseline：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-baseline-iter79-sharpe-ceiling-2-budget/`
 - Sharpe ceiling 2 新 full baseline：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-baseline-iter79-sharpe-ceiling-2-full/`
+- 第 80 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter80-cross-sign-offset-cash-budget/`
+- 第 80 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter80-cross-sign-offset-cash/`
+- 第 80 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter80-cross-sign-offset-cash/`
 - 迭代日志：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-mechanism-results.tsv`
 
-## 26. 后续建议
+## 27. 后续建议
 
 下一轮机制研究可以优先围绕第 63 轮继续做三类验证：
 
