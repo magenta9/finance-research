@@ -1,0 +1,17 @@
+[
+  {
+    "strategyId": "baseline",
+    "config": {
+      "absoluteMomentumFilter": false,
+      "longLookbackWeeks": 52,
+      "shortLookbackWeeks": 8,
+      "sleeveWeights": {
+        "long": 0.7,
+        "short": 0.3
+      },
+      "topK": 5,
+      "transactionCostBps": 5,
+      "slippageBps": 0
+    }
+  }
+]

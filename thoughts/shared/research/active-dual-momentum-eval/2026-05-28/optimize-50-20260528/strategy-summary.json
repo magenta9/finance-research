@@ -1,0 +1,512 @@
+[
+  {
+    "strategyId": "candidate-020-338bcd36",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 66.2635,
+    "p10Score": 44.4281,
+    "p50Score": 66.6667,
+    "p90Score": 88.0725
+  },
+  {
+    "strategyId": "candidate-024-e9c2ffa8",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 66.0933,
+    "p10Score": 45.0742,
+    "p50Score": 66.6667,
+    "p90Score": 90.2499
+  },
+  {
+    "strategyId": "candidate-022-2cc322e1",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 65.8186,
+    "p10Score": 40.6744,
+    "p50Score": 68.6768,
+    "p90Score": 86.536
+  },
+  {
+    "strategyId": "candidate-016-1e318827",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 65.2774,
+    "p10Score": 43.8871,
+    "p50Score": 66.6667,
+    "p90Score": 86.0191
+  },
+  {
+    "strategyId": "candidate-048-2716ac20",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 65.2045,
+    "p10Score": 48.6392,
+    "p50Score": 66.6667,
+    "p90Score": 80.9535
+  },
+  {
+    "strategyId": "candidate-050-83fbba6d",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 64.8201,
+    "p10Score": 43.4873,
+    "p50Score": 66.6667,
+    "p90Score": 85.0869
+  },
+  {
+    "strategyId": "candidate-007-b01bfd18",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 64.5715,
+    "p10Score": 43.2811,
+    "p50Score": 66.6667,
+    "p90Score": 84.732
+  },
+  {
+    "strategyId": "candidate-019-6dcdf8c0",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 63.7933,
+    "p10Score": 39.7754,
+    "p50Score": 66.6667,
+    "p90Score": 88.7537
+  },
+  {
+    "strategyId": "candidate-015-25ffbaa8",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 63.7763,
+    "p10Score": 38.4118,
+    "p50Score": 66.6667,
+    "p90Score": 89.6103
+  },
+  {
+    "strategyId": "candidate-049-cf7b29b7",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 63.5639,
+    "p10Score": 46.0686,
+    "p50Score": 66.6667,
+    "p90Score": 77.7234
+  },
+  {
+    "strategyId": "candidate-014-5fef7862",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 63.4541,
+    "p10Score": 45.0746,
+    "p50Score": 66.6667,
+    "p90Score": 78.0735
+  },
+  {
+    "strategyId": "candidate-009-fa3205fb",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 63.4418,
+    "p10Score": 44.4157,
+    "p50Score": 66.6667,
+    "p90Score": 78.0176
+  },
+  {
+    "strategyId": "candidate-040-446c788a",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 63.1755,
+    "p10Score": 34.7749,
+    "p50Score": 61.7537,
+    "p90Score": 92.3466
+  },
+  {
+    "strategyId": "candidate-010-f82d0a49",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 63.1629,
+    "p10Score": 44.2581,
+    "p50Score": 66.6667,
+    "p90Score": 77.9621
+  },
+  {
+    "strategyId": "candidate-044-0f56f611",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 62.5817,
+    "p10Score": 38.6061,
+    "p50Score": 66.6667,
+    "p90Score": 85.0042
+  },
+  {
+    "strategyId": "candidate-038-d4625d37",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 62.1865,
+    "p10Score": 43.4048,
+    "p50Score": 66.6667,
+    "p90Score": 78.5849
+  },
+  {
+    "strategyId": "candidate-011-39346393",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 61.6535,
+    "p10Score": 29.5136,
+    "p50Score": 62.7419,
+    "p90Score": 91.7098
+  },
+  {
+    "strategyId": "candidate-032-24936ac3",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 61.6243,
+    "p10Score": 31.0223,
+    "p50Score": 62.6385,
+    "p90Score": 90.462
+  },
+  {
+    "strategyId": "candidate-012-9e469db6",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 61.3964,
+    "p10Score": 40.8724,
+    "p50Score": 66.6667,
+    "p90Score": 78.0007
+  },
+  {
+    "strategyId": "candidate-013-9b298242",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 60.9696,
+    "p10Score": 39.7307,
+    "p50Score": 66.6667,
+    "p90Score": 77.2654
+  },
+  {
+    "strategyId": "candidate-004-cf2a2d43",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 58.8312,
+    "p10Score": 28.6505,
+    "p50Score": 66.6667,
+    "p90Score": 84.1115
+  },
+  {
+    "strategyId": "baseline",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 58.5533,
+    "p10Score": 27.2775,
+    "p50Score": 57.0239,
+    "p90Score": 91.9164
+  },
+  {
+    "strategyId": "candidate-023-0283e1fa",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 58.5304,
+    "p10Score": 34.4947,
+    "p50Score": 66.5543,
+    "p90Score": 76.1164
+  },
+  {
+    "strategyId": "candidate-041-2af24956",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 58.5031,
+    "p10Score": 34.1386,
+    "p50Score": 65.9619,
+    "p90Score": 75.9274
+  },
+  {
+    "strategyId": "candidate-018-82503c6d",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 58.1542,
+    "p10Score": 25.6847,
+    "p50Score": 66.6667,
+    "p90Score": 82.1758
+  },
+  {
+    "strategyId": "candidate-008-1b165747",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 58.0911,
+    "p10Score": 33.4837,
+    "p50Score": 65.3741,
+    "p90Score": 75.5075
+  },
+  {
+    "strategyId": "candidate-045-4a757479",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 57.9019,
+    "p10Score": 40.4736,
+    "p50Score": 57.5662,
+    "p90Score": 79.3716
+  },
+  {
+    "strategyId": "candidate-046-229e7810",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 57.4383,
+    "p10Score": 30.2926,
+    "p50Score": 57.9619,
+    "p90Score": 83.4532
+  },
+  {
+    "strategyId": "candidate-029-c04a8b08",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 57.3161,
+    "p10Score": 22.1474,
+    "p50Score": 57.42,
+    "p90Score": 90.6606
+  },
+  {
+    "strategyId": "candidate-043-6726e433",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 56.9871,
+    "p10Score": 30.6221,
+    "p50Score": 64.0404,
+    "p90Score": 73.9206
+  },
+  {
+    "strategyId": "candidate-034-dd9acb89",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 56.9167,
+    "p10Score": 23.7175,
+    "p50Score": 56.3226,
+    "p90Score": 89.6171
+  },
+  {
+    "strategyId": "candidate-035-2a7f33d4",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 56.7629,
+    "p10Score": 22.2707,
+    "p50Score": 57.1968,
+    "p90Score": 89.6497
+  },
+  {
+    "strategyId": "candidate-031-041e2f13",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 56.5555,
+    "p10Score": 30.1529,
+    "p50Score": 58.0602,
+    "p90Score": 82.0374
+  },
+  {
+    "strategyId": "candidate-047-da052aee",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 56.5096,
+    "p10Score": 21.668,
+    "p50Score": 57.0487,
+    "p90Score": 89.5984
+  },
+  {
+    "strategyId": "candidate-042-c31c73be",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 56.3453,
+    "p10Score": 22.5237,
+    "p50Score": 56.8476,
+    "p90Score": 89.4028
+  },
+  {
+    "strategyId": "candidate-002-39d32f69",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 56.0394,
+    "p10Score": 28.9261,
+    "p50Score": 63.2014,
+    "p90Score": 71.9951
+  },
+  {
+    "strategyId": "candidate-036-e38b4404",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 55.5784,
+    "p10Score": 37.7751,
+    "p50Score": 55.4228,
+    "p90Score": 77.5706
+  },
+  {
+    "strategyId": "candidate-021-77799ef5",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 54.5957,
+    "p10Score": 35.8766,
+    "p50Score": 53.4462,
+    "p90Score": 76.2936
+  },
+  {
+    "strategyId": "candidate-027-32dcbce2",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 53.1482,
+    "p10Score": 29.105,
+    "p50Score": 53.1974,
+    "p90Score": 76.8559
+  },
+  {
+    "strategyId": "candidate-017-e5d8a2da",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 52.7284,
+    "p10Score": 27.9174,
+    "p50Score": 52.5858,
+    "p90Score": 77.7477
+  },
+  {
+    "strategyId": "candidate-006-482d9165",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 51.9583,
+    "p10Score": 14.5194,
+    "p50Score": 52.4099,
+    "p90Score": 90.9172
+  },
+  {
+    "strategyId": "candidate-039-2b61d3af",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 51.7706,
+    "p10Score": 26.8765,
+    "p50Score": 51.5328,
+    "p90Score": 75.8854
+  },
+  {
+    "strategyId": "candidate-003-a91621bd",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 51.596,
+    "p10Score": 21.6932,
+    "p50Score": 51.9694,
+    "p90Score": 80.8823
+  },
+  {
+    "strategyId": "candidate-037-913f45ad",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 51.3037,
+    "p10Score": 21.3059,
+    "p50Score": 51.5268,
+    "p90Score": 80.8807
+  },
+  {
+    "strategyId": "candidate-001-585b72fe",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 50.9978,
+    "p10Score": 18.9246,
+    "p50Score": 51.9488,
+    "p90Score": 80.4127
+  },
+  {
+    "strategyId": "candidate-030-871b9372",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 50.0197,
+    "p10Score": 25.4075,
+    "p50Score": 49.035,
+    "p90Score": 75.707
+  },
+  {
+    "strategyId": "candidate-033-df65104c",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 49.9153,
+    "p10Score": 12.3259,
+    "p50Score": 51.3033,
+    "p90Score": 88.2655
+  },
+  {
+    "strategyId": "candidate-025-78e89b0f",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 49.7458,
+    "p10Score": 19.2629,
+    "p50Score": 49.5043,
+    "p90Score": 80.3876
+  },
+  {
+    "strategyId": "candidate-005-f719ad55",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 49.6303,
+    "p10Score": 18.4442,
+    "p50Score": 50.2013,
+    "p90Score": 80.1883
+  },
+  {
+    "strategyId": "candidate-026-0eabe909",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 49.3402,
+    "p10Score": 18.127,
+    "p50Score": 49.8753,
+    "p90Score": 79.8541
+  },
+  {
+    "strategyId": "candidate-028-2ebf423e",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 48.9056,
+    "p10Score": 23.9292,
+    "p50Score": 47.4939,
+    "p90Score": 75.1699
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "strategyId": "baseline",
+    "caseCount": 600,
+    "successCount": 600,
+    "failureCount": 0,
+    "meanScore": 66.2554,
+    "p10Score": 44.4281,
+    "p50Score": 66.6667,
+    "p90Score": 88.0725
+  }
+]
