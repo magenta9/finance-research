@@ -65,6 +65,28 @@ export const signedActiveDualMomentumWeight = (
     position: Pick<ActiveDualMomentumPosition, 'direction' | 'weight'>,
 ) => position.direction === 'short' ? -position.weight : position.weight;
 
+const realizedVolatility = (prices: number[], startIndex: number, endIndex: number) => {
+    const returns: number[] = [];
+
+    for (let index = startIndex + 1; index <= endIndex; index += 1) {
+        const previousPrice = prices[index - 1] ?? 0;
+        const currentPrice = prices[index] ?? 0;
+
+        if (previousPrice > 0 && currentPrice > 0) {
+            returns.push(currentPrice / previousPrice - 1);
+        }
+    }
+
+    if (returns.length < 2) {
+        return 0;
+    }
+
+    const mean = returns.reduce((sum, value) => sum + value, 0) / returns.length;
+    const variance = returns.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (returns.length - 1);
+
+    return Math.sqrt(Math.max(0, variance));
+};
+
 export const selectActiveDualMomentumSleeve = ({
     config,
     lookbackWeeks,
@@ -94,6 +116,7 @@ export const selectActiveDualMomentumSleeve = ({
             futures,
             momentum,
             rankScore: futures ? Math.abs(momentum) : momentum,
+            riskScore: 1 / Math.max(realizedVolatility(entry.prices, rebalanceIndex - lookbackDays, rebalanceIndex), 0.0001),
         }];
     }).sort((left, right) => right.rankScore - left.rankScore).slice(0, config.topK);
 
@@ -102,13 +125,16 @@ export const selectActiveDualMomentumSleeve = ({
     }
 
     const sleeveWeight = config.sleeveWeights[sleeve];
-    const slotWeight = sleeveWeight / candidates.length;
+    const totalRiskScore = candidates.reduce((sum, candidate) => sum + candidate.riskScore, 0);
     const filtered: ActiveDualMomentumSleeveSelection['filtered'] = [];
     const positions: ActiveDualMomentumPosition[] = [];
     let cashWeight = 0;
 
     candidates.forEach((candidate) => {
         const asset = prepared.series[candidate.assetIndex].asset;
+        const slotWeight = totalRiskScore > 0
+            ? sleeveWeight * candidate.riskScore / totalRiskScore
+            : sleeveWeight / candidates.length;
 
         if (candidate.futures) {
             if (candidate.momentum === 0) {

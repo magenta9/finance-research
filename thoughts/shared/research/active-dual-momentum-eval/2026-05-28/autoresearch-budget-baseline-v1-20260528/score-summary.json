@@ -1,0 +1,9 @@
+{
+  "caseCount": 60,
+  "successCount": 60,
+  "failureCount": 0,
+  "meanScore": 55.6904,
+  "p10Score": 25.5576,
+  "p50Score": 54.7308,
+  "p90Score": 88.9752
+}
