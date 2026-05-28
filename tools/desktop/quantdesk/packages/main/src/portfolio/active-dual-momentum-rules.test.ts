@@ -59,6 +59,35 @@ describe('active dual momentum rules', () => {
         ]));
     });
 
+    test('keeps long sleeve futures focused on positive trend', () => {
+        const assets = [
+            buildAsset('asset-future-up', 'UP9999', 'commodity', { market: 'COMMODITY', metadata: { instrumentType: 'future' } }),
+            buildAsset('asset-future-down', 'DN9999', 'commodity', { market: 'COMMODITY', metadata: { instrumentType: 'future' } }),
+            buildAsset('asset-etf-up', 'ETF', 'equity'),
+        ];
+        const prepared = buildPrepared(assets, [
+            [100, 105],
+            [100, 80],
+            [100, 103],
+        ]);
+
+        const selection = selectActiveDualMomentumSleeve({
+            config: normalizeActiveDualMomentumConfig({ sleeveWeights: { long: 0.6, short: 0.4 }, topK: 3 }),
+            lookbackWeeks: 0.2,
+            prepared,
+            rebalanceIndex: 1,
+            sleeve: 'long',
+        });
+
+        expect(selection.positions).toEqual(expect.arrayContaining([
+            expect.objectContaining({ assetIndex: 0, direction: 'long' }),
+            expect.objectContaining({ assetIndex: 2, direction: 'long' }),
+        ]));
+        expect(selection.positions).not.toEqual(expect.arrayContaining([
+            expect.objectContaining({ assetIndex: 1 }),
+        ]));
+    });
+
     test('merges short and long sleeves into net directional positions', () => {
         const merged = mergeActiveDualMomentumSleeves(
             { cashWeight: 0, filtered: [], positions: [{ assetIndex: 0, direction: 'short', shortMomentum: -0.2, source: 'short', weight: 0.4 }] },
