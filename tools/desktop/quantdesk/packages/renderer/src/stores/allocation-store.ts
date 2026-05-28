@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import type {
+    ActiveDualMomentumStrategyConfig,
     AllocationConstraints,
     AllocationPlanRecord,
     AllocationResult,
@@ -45,6 +46,7 @@ interface AllocationStoreActions {
     setBaseCurrency: (baseCurrency: Currency) => void;
     setAllocationAssetEnabled: (assetId: string, enabled: boolean) => void;
     setAllocationAssetSelection: (assetIds: string[]) => void;
+    setActiveDualMomentumTopK: (value: number) => void;
     setClassConstraint: (assetClass: AssetClass, value: number | null) => void;
     setDateRange: (startDate: string, endDate: string) => void;
     setFilterQuery: (filterQuery: string) => void;
@@ -84,16 +86,20 @@ const createDefaultTrendFollowingConfig = (): TrendFollowingStrategyConfig => ({
     sleeveWeight: 0.3,
 });
 
+const createDefaultActiveDualMomentumConfig = (): ActiveDualMomentumStrategyConfig => ({
+    absoluteMomentumFilter: true,
+    longLookbackWeeks: 25,
+    shortLookbackWeeks: 10,
+    slippageBps: 0,
+    sleeveWeights: { long: 0.5, short: 0.5 },
+    topK: 3,
+    transactionCostBps: 0,
+});
+
+const clampActiveDualMomentumTopK = (value: number) => Math.min(10, Math.max(2, Math.round(value)));
+
 const createDefaultStrategyMix = (): AllocationStrategyMix => ({
-    activeDualMomentum: {
-        absoluteMomentumFilter: true,
-        longLookbackWeeks: 25,
-        shortLookbackWeeks: 10,
-        slippageBps: 0,
-        sleeveWeights: { long: 0.5, short: 0.5 },
-        topK: 3,
-        transactionCostBps: 0,
-    },
+    activeDualMomentum: createDefaultActiveDualMomentumConfig(),
     trendFollowing: createDefaultTrendFollowingConfig(),
 });
 
@@ -122,6 +128,7 @@ const restoreStrategyMixFromPlan = (plan: AllocationPlanRecord): AllocationStrat
     const enabledRuleKeys = new Set(trendFollowing.rules.map((rule) => `${rule.fast}:${rule.slow}`));
 
     return {
+        activeDualMomentum: strategyMix.activeDualMomentum,
         allocation: strategyMix.allocation,
         trendFollowing: {
             allowShort: trendFollowing.allowShort ?? true,
@@ -198,24 +205,34 @@ const buildRunnableStrategyMix = (
     strategy: AllocationStrategy,
     strategyMix: AllocationStrategyMix,
 ) => {
-    if (strategy !== 'ewmac_trend_following') {
-        return undefined;
+    if (strategy === 'active_dual_momentum_gtaa') {
+        return cloneJson({
+            activeDualMomentum: {
+                ...createDefaultActiveDualMomentumConfig(),
+                ...strategyMix.activeDualMomentum,
+                topK: clampActiveDualMomentumTopK(strategyMix.activeDualMomentum?.topK ?? 3),
+            },
+        });
     }
 
-    const defaultTrendFollowing = createDefaultTrendFollowingConfig();
-    const configuredTrendFollowing = strategyMix.trendFollowing;
+    if (strategy === 'ewmac_trend_following') {
+        const defaultTrendFollowing = createDefaultTrendFollowingConfig();
+        const configuredTrendFollowing = strategyMix.trendFollowing;
 
-    return cloneJson({
-        trendFollowing: {
-            enabled: true,
-            forecastCap: configuredTrendFollowing?.forecastCap,
-            forecastDiversificationMultiplier: configuredTrendFollowing?.forecastDiversificationMultiplier,
-            allowShort: configuredTrendFollowing?.allowShort ?? defaultTrendFollowing.allowShort,
-            rules: configuredTrendFollowing?.rules ?? defaultTrendFollowing.rules,
-            sleeveWeight: 1,
-            volatilitySpan: configuredTrendFollowing?.volatilitySpan,
-        },
-    });
+        return cloneJson({
+            trendFollowing: {
+                enabled: true,
+                forecastCap: configuredTrendFollowing?.forecastCap,
+                forecastDiversificationMultiplier: configuredTrendFollowing?.forecastDiversificationMultiplier,
+                allowShort: configuredTrendFollowing?.allowShort ?? defaultTrendFollowing.allowShort,
+                rules: configuredTrendFollowing?.rules ?? defaultTrendFollowing.rules,
+                sleeveWeight: 1,
+                volatilitySpan: configuredTrendFollowing?.volatilitySpan,
+            },
+        });
+    }
+
+    return undefined;
 };
 
 const createInitialState = (): AllocationStoreState => {
@@ -409,6 +426,18 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
                 allocation: {
                     ...get().strategyMix.allocation,
                     assetIds: get().selectedAssetIds.filter((selectedAssetId) => selectedAllocationAssetIds.has(selectedAssetId)),
+                },
+            },
+        });
+    },
+    setActiveDualMomentumTopK(value) {
+        set({
+            strategyMix: {
+                ...get().strategyMix,
+                activeDualMomentum: {
+                    ...createDefaultActiveDualMomentumConfig(),
+                    ...get().strategyMix.activeDualMomentum,
+                    topK: clampActiveDualMomentumTopK(value),
                 },
             },
         });

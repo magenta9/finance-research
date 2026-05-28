@@ -11,6 +11,7 @@ import type {
 import { isMaterialAllocationTradeChange } from './allocation-trade-orchestrator';
 import type { PreparedAllocationData } from './preprocessor';
 import { buildScenarioAnalysis } from './scenarios';
+import { correlationMatrix } from './statistics';
 import {
     activeDualMomentumTradingDaysPerWeek,
     mergeActiveDualMomentumSleeves,
@@ -148,6 +149,7 @@ export const runActiveDualMomentumBacktest = ({
     annualizedVolatility,
     baseCurrency,
     calculationDateRange,
+    covariance,
     config: rawConfig,
     prepared,
 }: {
@@ -155,6 +157,7 @@ export const runActiveDualMomentumBacktest = ({
     annualizedVolatility: number[];
     baseCurrency: Currency;
     calculationDateRange: { startDate: string; endDate: string };
+    covariance: number[][];
     config?: ActiveDualMomentumStrategyConfig;
     prepared: PreparedAllocationData;
 }): AllocationResult => {
@@ -313,7 +316,7 @@ export const runActiveDualMomentumBacktest = ({
     return {
         allocations,
         baseCurrency,
-        correlationMatrix: { labels: prepared.series.map((entry) => entry.asset.symbol), matrix: [] },
+        correlationMatrix: { labels: prepared.series.map((entry) => entry.asset.symbol), matrix: correlationMatrix(covariance) },
         diagnostics: {
             activeDualMomentum: {
                 averageNetExposure: meanPortfolioValues(calculationNetExposures.map((value) => Math.abs(value))),

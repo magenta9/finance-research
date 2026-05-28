@@ -180,6 +180,16 @@ describe('useAllocationStore', () => {
         expect(useAllocationStore.getState().rebalanceCadence).toBe('weekly');
     });
 
+    test('clamps active dual momentum topK to 2 through 10', () => {
+        useAllocationStore.getState().setActiveDualMomentumTopK(1);
+
+        expect(useAllocationStore.getState().strategyMix.activeDualMomentum?.topK).toBe(2);
+
+        useAllocationStore.getState().setActiveDualMomentumTopK(11);
+
+        expect(useAllocationStore.getState().strategyMix.activeDualMomentum?.topK).toBe(10);
+    });
+
     test('can clear selected assets through select first zero', () => {
         useAllocationStore.setState({ selectedAssetIds: ['spy', 'agg', 'gld'] });
 

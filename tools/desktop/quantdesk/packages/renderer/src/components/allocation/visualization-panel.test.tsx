@@ -250,6 +250,85 @@ describe('AllocationVisualizationPanel', () => {
         expect(onOpenAssetDetail).toHaveBeenNthCalledWith(3, 'agg');
     });
 
+    test('Active Dual Momentum 结果在净值图底部展示最新持仓比例', async () => {
+        const user = userEvent.setup();
+        const onOpenAssetDetail = vi.fn();
+        const activeDualMomentumResult: AllocationResult = {
+            ...mockResult,
+            diagnostics: {
+                ...mockResult.diagnostics,
+                activeDualMomentum: {
+                    averageNetExposure: 0.35,
+                    averageNominalExposure: 0.77,
+                    cashWeight: 0.12,
+                    maxNetExposure: 0.65,
+                    maxNominalExposure: 0.88,
+                    rebalanceRecords: [
+                        {
+                            cashWeight: 0.12,
+                            date: '2025-04-14',
+                            holdings: [
+                                {
+                                    assetId: 'spy',
+                                    direction: 'long',
+                                    source: 'both',
+                                    symbol: 'SPY',
+                                    weight: 0.45,
+                                },
+                                {
+                                    assetId: 'agg',
+                                    direction: 'short',
+                                    source: 'short',
+                                    symbol: 'AGG',
+                                    weight: 0.2,
+                                },
+                            ],
+                            selectedButFiltered: [],
+                        },
+                    ],
+                    status: 'ok',
+                    turnover: 0.2,
+                },
+            },
+            strategy: 'active_dual_momentum_gtaa',
+        };
+
+        render(
+            <div style={{ height: 1600, width: 1280 }}>
+                <AllocationVisualizationPanel onOpenAssetDetail={onOpenAssetDetail} result={activeDualMomentumResult} />
+            </div>,
+        );
+
+        expect(screen.getByTestId('allocation-holdings-strip')).toHaveTextContent('2025-04-14 持仓比例');
+        expect(screen.getByTestId('allocation-holding-chip-SPY')).toHaveTextContent('SPY 多 45.0%');
+        expect(screen.getByTestId('allocation-holding-chip-AGG')).toHaveTextContent('AGG 空 20.0%');
+        expect(screen.getByTestId('allocation-holding-cash')).toHaveTextContent('现金 12.0%');
+
+        await user.click(screen.getByTestId('allocation-holding-chip-SPY'));
+
+        expect(onOpenAssetDetail).toHaveBeenCalledWith('spy');
+    });
+
+    test('相关性矩阵缺失时显示空状态而不是误导性的热力图', () => {
+        render(
+            <div style={{ height: 1600, width: 1280 }}>
+                <AllocationVisualizationPanel
+                    onOpenAssetDetail={vi.fn()}
+                    result={{
+                        ...mockResult,
+                        correlationMatrix: {
+                            labels: ['SPY', 'AGG'],
+                            matrix: [],
+                        },
+                    }}
+                />
+            </div>,
+        );
+
+        expect(screen.getByTestId('allocation-correlation-empty')).toHaveTextContent('当前结果未携带可用的相关性矩阵。');
+        expect(screen.queryByTestId('allocation-correlation-grid')).not.toBeInTheDocument();
+    });
+
     test('交易行为按每页 10 条分页展示', async () => {
         const user = userEvent.setup();
         const resultWithTrades: AllocationResult = {

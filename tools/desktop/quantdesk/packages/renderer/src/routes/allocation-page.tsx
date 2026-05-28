@@ -69,6 +69,7 @@ export const AllocationPage = () => {
         saveDetailTags,
         selectedAssetIds,
         selectFirstAssets,
+        setActiveDualMomentumTopK,
         setBaseCurrency,
         setDateRange,
         setFilterQuery,
@@ -222,10 +223,12 @@ export const AllocationPage = () => {
                 <AssetSelectionPanel
                     filterQuery={filterQuery}
                     isLoadingAssets={isLoadingAssets}
-                    onClearResult={clearResult}
+                    onClearSelection={() => {
+                        selectFirstAssets(0);
+                        clearResult();
+                    }}
                     onFilterChange={setFilterQuery}
                     onOpenAssetDetail={openAssetDetail}
-                    onSelectFirst={selectFirstAssets}
                     onToggleSelected={toggleSelectedAsset}
                     selectedAssets={selectedAssets}
                     selectedAssetIds={selectedAssetIds}
@@ -240,6 +243,7 @@ export const AllocationPage = () => {
                     isRunning={isRunning}
                     latestEndDate={latestEndDate}
                     onRunAllocation={handleRunAllocation}
+                    onSetActiveDualMomentumTopK={setActiveDualMomentumTopK}
                     onSetBaseCurrency={(value) => {
                         setBaseCurrency(value as typeof baseCurrency);
                     }}

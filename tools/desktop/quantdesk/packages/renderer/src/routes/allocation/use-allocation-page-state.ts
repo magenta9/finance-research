@@ -28,6 +28,7 @@ type AllocationPageAllocationState = Pick<AllocationStore,
     | 'selectFirstAssets'
     | 'setAllocationAssetEnabled'
     | 'setAllocationAssetSelection'
+    | 'setActiveDualMomentumTopK'
     | 'setBaseCurrency'
     | 'setDateRange'
     | 'setFilterQuery'
@@ -99,6 +100,7 @@ export const useAllocationPageState = (): AllocationPageState => {
         selectFirstAssets: state.selectFirstAssets,
         setAllocationAssetEnabled: state.setAllocationAssetEnabled,
         setAllocationAssetSelection: state.setAllocationAssetSelection,
+        setActiveDualMomentumTopK: state.setActiveDualMomentumTopK,
         setBaseCurrency: state.setBaseCurrency,
         setDateRange: state.setDateRange,
         setFilterQuery: state.setFilterQuery,

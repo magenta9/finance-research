@@ -126,23 +126,21 @@ export const AllocationStrategyPanel = ({
 );
 
 export const AssetSelectionPanel = ({
+    onClearSelection,
     filterQuery,
     isLoadingAssets,
-    onClearResult,
     onFilterChange,
     onOpenAssetDetail,
-    onSelectFirst,
     onToggleSelected,
     selectedAssets,
     selectedAssetIds,
     visibleAssets,
 }: {
+    onClearSelection: () => void;
     filterQuery: string;
     isLoadingAssets: boolean;
-    onClearResult: () => void;
     onFilterChange: (value: string) => void;
     onOpenAssetDetail: (assetId: string) => void;
-    onSelectFirst: (count: number) => void;
     onToggleSelected: (assetId: string) => void;
     selectedAssets: StoredAsset[];
     selectedAssetIds: string[];
@@ -150,7 +148,7 @@ export const AssetSelectionPanel = ({
 }) => {
     const [isDropdownOpen, setDropdownOpen] = useState(false);
     const selectedAssetIdSet = new Set(selectedAssetIds);
-    const dropdownAssets = visibleAssets.slice(0, 12);
+    const dropdownAssets = visibleAssets.slice(0, 20);
 
     return (
         <section className="rounded-[20px] border border-[color:var(--color-border)] bg-[rgba(255,252,248,0.78)] p-4 shadow-[0_12px_32px_rgba(61,43,31,0.05)]">
@@ -184,7 +182,7 @@ export const AssetSelectionPanel = ({
                     />
                     {isDropdownOpen && (
                         <div
-                            className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-80 overflow-y-auto rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-surface-strong)] p-2 shadow-[0_18px_40px_rgba(23,19,16,0.14)]"
+                            className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-[min(28rem,calc(100vh-14rem))] overflow-y-auto rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-surface-strong)] p-2 shadow-[0_18px_40px_rgba(23,19,16,0.14)]"
                             data-testid="allocation-asset-dropdown"
                             onMouseDown={(event) => {
                                 event.preventDefault();
@@ -199,14 +197,14 @@ export const AssetSelectionPanel = ({
                                     当前没有匹配标的。
                                 </div>
                             ) : (
-                                <div className="space-y-1">
+                                <div className="divide-y divide-[color:var(--color-border)]">
                                     {dropdownAssets.map((asset) => {
                                         const isSelected = selectedAssetIdSet.has(asset.id);
 
                                         return (
                                             <div
                                                 className={[
-                                                    'flex items-center gap-3 rounded-[12px] border px-3 py-2 transition',
+                                                    'grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[12px] border px-3 py-2.5 transition',
                                                     isSelected
                                                         ? 'border-[var(--color-highlight-soft)] bg-[rgba(156,98,55,0.08)]'
                                                         : 'border-transparent bg-transparent hover:border-[var(--color-highlight-soft)] hover:bg-white/70',
@@ -221,7 +219,7 @@ export const AssetSelectionPanel = ({
                                                     }}
                                                 />
                                                 <Button
-                                                    className="h-auto min-w-0 flex-1 justify-start border-0 bg-transparent px-0 py-0 text-left shadow-none hover:bg-transparent"
+                                                    className="h-auto min-w-0 justify-start border-0 bg-transparent px-0 py-0 text-left shadow-none hover:bg-transparent"
                                                     data-testid={`allocation-asset-open-${asset.symbol}`}
                                                     onClick={() => {
                                                         onOpenAssetDetail(asset.id);
@@ -230,14 +228,16 @@ export const AssetSelectionPanel = ({
                                                     tone="ghost"
                                                     type="button"
                                                 >
-                                                    <span className="block min-w-0 truncate font-display text-lg text-[var(--color-foreground)]">{asset.symbol}（{asset.name}）</span>
-                                                    <span className="mt-1 flex flex-wrap gap-1.5">
-                                                        <Badge>{asset.market}</Badge>
-                                                        <Badge tone="accent">{asset.assetClass}</Badge>
-                                                        <Badge>{asset.currency}</Badge>
+                                                    <span className="flex min-w-0 items-baseline gap-2">
+                                                        <span className="shrink-0 font-display text-lg text-[var(--color-foreground)]">{asset.symbol}</span>
+                                                        <span className="min-w-0 truncate text-sm text-[var(--color-copy)]">{asset.name}</span>
+                                                    </span>
+                                                    <span className="mt-1 block min-w-0 truncate text-xs uppercase tracking-[0.14em] text-[var(--color-muted)]">
+                                                        {asset.market} / {asset.assetClass} / {asset.currency}
                                                     </span>
                                                 </Button>
                                                 <Button
+                                                    className="shrink-0 px-2.5"
                                                     onClick={() => {
                                                         onOpenAssetDetail(asset.id);
                                                     }}
@@ -258,19 +258,13 @@ export const AssetSelectionPanel = ({
                     )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => { onSelectFirst(5); }} tone="secondary" data-testid="allocation-select-first-5">
-                        选择前 5 个
-                    </Button>
-                    <Button onClick={() => { onSelectFirst(20); }} tone="secondary" data-testid="allocation-select-first-20">
-                        选择前 20 个
-                    </Button>
                     <Button
+                        data-testid="allocation-clear-selection"
                         onClick={() => {
-                            onSelectFirst(0);
-                            onClearResult();
+                            onClearSelection();
                         }}
                         tone="ghost"
-                    >清空结果</Button>
+                    >清空选择</Button>
                 </div>
             </div>
 
@@ -307,6 +301,7 @@ export const AllocationControlsPanel = ({
     isRunning,
     latestEndDate,
     onRunAllocation,
+    onSetActiveDualMomentumTopK,
     onSetBaseCurrency,
     onSetDateRange,
     onSetMaxSingleWeight,
@@ -326,6 +321,7 @@ export const AllocationControlsPanel = ({
     isRunning: boolean;
     latestEndDate: string;
     onRunAllocation: () => void;
+    onSetActiveDualMomentumTopK: (value: number) => void;
     onSetBaseCurrency: (value: string) => void;
     onSetDateRange: (startDate: string, endDate: string) => void;
     onSetMaxSingleWeight: (value: number) => void;
@@ -341,6 +337,8 @@ export const AllocationControlsPanel = ({
     const trendConfig = resolveTrendFollowingConfig(strategyMix);
     const enabledTrendRuleCount = trendConfig.rules.filter((rule) => rule.enabled).length;
     const isEwmacStrategy = strategy === 'ewmac_trend_following';
+    const isActiveDualMomentumStrategy = strategy === 'active_dual_momentum_gtaa';
+    const activeDualMomentumTopK = strategyMix.activeDualMomentum?.topK ?? 3;
 
     return (
         <section className="rounded-[20px] border border-[color:var(--color-border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,243,235,0.82))] p-4 shadow-[0_12px_32px_rgba(61,43,31,0.05)]">
@@ -498,6 +496,38 @@ export const AllocationControlsPanel = ({
                         </div>
                     </div>
                 )}
+
+                {isActiveDualMomentumStrategy && (
+                    <div className="rounded-[18px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.48)] p-4 md:col-span-2">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <span className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">动量标的数量</span>
+                            <Badge tone="accent">Top {activeDualMomentumTopK}</Badge>
+                        </div>
+                        <div className="mt-3 space-y-3" data-testid="allocation-adm-topk-control">
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-semibold text-[var(--color-muted)]">2</span>
+                                <input
+                                    aria-label="动量标的数量"
+                                    className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[rgba(156,98,55,0.18)] accent-[var(--color-highlight)]"
+                                    data-testid="allocation-adm-topk-slider"
+                                    max={10}
+                                    min={2}
+                                    onChange={(event) => {
+                                        onSetActiveDualMomentumTopK(Number(event.currentTarget.value));
+                                    }}
+                                    step={1}
+                                    type="range"
+                                    value={activeDualMomentumTopK}
+                                />
+                                <span className="text-xs font-semibold text-[var(--color-muted)]">10</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-[var(--color-muted)]">
+                                <span>范围 2 - 10</span>
+                                <span>默认值 3</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -514,6 +544,7 @@ export const AllocationControlsPanel = ({
                 <Badge>{cadenceLabelMap[rebalanceCadence]}</Badge>
                 {isEwmacStrategy && <Badge>{trendConfig.allowShort ? '允许做空' : '仅做多'}</Badge>}
                 {isEwmacStrategy && <Badge tone="accent">EWMAC {enabledTrendRuleCount} 条规则</Badge>}
+                {isActiveDualMomentumStrategy && <Badge tone="accent">动量 Top {activeDualMomentumTopK}</Badge>}
                 <Badge>{startDate} ~ {endDate}</Badge>
             </div>
 

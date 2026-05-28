@@ -150,6 +150,7 @@ const activeDualMomentumHandler: AllocationStrategyHandler = {
             annualizedVolatility: analysisInput.annualizedAssetVolatility,
             baseCurrency,
             calculationDateRange,
+            covariance: analysisInput.shrunkCovariance,
             config: strategyMix?.activeDualMomentum,
             prepared,
         }),

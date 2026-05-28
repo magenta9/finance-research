@@ -2,7 +2,7 @@
 
 import '@testing-library/jest-dom/vitest';
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -62,6 +62,23 @@ describe('AllocationPage', () => {
         resetAssetStore();
         resetPlanStore();
 
+        vi.stubGlobal(
+            'ResizeObserver',
+            class ResizeObserver {
+                disconnect() {
+                    return undefined;
+                }
+
+                observe() {
+                    return undefined;
+                }
+
+                unobserve() {
+                    return undefined;
+                }
+            },
+        );
+
         const consoleError = console.error.bind(console);
         vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
             const message = args.map((value) => String(value)).join(' ');
@@ -112,6 +129,7 @@ describe('AllocationPage', () => {
     });
 
     afterAll(() => {
+        vi.unstubAllGlobals();
         vi.restoreAllMocks();
     });
 
@@ -136,6 +154,8 @@ describe('AllocationPage', () => {
         expect(screen.getByText('反波动率加权 参数')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-asset-list')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-run-button')).toBeInTheDocument();
+        expect(screen.queryByTestId('allocation-select-first-5')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('allocation-select-first-20')).not.toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: /配置结果总览与历史方案库/i })).not.toBeInTheDocument();
         expect(screen.queryByText('保存与回放')).not.toBeInTheDocument();
         expect(await screen.findByText('还没有保存过方案。先运行一次配置，再把结果归档到历史列表。')).toBeInTheDocument();
@@ -159,5 +179,59 @@ describe('AllocationPage', () => {
 
         await user.click(screen.getByTestId('allocation-ewmac-rule-2-8'));
         expect(screen.getByTestId('allocation-ewmac-rule-2-8')).not.toBeChecked();
+    });
+
+    test('Active Dual Momentum 支持通过滑杆选择 2 到 10 个动量标的并传入运行请求', async () => {
+        const user = userEvent.setup();
+        mockApi.portfolio.runAllocation = vi.fn().mockResolvedValue(null);
+
+        render(<AllocationPage />);
+
+        await waitFor(() => {
+            expect(mockApi.data.getAssets).toHaveBeenCalledTimes(2);
+        });
+
+        await user.click(screen.getByTestId('allocation-strategy-active_dual_momentum_gtaa'));
+
+        expect(screen.getByTestId('allocation-adm-topk-control')).toBeInTheDocument();
+        expect(screen.getByText('Active Dual Momentum 参数')).toBeInTheDocument();
+        expect(screen.getByTestId('allocation-adm-topk-slider')).toHaveValue('3');
+
+        fireEvent.change(screen.getByTestId('allocation-adm-topk-slider'), { target: { value: '10' } });
+        await user.click(screen.getByTestId('allocation-run-button'));
+
+        await waitFor(() => {
+            expect(mockApi.portfolio.runAllocation).toHaveBeenCalledTimes(1);
+        });
+
+        expect(mockApi.portfolio.runAllocation).toHaveBeenCalledWith(expect.objectContaining({
+            strategy: 'active_dual_momentum_gtaa',
+            strategyMix: {
+                activeDualMomentum: expect.objectContaining({
+                    topK: 10,
+                }),
+            },
+        }));
+    });
+
+    test('清空选择按钮会清空当前已选资产', async () => {
+        const user = userEvent.setup();
+
+        render(<AllocationPage />);
+
+        await waitFor(() => {
+            expect(mockApi.data.getAssets).toHaveBeenCalledTimes(2);
+        });
+
+        expect(screen.getByTestId('allocation-selected-asset-SPY')).toBeInTheDocument();
+        expect(screen.getByTestId('allocation-selected-asset-511010')).toBeInTheDocument();
+        expect(screen.getByTestId('allocation-selected-asset-GLD')).toBeInTheDocument();
+
+        await user.click(screen.getByTestId('allocation-clear-selection'));
+
+        expect(screen.queryByTestId('allocation-selected-asset-SPY')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('allocation-selected-asset-511010')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('allocation-selected-asset-GLD')).not.toBeInTheDocument();
+        expect(screen.getByText('尚未选择标的。')).toBeInTheDocument();
     });
 });

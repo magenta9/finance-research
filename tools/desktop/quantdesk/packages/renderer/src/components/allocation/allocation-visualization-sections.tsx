@@ -49,6 +49,11 @@ const cadenceLabelMap = {
 
 const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
 
+const directionLabelMap = {
+    long: '多',
+    short: '空',
+} as const;
+
 const chartPercentFormatter = (value: string | number) => `${Number(value).toFixed(1)}%`;
 
 const chartValueFormatter = (value: number | null) => {
@@ -129,9 +134,58 @@ const AssetChipButton = ({
 );
 
 type AssetDateCoverageRow = NonNullable<AllocationResult['diagnostics']['assetDateCoverage']>[number];
+type ActiveDualMomentumRebalanceRecord = NonNullable<AllocationResult['diagnostics']['activeDualMomentum']>['rebalanceRecords'][number];
 type WeightRow = AllocationResult['allocations'][number];
 type PortfolioPathRow = NonNullable<AllocationResult['portfolioPath']>[number];
 type ScenarioRow = NonNullable<AllocationResult['scenarioAnalysis']>[number];
+
+interface HoldingDisplayRow {
+    assetId?: string;
+    direction?: 'long' | 'short';
+    symbol: string;
+    weight: number;
+}
+
+const findActiveDualMomentumRecordForDate = (
+    records: ActiveDualMomentumRebalanceRecord[],
+    date: string,
+) => {
+    let matchedRecord: ActiveDualMomentumRebalanceRecord | undefined;
+
+    records.forEach((record) => {
+        if (record.date <= date) {
+            matchedRecord = record;
+        }
+    });
+
+    return matchedRecord;
+};
+
+const buildHoldingRowsFromRebalanceRecord = (record?: ActiveDualMomentumRebalanceRecord): HoldingDisplayRow[] =>
+    (record?.holdings ?? [])
+        .map((holding) => ({
+            assetId: holding.assetId,
+            direction: holding.direction,
+            symbol: holding.symbol,
+            weight: holding.weight,
+        }))
+        .sort((left, right) => right.weight - left.weight);
+
+const buildHoldingRowsFromAllocations = (allocations: WeightRow[]): HoldingDisplayRow[] =>
+    allocations
+        .map((allocation) => ({
+            assetId: allocation.assetId,
+            direction: allocation.direction,
+            symbol: allocation.symbol,
+            weight: allocation.weight,
+        }))
+        .sort((left, right) => right.weight - left.weight);
+
+const formatHoldingLabel = (holding: HoldingDisplayRow) => [
+    holding.symbol,
+    holding.direction ? directionLabelMap[holding.direction] : null,
+    formatPercent(holding.weight),
+].filter(Boolean).join(' ');
 
 export interface AllocationVisualizationSectionsProps {
     assetCoverageById: Map<string, AssetDateCoverageRow>;
@@ -173,6 +227,16 @@ export const AllocationVisualizationSections = ({
     result,
     scenarioAnalysis,
 }: AllocationVisualizationSectionsProps) => {
+    const activeDualMomentumRecords = result.diagnostics.activeDualMomentum?.rebalanceRecords ?? [];
+    const latestActiveDualMomentumRecord = activeDualMomentumRecords.at(-1);
+    const latestHoldingRows = latestActiveDualMomentumRecord
+        ? buildHoldingRowsFromRebalanceRecord(latestActiveDualMomentumRecord)
+        : buildHoldingRowsFromAllocations(result.allocations);
+    const latestCashWeight = latestActiveDualMomentumRecord?.cashWeight ?? 0;
+    const hasCorrelationMatrix = correlationLabels.length > 0
+        && result.correlationMatrix.matrix.length === correlationLabels.length
+        && result.correlationMatrix.matrix.every((row) => row.length === correlationLabels.length);
+
     const getScenarioAssets = (scenarioName: string) => {
         const prioritizedClasses = scenarioAssetClassPriorityMap[scenarioName] ?? [];
         const prioritizedAllocations = prioritizedClasses.length > 0
@@ -275,9 +339,11 @@ export const AllocationVisualizationSections = ({
 
                                             const point = payload[0]?.payload as PortfolioPathRow;
                                             const drawdownPoint = payload.find((entry) => entry.dataKey === 'drawdownEquity')?.payload as PortfolioPathDrawdownPoint | undefined;
+                                            const activeDualMomentumRecord = findActiveDualMomentumRecordForDate(activeDualMomentumRecords, point.date);
+                                            const tooltipHoldings = buildHoldingRowsFromRebalanceRecord(activeDualMomentumRecord);
 
                                             return (
-                                                <div className="min-w-[220px] rounded-[18px] border border-[rgba(168,141,109,0.22)] bg-[rgba(255,252,247,0.98)] px-4 py-3 text-sm text-[var(--color-copy)] shadow-[0_18px_42px_rgba(61,43,31,0.1)]">
+                                                <div className="min-w-[260px] rounded-[18px] border border-[rgba(168,141,109,0.22)] bg-[rgba(255,252,247,0.98)] px-4 py-3 text-sm text-[var(--color-copy)] shadow-[0_18px_42px_rgba(61,43,31,0.1)]">
                                                     <p className="text-xs uppercase tracking-[0.18em] text-[var(--color-muted)]">{label}</p>
                                                     <div className="mt-3 space-y-2">
                                                         <div className="flex items-center justify-between gap-4">
@@ -298,6 +364,31 @@ export const AllocationVisualizationSections = ({
                                                                         <span>最大回撤</span>
                                                                         <strong className="font-medium text-[#5c8f63]">{formatPercent(drawdownPoint.drawdownRatio)}</strong>
                                                                     </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {activeDualMomentumRecord && (
+                                                            <div className="rounded-[14px] border border-[rgba(156,98,55,0.18)] bg-[rgba(156,98,55,0.07)] px-3 py-2" data-testid="allocation-nav-tooltip-holdings">
+                                                                <div className="flex items-center justify-between gap-4 text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                                                                    <span>持仓</span>
+                                                                    <span>{activeDualMomentumRecord.date}</span>
+                                                                </div>
+                                                                <div className="mt-2 space-y-1 text-xs text-[var(--color-foreground)]">
+                                                                    {tooltipHoldings.slice(0, 5).map((holding) => (
+                                                                        <div className="flex items-center justify-between gap-4" key={`${holding.symbol}-${holding.direction ?? 'net'}`}>
+                                                                            <span>{holding.symbol}{holding.direction ? ` ${directionLabelMap[holding.direction]}` : ''}</span>
+                                                                            <strong className="font-medium">{formatPercent(holding.weight)}</strong>
+                                                                        </div>
+                                                                    ))}
+                                                                    {tooltipHoldings.length > 5 && (
+                                                                        <p className="text-[var(--color-muted)]">另有 {tooltipHoldings.length - 5} 个持仓</p>
+                                                                    )}
+                                                                    {activeDualMomentumRecord.cashWeight > 0 && (
+                                                                        <div className="flex items-center justify-between gap-4 text-[var(--color-muted)]">
+                                                                            <span>现金</span>
+                                                                            <strong className="font-medium">{formatPercent(activeDualMomentumRecord.cashWeight)}</strong>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         )}
@@ -328,6 +419,43 @@ export const AllocationVisualizationSections = ({
                             <p>横轴为时间，纵轴为净值的对数坐标</p>
                             {portfolioPathWithDrawdowns.segments.length > 0 && <p className="text-[#5c8f63]">绿色段表示新高后的最大回撤</p>}
                         </div>
+                        {latestHoldingRows.length > 0 && (
+                            <div className="rounded-[18px] border border-[color:var(--color-border)] bg-[rgba(244,239,230,0.46)] p-3" data-testid="allocation-holdings-strip">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-xs uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                                        {latestActiveDualMomentumRecord ? `${latestActiveDualMomentumRecord.date} 持仓比例` : '当前持仓比例'}
+                                    </span>
+                                    {latestHoldingRows.map((holding) => {
+                                        const assetId = holding.assetId;
+
+                                        return assetId ? (
+                                            <Button
+                                                className="h-auto min-h-0 rounded-full border border-[color:var(--color-highlight-soft)] bg-[rgba(156,98,55,0.08)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-highlight)] shadow-none hover:bg-[rgba(156,98,55,0.14)]"
+                                                data-testid={`allocation-holding-chip-${holding.symbol}`}
+                                                key={`${holding.symbol}-${holding.direction ?? 'net'}`}
+                                                onClick={() => {
+                                                    onOpenAssetDetail(assetId);
+                                                }}
+                                                size="sm"
+                                                tone="ghost"
+                                                type="button"
+                                            >
+                                                {formatHoldingLabel(holding)}
+                                            </Button>
+                                        ) : (
+                                            <span className="rounded-full border border-[color:var(--color-highlight-soft)] bg-[rgba(156,98,55,0.08)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-highlight)]" key={`${holding.symbol}-${holding.direction ?? 'net'}`}>
+                                                {formatHoldingLabel(holding)}
+                                            </span>
+                                        );
+                                    })}
+                                    {latestCashWeight > 0 && (
+                                        <span className="rounded-full border border-[color:var(--color-border)] bg-white/70 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]" data-testid="allocation-holding-cash">
+                                            现金 {formatPercent(latestCashWeight)}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="rounded-[20px] border border-dashed border-[color:var(--color-border)] bg-[rgba(244,239,230,0.44)] p-5 text-sm leading-6 text-[var(--color-copy)]">
@@ -517,42 +645,48 @@ export const AllocationVisualizationSections = ({
                 </div>
 
                 <ChartCard title="相关性热力图">
-                    <div
-                        className="grid gap-2"
-                        data-testid="allocation-correlation-grid"
-                        style={{ gridTemplateColumns: `repeat(${Math.max(correlationLabels.length + 1, 1)}, minmax(0, 1fr))` }}
-                    >
-                        <div aria-hidden="true" />
-                        {correlationLabels.map((symbol) => (
-                            <div className="flex justify-center" key={`correlation-col-${symbol}`}>
-                                <AssetChipButton label={symbol} onClick={() => { openAssetDetailBySymbol(symbol); }} title={`打开 ${symbol} 详情`} />
-                            </div>
-                        ))}
-                        {correlationLabels.map((rowSymbol, rowIndex) => (
-                            <Fragment key={rowSymbol}>
-                                <div className="flex items-center justify-center">
-                                    <AssetChipButton label={rowSymbol} onClick={() => { openAssetDetailBySymbol(rowSymbol); }} title={`打开 ${rowSymbol} 详情`} />
+                    {hasCorrelationMatrix ? (
+                        <div
+                            className="grid gap-2"
+                            data-testid="allocation-correlation-grid"
+                            style={{ gridTemplateColumns: `repeat(${Math.max(correlationLabels.length + 1, 1)}, minmax(0, 1fr))` }}
+                        >
+                            <div aria-hidden="true" />
+                            {correlationLabels.map((symbol) => (
+                                <div className="flex justify-center" key={`correlation-col-${symbol}`}>
+                                    <AssetChipButton label={symbol} onClick={() => { openAssetDetailBySymbol(symbol); }} title={`打开 ${symbol} 详情`} />
                                 </div>
-                                {correlationLabels.map((columnSymbol, columnIndex) => {
-                                    const value = result.correlationMatrix.matrix[rowIndex]?.[columnIndex] ?? 0;
+                            ))}
+                            {correlationLabels.map((rowSymbol, rowIndex) => (
+                                <Fragment key={rowSymbol}>
+                                    <div className="flex items-center justify-center">
+                                        <AssetChipButton label={rowSymbol} onClick={() => { openAssetDetailBySymbol(rowSymbol); }} title={`打开 ${rowSymbol} 详情`} />
+                                    </div>
+                                    {correlationLabels.map((columnSymbol, columnIndex) => {
+                                        const value = result.correlationMatrix.matrix[rowIndex]?.[columnIndex] ?? 0;
 
-                                    return (
-                                        <div
-                                            className={`correlation-heat-cell ${correlationToneClassName(value)} rounded-[16px] p-3 text-center text-xs font-medium`}
-                                            data-testid={`allocation-correlation-cell-${rowSymbol}-${columnSymbol}`}
-                                            key={`${rowSymbol}-${columnSymbol}`}
-                                            style={correlationHeatCellStyle(value)}
-                                        >
-                                            <p className="text-[10px] uppercase tracking-[0.18em] opacity-70">
-                                                {rowSymbol} / {columnSymbol}
-                                            </p>
-                                            <p className="mt-2 text-sm">{value.toFixed(2)}</p>
-                                        </div>
-                                    );
-                                })}
-                            </Fragment>
-                        ))}
-                    </div>
+                                        return (
+                                            <div
+                                                className={`correlation-heat-cell ${correlationToneClassName(value)} rounded-[16px] p-3 text-center text-xs font-medium`}
+                                                data-testid={`allocation-correlation-cell-${rowSymbol}-${columnSymbol}`}
+                                                key={`${rowSymbol}-${columnSymbol}`}
+                                                style={correlationHeatCellStyle(value)}
+                                            >
+                                                <p className="text-[10px] uppercase tracking-[0.18em] opacity-70">
+                                                    {rowSymbol} / {columnSymbol}
+                                                </p>
+                                                <p className="mt-2 text-sm">{value.toFixed(2)}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </Fragment>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="rounded-[20px] border border-dashed border-[color:var(--color-border)] bg-[rgba(244,239,230,0.44)] p-5 text-sm leading-6 text-[var(--color-copy)]" data-testid="allocation-correlation-empty">
+                            当前结果未携带可用的相关性矩阵。
+                        </div>
+                    )}
                 </ChartCard>
             </div>
         </>

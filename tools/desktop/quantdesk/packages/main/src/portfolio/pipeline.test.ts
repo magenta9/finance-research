@@ -294,6 +294,8 @@ describe('portfolio allocation pipeline', () => {
             expect.objectContaining({ direction: 'short', symbol: 'FU9999' }),
             expect.objectContaining({ direction: 'long', symbol: 'RB9999' }),
         ]));
+        expect(outcome.result.correlationMatrix.labels).toEqual(['SPY', 'TLT', 'RB9999', 'FU9999']);
+        expect(outcome.result.correlationMatrix.matrix).toHaveLength(4);
         expect(outcome.result.portfolioPath).toHaveLength(length);
         expect(preparationService.prepare).toHaveBeenCalledWith(expect.objectContaining({
             warmupDays: 203,
