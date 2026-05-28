@@ -87,13 +87,14 @@ Full baseline 结果：
 | 6 | sleeve 入选标的按资产类别设上限 | 61.5761 | 24.2506 | discard，均值高但尾部严重恶化 |
 | 7 | 常设 20% cash buffer | 61.2313 | 34.3947 | keep candidate |
 | 7i | 隔离验证：仅保留 20% cash buffer | 60.6981 | 32.0725 | keep candidate |
-| 8 | 20% cash buffer + sleeve 内逆波动权重 | 64.4694 | 37.1067 | keep candidate，进入 full Eval |
+| 8 | 20% cash buffer + sleeve 内逆波动权重 | 64.4694 | 37.1067 | keep candidate，full Eval 通过 |
+| 9 | best + long-sleeve futures trend filter | 65.2284 | 38.7577 | keep candidate，full Eval 通过 |
 
-关键观察：逆波动权重单独使用时会改善均值但尾部不够稳；20% cash buffer 单独使用时已经能改善尾部；把二者叠加后，现金缓冲压住整体风险，逆波动权重再降低高波动标的的组合冲击，二者形成互补。
+关键观察：逆波动权重单独使用时会改善均值但尾部不够稳；20% cash buffer 单独使用时已经能改善尾部；把二者叠加后，现金缓冲压住整体风险，逆波动权重再降低高波动标的的组合冲击。进一步叠加 long-sleeve futures trend filter 后，长周期 sleeve 不再承担负趋势期货空头，空头表达更多留给短周期 sleeve，full Eval 继续改善。
 
 ## 4. 最终机制
 
-最终保留机制：常设 20% cash buffer + sleeve 内逆波动权重。
+最终保留机制：常设 20% cash buffer + sleeve 内逆波动权重 + long-sleeve futures trend filter。
 
 实现方式：
 
@@ -101,31 +102,32 @@ Full baseline 结果：
 - short sleeve 与 long sleeve 正常选择候选。
 - 每个 sleeve 内，对入选标的计算 lookback 区间内的实现波动率。
 - sleeve 权重按 `1 / realizedVolatility` 分配。
+- futures 在 short sleeve 中仍可按绝对动量表达多空；但在 long sleeve 中，负动量 futures 不再进入空头仓位，而是转为现金。
 - short/long sleeves 合并后，实际持仓权重统一乘以 0.8。
 - 缩减出来的 20% 暴露计入现金权重。
 
-这个机制改变的是风险预算与组合暴露，不是动量周期参数。
+这个机制改变的是风险预算、组合暴露和 futures 信号职责分工，不是动量周期参数。
 
 ## 5. Full Eval 结论
 
-| 指标 | ADM V1 baseline | 20% cash buffer | 20% cash buffer + inverse vol | 相对 baseline 变化 |
-|---|---:|---:|---:|---:|
-| caseCount | 600 | 600 | 600 | 0 |
-| successCount | 600 | 600 | 600 | 0 |
-| failureCount | 0 | 0 | 0 | 0 |
-| meanScore | 58.5533 | 63.2808 | 67.0347 | +8.4814 |
-| p10Score | 27.2775 | 33.1089 | 38.0058 | +10.7283 |
-| p50Score | 57.0239 | 62.5091 | 66.8327 | +9.8088 |
-| p90Score | 91.9164 | 93.5335 | 93.5667 | +1.6503 |
-| combinedScore | 49.1706 | 54.2292 | 58.3260 | +9.1554 |
+| 指标 | ADM V1 baseline | 20% cash buffer | cash + inverse vol | final best | 相对 baseline 变化 |
+|---|---:|---:|---:|---:|---:|
+| caseCount | 600 | 600 | 600 | 600 | 0 |
+| successCount | 600 | 600 | 600 | 600 | 0 |
+| failureCount | 0 | 0 | 0 | 0 | 0 |
+| meanScore | 58.5533 | 63.2808 | 67.0347 | 67.5640 | +9.0107 |
+| p10Score | 27.2775 | 33.1089 | 38.0058 | 39.9569 | +12.6794 |
+| p50Score | 57.0239 | 62.5091 | 66.8327 | 68.0753 | +11.0514 |
+| p90Score | 91.9164 | 93.5335 | 93.5667 | 93.5811 | +1.6647 |
+| combinedScore | 49.1706 | 54.2292 | 58.3260 | 59.2819 | +10.1113 |
 
-研究结论：20% cash buffer + inverse volatility sleeve weighting 在 full Eval 上明显优于 ADM V1，也优于 cash buffer-only。它同时提升 meanScore 与 p10Score，说明不是只优化平均表现，而是在弱样本上也有改善。
+研究结论：最终 best 机制在 full Eval 上明显优于 ADM V1，也优于 cash buffer-only 和 cash + inverse vol 两个中间版本。它同时提升 meanScore 与 p10Score，说明不是只优化平均表现，而是在弱样本上也有改善。
 
 相对 cash buffer-only：
 
-- meanScore 进一步提升 3.7539
-- p10Score 进一步提升 4.8969
-- combinedScore 进一步提升 4.0968
+- meanScore 进一步提升 4.2832
+- p10Score 进一步提升 6.8480
+- combinedScore 进一步提升 5.0527
 
 ## 6. 验证结果
 
@@ -133,7 +135,7 @@ Full baseline 结果：
 
 - Eval harness unit tests：6 tests passed
 - `make strategy.test`：13 tests passed
-- QuantDesk ADM rules vitest：4 tests passed
+- QuantDesk ADM rules vitest：5 tests passed
 - Eval harness 直接 SQLite 检查：仅 README 中存在否定说明，代码未直接访问 SQLite
 
 最终保留提交：
@@ -141,15 +143,16 @@ Full baseline 结果：
 - `b0c0bea experiment(adm): isolate cash buffer mechanism`
 - `c33e071 experiment(adm): keep isolated cash buffer`
 - `a5d5f84 experiment(adm): combine cash buffer and inverse volatility`
+- `0d4a812 experiment(adm): add futures trend filter to best`
 
 ## 7. 局限与后续建议
 
-本轮结论基于当前 quant-data 可覆盖资产、当前评分函数和固定随机种子。它支持该机制进入下一阶段，但还不是最终产品默认参数结论。
+本轮结论基于当前 quant-data 可覆盖资产、当前评分函数和固定随机种子。它支持 final best 机制进入下一阶段，但还不是最终产品默认参数结论。
 
 建议后续：
 
 1. 使用不同随机种子重复 full Eval，确认不是样本路径偶然性。
-2. 对剩余二线候选补跑 full Eval：50/50 逆波动权重、long-horizon futures short separation。
+2. 对剩余二线候选补跑 full Eval：50/50 逆波动权重，以及与 final best 的组合版本。
 3. 加入交易成本和滑点敏感性测试。
 4. 在产品层把 cash buffer 和 sleeve weighting 做成可配置机制，而不是硬编码。
 5. 对 drawdown attribution 做二次复盘，确认改善来自波动/回撤压缩，而不是评分函数偏差。
@@ -159,5 +162,6 @@ Full baseline 结果：
 
 - Iteration log: `autoresearch-mechanism-results.tsv`
 - Budget confirmation: `autoresearch-iter08-cash-inv-vol/score-summary.json`
-- Full confirmation: `autoresearch-full-cash-inv-vol-20260528/score-summary.json`
-- Eval plan: `autoresearch-full-cash-inv-vol-20260528/eval-plan.json`
+- Previous full confirmation: `autoresearch-full-cash-inv-vol-20260528/score-summary.json`
+- Final full confirmation: `autoresearch-full-best-futures-trend-filter-20260528/score-summary.json`
+- Eval plan: `autoresearch-full-best-futures-trend-filter-20260528/eval-plan.json`
