@@ -88,32 +88,6 @@ describe('active dual momentum rules', () => {
         ]));
     });
 
-    test('keeps unfilled diversified slots in cash when one asset class dominates', () => {
-        const assets = [
-            buildAsset('equity-1', 'EQ1', 'equity'),
-            buildAsset('equity-2', 'EQ2', 'equity'),
-            buildAsset('equity-3', 'EQ3', 'equity'),
-            buildAsset('commodity-1', 'CM1', 'commodity'),
-        ];
-        const prepared = buildPrepared(assets, [
-            [100, 120],
-            [100, 118],
-            [100, 116],
-            [100, 101],
-        ]);
-
-        const selection = selectActiveDualMomentumSleeve({
-            config: normalizeActiveDualMomentumConfig({ absoluteMomentumFilter: false, sleeveWeights: { long: 0.8, short: 0.2 }, topK: 4 }),
-            lookbackWeeks: 0.2,
-            prepared,
-            rebalanceIndex: 1,
-            sleeve: 'long',
-        });
-
-        expect(selection.positions.map((position) => position.assetIndex).sort()).toEqual([0, 1, 3]);
-        expect(selection.cashWeight).toBeCloseTo(0.2, 6);
-    });
-
     test('merges short and long sleeves into net directional positions', () => {
         const merged = mergeActiveDualMomentumSleeves(
             { cashWeight: 0, filtered: [], positions: [{ assetIndex: 0, direction: 'short', shortMomentum: -0.2, source: 'short', weight: 0.4 }] },

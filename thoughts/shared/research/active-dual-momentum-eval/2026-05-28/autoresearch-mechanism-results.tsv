@@ -7,3 +7,4 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 4	market breadth exposure gate	52.8449	22.1548	43.6379	mean and p10 regressed	discard	0d96b9c
 5	long-horizon futures short separation	57.8644	30.2848	49.5905	p10 regressed	discard	eca63bd
 5r	negative futures route to cash	56.9955	28.0330	48.3068	p10 regressed	discard	d6f7e37
+6	asset class candidate cap	61.5761	24.2506	50.3785	p10 regressed	discard	3dafc6d/fa9df64
