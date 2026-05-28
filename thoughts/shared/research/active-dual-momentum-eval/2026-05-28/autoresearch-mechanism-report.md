@@ -89,8 +89,9 @@ Full baseline 结果：
 | 7i | 隔离验证：仅保留 20% cash buffer | 60.6981 | 32.0725 | keep candidate |
 | 8 | 20% cash buffer + sleeve 内逆波动权重 | 64.4694 | 37.1067 | keep candidate，full Eval 通过 |
 | 9 | best + long-sleeve futures trend filter | 65.2284 | 38.7577 | keep candidate，full Eval 通过 |
+| 10 | best + 50/50 等权/逆波动混合权重 | 63.4554 | 36.3368 | discard，低于当前 best budget |
 
-关键观察：逆波动权重单独使用时会改善均值但尾部不够稳；20% cash buffer 单独使用时已经能改善尾部；把二者叠加后，现金缓冲压住整体风险，逆波动权重再降低高波动标的的组合冲击。进一步叠加 long-sleeve futures trend filter 后，长周期 sleeve 不再承担负趋势期货空头，空头表达更多留给短周期 sleeve，full Eval 继续改善。
+关键观察：逆波动权重单独使用时会改善均值但尾部不够稳；20% cash buffer 单独使用时已经能改善尾部；把二者叠加后，现金缓冲压住整体风险，逆波动权重再降低高波动标的的组合冲击。进一步叠加 long-sleeve futures trend filter 后，长周期 sleeve 不再承担负趋势期货空头，空头表达更多留给短周期 sleeve，full Eval 继续改善。第 10 轮尝试用 50/50 等权/逆波动混合权重降低集中度，但 budget 表现低于当前 best，因此回滚。
 
 ## 4. 最终机制
 

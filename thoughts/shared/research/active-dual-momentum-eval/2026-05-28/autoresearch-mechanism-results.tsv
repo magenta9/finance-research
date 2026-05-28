@@ -15,3 +15,4 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 8f	20 percent cash buffer plus inverse volatility sleeve weights full eval	67.0347	38.0058	58.3260	full eval passed	keep	a5d5f84
 9	best plus long-sleeve futures trend filter	65.2284	38.7577	57.2872	budget eval passed	keep candidate	0d4a812
 9f	best plus long-sleeve futures trend filter full eval	67.5640	39.9569	59.2819	full eval passed	keep	0d4a812
+10	best with 50/50 equal and inverse-volatility sleeve weights	63.4554	36.3368	55.3198	below current best budget	discard	8c2d5e0/dee21f1
