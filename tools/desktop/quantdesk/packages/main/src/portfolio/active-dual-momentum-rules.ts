@@ -79,7 +79,7 @@ export const selectActiveDualMomentumSleeve = ({
     sleeve: 'short' | 'long';
 }): ActiveDualMomentumSleeveSelection => {
     const lookbackDays = lookbackWeeks * activeDualMomentumTradingDaysPerWeek;
-    const candidates = prepared.series.flatMap((entry, assetIndex) => {
+    const rankedCandidates = prepared.series.flatMap((entry, assetIndex) => {
         const previousPrice = entry.prices[rebalanceIndex - lookbackDays];
         const currentPrice = entry.prices[rebalanceIndex];
 
