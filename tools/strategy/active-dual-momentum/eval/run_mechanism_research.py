@@ -33,10 +33,12 @@ from run_eval import (
 
 
 CURRENT_REFERENCE_BUDGET = {
-    "meanScore": 82.3529,
-    "p10Score": 64.0293,
-    "combinedScore": 76.8558,
+    "meanScore": 71.9568,
+    "p10Score": 54.1614,
+    "combinedScore": 66.6182,
 }
+
+REFERENCE_GUARD_MULTIPLIER = 0.9
 
 
 @dataclass(frozen=True)
@@ -366,8 +368,8 @@ def main() -> int:
                 isinstance(summary.get("meanScore"), (int, float))
                 and isinstance(summary.get("p10Score"), (int, float))
                 and isinstance(combined, float)
-                and float(summary["meanScore"]) >= CURRENT_REFERENCE_BUDGET["meanScore"]
-                and float(summary["p10Score"]) >= CURRENT_REFERENCE_BUDGET["p10Score"]
+                and float(summary["meanScore"]) >= CURRENT_REFERENCE_BUDGET["meanScore"] * REFERENCE_GUARD_MULTIPLIER
+                and float(summary["p10Score"]) >= CURRENT_REFERENCE_BUDGET["p10Score"] * REFERENCE_GUARD_MULTIPLIER
                 and combined > CURRENT_REFERENCE_BUDGET["combinedScore"]
             )
             else "discard"

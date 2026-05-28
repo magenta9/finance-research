@@ -44,3 +44,4 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 78	searched direction: replace duplicate sleeve slots	80.3057	57.2828	73.3988	below current budget baseline	discard	not committed
 79	searched direction: risk-exit redeployment cooldown	82.3529	64.0293	76.8558	budget eval passed	keep candidate	pending
 79f	risk-exit redeployment cooldown full eval	84.7084	66.1378	79.1372	full eval passed	keep	pending
+79s	sharpe ceiling 2 scoring baseline reset	71.9568	54.1614	66.6182	new scoring baseline	baseline	pending

@@ -466,7 +466,39 @@ Full confirmation：
 
 结论：第 79 轮高于第 77 轮默认机制 full baseline（mean 84.0880 / p10 65.9341 / combined 78.6418），提升为当前默认机制并 commit。连续未改进计数重置为 0。
 
-## 23. 最终结论
+## 23. 评分函数重算基线
+
+从第 80 轮开始，Eval 评分函数将 `sharpeCeiling` 从 1.0 调整为 2.0，其他配置不变。这个改动会降低高 Sharpe 样本的饱和速度，因此第 80 轮之后的分数只与新基线比较，不再与第 79 轮之前的旧评分分数直接比较。
+
+新 budget baseline：
+
+| 指标 | 当前默认机制 |
+|---|---:|
+| caseCount | 60 |
+| successCount | 60 |
+| failureCount | 0 |
+| meanScore | 71.9568 |
+| p10Score | 54.1614 |
+| p50Score | 67.4219 |
+| p90Score | 95.6739 |
+| combinedScore | 66.6182 |
+
+新 full baseline：
+
+| 指标 | 当前默认机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 68.9448 |
+| p10Score | 51.3899 |
+| p50Score | 66.8944 |
+| p90Score | 92.3321 |
+| combinedScore | 63.6783 |
+
+后续 budget 闸门同步使用用户指定的保护条件：meanScore 不低于当前 baseline 的 90%，p10Score 不低于当前 baseline 的 90%，且 combinedScore 高于当前 baseline。
+
+## 24. 最终结论
 
 当前推荐保留的新机制为：
 
@@ -508,7 +540,7 @@ Full confirmation：
 - 25% 现金缓冲进一步降低跨品种随机篮子中的尾部暴露，同时没有牺牲 meanScore。
 - 单独的小幅变化保持带在非标准抽样中表现很好，但标准 full confirmation 不如第 45 轮稳健，因此没有进入最终默认机制。
 
-## 24. 证据路径
+## 25. 证据路径
 
 - 标准 50 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter11-60-mechanism-sweep-standard-cases/`
 - 第 45 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter45-downside-risk-larger-cash-standard-cases/`
@@ -543,9 +575,11 @@ Full confirmation：
 - 第 79 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter79-risk-exit-redeployment-cooldown-budget/`
 - 第 79 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter79-risk-exit-redeployment-cooldown/`
 - 第 79 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter79-risk-exit-redeployment-cooldown/`
+- Sharpe ceiling 2 新 budget baseline：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-baseline-iter79-sharpe-ceiling-2-budget/`
+- Sharpe ceiling 2 新 full baseline：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-baseline-iter79-sharpe-ceiling-2-full/`
 - 迭代日志：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-mechanism-results.tsv`
 
-## 25. 后续建议
+## 26. 后续建议
 
 下一轮机制研究可以优先围绕第 63 轮继续做三类验证：
 

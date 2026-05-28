@@ -31,7 +31,7 @@
         "maxDrawdownWeight": 0.3,
         "volatilityWeight": 0.2,
         "sharpeFloor": -0.5,
-        "sharpeCeiling": 1.0,
+        "sharpeCeiling": 2.0,
         "maxDrawdownCeiling": 0.35,
         "volatilityCeiling": 0.35
     }
