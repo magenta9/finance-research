@@ -11,3 +11,5 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 7	standing 20 percent cash buffer	61.2313	34.3947	53.1803	budget eval passed	keep candidate	fcecafb/1b45798
 7i	isolated standing 20 percent cash buffer	60.6981	32.0725	52.1104	budget eval passed	keep candidate	b0c0bea
 7f	isolated standing 20 percent cash buffer full eval	63.2808	33.1089	54.2292	full eval passed	keep	b0c0bea
+8	20 percent cash buffer plus inverse volatility sleeve weights	64.4694	37.1067	56.2606	budget eval passed	keep candidate	a5d5f84
+8f	20 percent cash buffer plus inverse volatility sleeve weights full eval	67.0347	38.0058	58.3260	full eval passed	keep	a5d5f84

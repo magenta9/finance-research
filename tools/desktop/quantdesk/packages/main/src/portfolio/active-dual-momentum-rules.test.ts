@@ -75,8 +75,6 @@ describe('active dual momentum rules', () => {
         expect(merged[0]?.weight).toBeCloseTo(0.3, 6);
     });
 
-});
-
     test('weights selected sleeve assets by inverse realized volatility', () => {
         const assets = [
             buildAsset('asset-high-vol', 'HV', 'equity'),
@@ -102,3 +100,4 @@ describe('active dual momentum rules', () => {
         expect(selection.positions.reduce((sum, position) => sum + position.weight, 0)).toBeCloseTo(0.6, 6);
         expect(lowVolWeight).toBeGreaterThan(highVolWeight);
     });
+});
