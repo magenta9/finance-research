@@ -24,6 +24,13 @@ const buildPrepared = (assets: StoredAsset[], prices: number[][]): PreparedAlloc
 });
 
 describe('active dual momentum rules', () => {
+    test('normalizes topK to the supported three to five asset range', () => {
+        expect(normalizeActiveDualMomentumConfig({ topK: 2 }).topK).toBe(3);
+        expect(normalizeActiveDualMomentumConfig({ topK: 4 }).topK).toBe(4);
+        expect(normalizeActiveDualMomentumConfig({ topK: 6 }).topK).toBe(5);
+        expect(normalizeActiveDualMomentumConfig({ topK: 4.6 }).topK).toBe(5);
+    });
+
     test('selects futures by absolute momentum while filtering negative ETF momentum to cash', () => {
         const assets = [
             buildAsset('asset-etf-up', 'SPY', 'equity'),
