@@ -31,7 +31,7 @@ describe('active dual momentum rules', () => {
         expect(normalizeActiveDualMomentumConfig({ topK: 4.6 }).topK).toBe(5);
     });
 
-    test('filters negative ETF and futures momentum to cash', () => {
+    test('selects futures by absolute momentum while filtering negative ETF momentum to cash', () => {
         const assets = [
             buildAsset('asset-etf-up', 'SPY', 'equity'),
             buildAsset('asset-etf-down', 'TLT', 'fixed_income'),
@@ -51,12 +51,10 @@ describe('active dual momentum rules', () => {
             sleeve: 'short',
         });
 
-        expect(selection.cashWeight).toBeCloseTo(1 / 3, 6);
-        expect(selection.filtered).toEqual([
-            expect.objectContaining({ assetId: 'asset-etf-down', reason: 'NEGATIVE_MOMENTUM' }),
-            expect.objectContaining({ assetId: 'asset-future-down', reason: 'NEGATIVE_MOMENTUM' }),
-        ]);
+        expect(selection.cashWeight).toBeCloseTo(1 / 6, 6);
+        expect(selection.filtered).toEqual([expect.objectContaining({ assetId: 'asset-etf-down', reason: 'NEGATIVE_MOMENTUM' })]);
         expect(selection.positions).toEqual(expect.arrayContaining([
+            expect.objectContaining({ assetIndex: 2, direction: 'short', weight: 1 / 6 }),
             expect.objectContaining({ assetIndex: 0, direction: 'long', weight: 1 / 6 }),
         ]));
     });

@@ -93,7 +93,7 @@ export const selectActiveDualMomentumSleeve = ({
             assetIndex,
             futures,
             momentum,
-            rankScore: momentum,
+            rankScore: futures ? Math.abs(momentum) : momentum,
         }];
     }).sort((left, right) => right.rankScore - left.rankScore).slice(0, config.topK);
 
@@ -115,7 +115,7 @@ export const selectActiveDualMomentumSleeve = ({
                 return;
             }
 
-            if (candidate.momentum < 0) {
+            if (sleeve === 'long' && candidate.momentum < 0) {
                 cashWeight += slotWeight;
                 filtered.push({
                     assetId: asset.id,

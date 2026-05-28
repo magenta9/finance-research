@@ -5,3 +5,5 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 2	conflicting sleeve signal gate	55.6904	25.5576	46.6506	p10 regressed	discard	04ac652
 3	drawdown exposure circuit breaker	55.1610	26.6318	46.6022	p10 regressed	discard	9e15d4f
 4	market breadth exposure gate	52.8449	22.1548	43.6379	mean and p10 regressed	discard	0d96b9c
+5	long-horizon futures short separation	57.8644	30.2848	49.5905	p10 regressed	discard	eca63bd
+5r	negative futures route to cash	56.9955	28.0330	48.3068	p10 regressed	discard	d6f7e37
