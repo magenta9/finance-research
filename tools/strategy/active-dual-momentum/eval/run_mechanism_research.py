@@ -33,9 +33,9 @@ from run_eval import (
 
 
 REFERENCE_BUDGET_BEFORE_ITER11 = {
-    "meanScore": 65.2284,
-    "p10Score": 38.7577,
-    "combinedScore": 57.2872,
+    "meanScore": 71.4550,
+    "p10Score": 43.6283,
+    "combinedScore": 63.1070,
 }
 
 
@@ -341,8 +341,10 @@ def main() -> int:
                 isinstance(summary.get("meanScore"), (int, float))
                 and isinstance(summary.get("p10Score"), (int, float))
                 and isinstance(combined, float)
-                and float(summary["meanScore"]) >= REFERENCE_BUDGET_BEFORE_ITER11["meanScore"]
-                and float(summary["p10Score"]) >= REFERENCE_BUDGET_BEFORE_ITER11["p10Score"]
+                and float(summary["meanScore"])
+                >= REFERENCE_BUDGET_BEFORE_ITER11["meanScore"]
+                and float(summary["p10Score"])
+                >= REFERENCE_BUDGET_BEFORE_ITER11["p10Score"]
                 and combined > REFERENCE_BUDGET_BEFORE_ITER11["combinedScore"]
             )
             else "discard"

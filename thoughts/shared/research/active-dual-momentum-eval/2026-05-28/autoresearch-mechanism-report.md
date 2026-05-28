@@ -116,47 +116,86 @@ Full confirmation：
 | p90Score | 94.2882 |
 | combinedScore | 65.5964 |
 
-## 5. 最终结论
+## 5. 追加 20 轮逐轮检索研究
+
+按新的执行要求，追加 20 轮“先检索方向，再落地机制，再跑 Eval 验证”的循环。检索方向来自 dual momentum、trend following、volatility-managed portfolios、managed futures、rebalancing friction 等机制研究，优先测试能改善 p10/tail robustness 的机制。
+
+当前默认机制的 60-case budget baseline：
+
+| 指标 | 当前默认 baseline |
+|---|---:|
+| caseCount | 60 |
+| successCount | 60 |
+| failureCount | 0 |
+| meanScore | 70.6348 |
+| p10Score | 41.8233 |
+| p50Score | 71.3773 |
+| p90Score | 93.2878 |
+| combinedScore | 61.9914 |
+
+20 轮 budget 中最强候选为第 62 轮：将 sleeve 权重从全波动反比改为下行波动反比。
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 62 | 下行波动调整排序 + 下行波动反比权重 + 25% 现金缓冲 | 71.4550 | 43.6283 | 63.1070 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 62 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 73.4557 |
+| p10Score | 51.1093 |
+| p50Score | 75.6471 |
+| p90Score | 94.2375 |
+| combinedScore | 66.7518 |
+
+## 6. 最终结论
 
 当前推荐保留的新机制为：
 
-1. 保留上一版 best 中的 inverse-volatility sleeve weighting。
-2. 保留上一版 best 中的 long-sleeve futures trend filter。
-3. 将候选排序从原始动量改为 `momentum / downsideVolatility`。
+1. 保留上一版 best 中的 long-sleeve futures trend filter。
+2. 将候选排序从原始动量改为 `momentum / downsideVolatility`。
+3. 将 sleeve 权重从 inverse realized volatility 改为 inverse downside volatility。
 4. 将 standing cash buffer 从 20% 提高到 25%。
 
 相对 ADM V1 baseline：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +14.2099 |
-| p10Score | +21.5963 |
-| combinedScore | +16.4258 |
+| meanScore | +14.9024 |
+| p10Score | +23.8318 |
+| combinedScore | +17.5812 |
 
-相对上一版 best：
+相对第 45 轮 best：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +5.1992 |
-| p10Score | +8.9169 |
-| combinedScore | +6.3145 |
+| meanScore | +0.6925 |
+| p10Score | +2.2355 |
+| combinedScore | +1.1554 |
 
 研究解释：
 
 - 下行波动调整排序比单纯追逐动量更能区分“上涨但回撤质量差”的标的，尤其提升 p10 tail cases。
+- 下行波动反比权重进一步把风险预算从左尾更差的标的移开，full Eval 中 p10 从 48.8738 提高到 51.1093。
 - 25% 现金缓冲进一步降低跨品种随机篮子中的尾部暴露，同时没有牺牲 meanScore。
 - 单独的小幅变化保持带在非标准抽样中表现很好，但标准 full confirmation 不如第 45 轮稳健，因此没有进入最终默认机制。
 
-## 6. 证据路径
+## 7. 证据路径
 
 - 标准 50 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter11-60-mechanism-sweep-standard-cases/`
 - 第 45 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter45-downside-risk-larger-cash-standard-cases/`
 - 默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-downside-risk-25cash/`
+- 追加 20 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter62-81-searched-directions-budget/`
+- 第 62 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter62-default-downside-rank-risk-weight/`
 - 迭代日志：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-mechanism-results.tsv`
 
-## 7. 后续建议
+## 8. 后续建议
 
-下一轮机制研究可以优先围绕第 45 轮继续做三类验证：
+下一轮机制研究可以优先围绕第 62 轮继续做三类验证：
 
 - 在标准 cases 上评估交易成本和滑点压力。
 - 用不同 random seed 做 out-of-sample robustness check。

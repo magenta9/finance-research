@@ -18,3 +18,6 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 10	best with 50/50 equal and inverse-volatility sleeve weights	63.4554	36.3368	55.3198	below current best budget	discard	8c2d5e0/dee21f1
 11-60	50 mechanism candidates, standard run_eval case generation	70.5477	44.1610	62.6317	best budget candidate: downside-risk rank plus 25 percent cash buffer	keep candidate	pending
 45f	downside-risk rank plus 25 percent cash buffer full eval	72.7632	48.8738	65.5964	full eval passed	keep	pending
+61	current default budget baseline before searched 20-round loop	70.6348	41.8233	61.9914	baseline	baseline	7512606
+62	searched direction: inverse downside-volatility sleeve weights	71.4550	43.6283	63.1070	budget eval passed	keep candidate	pending
+62f	downside-risk rank plus inverse downside-volatility weights plus 25 percent cash buffer full eval	73.4557	51.1093	66.7518	full eval passed	keep	pending

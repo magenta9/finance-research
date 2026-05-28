@@ -218,6 +218,9 @@ const resolveRiskScore = ({
         case 'sqrtInverseVolatility':
             return Math.sqrt(1 / Math.max(volatility, 0.0001));
         default:
+            if (!profile?.riskMode) {
+                return 1 / Math.max(downsideRisk || volatility, 0.0001);
+            }
             return 1 / Math.max(volatility, 0.0001);
     }
 };
