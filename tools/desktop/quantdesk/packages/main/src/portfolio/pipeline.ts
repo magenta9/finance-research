@@ -13,6 +13,7 @@ import {
     DefaultAllocationOptimizerAdapter,
     type AllocationOptimizerAdapter,
 } from './allocation-optimizer-adapter';
+import { resolveActiveDualMomentumWarmupCalendarDays } from './active-dual-momentum-rules';
 import {
     buildAllocationErrorResult,
 } from './allocation-result-assembler';
@@ -83,6 +84,7 @@ export class PortfolioAllocationPipeline {
             baseCurrency,
             endDate,
             startDate,
+            warmupDays: this.resolveWarmupDays(strategy, strategyMix),
         });
 
         if (!preparation.ok) {
@@ -203,6 +205,12 @@ export class PortfolioAllocationPipeline {
 
     private resolveStrategyHandler(strategy: AllocationStrategy): AllocationStrategyHandler | null {
         return (this.strategyRegistry as Partial<AllocationStrategyRegistry>)[strategy] ?? null;
+    }
+
+    private resolveWarmupDays(strategy: AllocationStrategy, strategyMix?: AllocationStrategyMix) {
+        return strategy === 'active_dual_momentum_gtaa'
+            ? resolveActiveDualMomentumWarmupCalendarDays(strategyMix?.activeDualMomentum)
+            : 0;
     }
 
     private async runStrategyHandler({

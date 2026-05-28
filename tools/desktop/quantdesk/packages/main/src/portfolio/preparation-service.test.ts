@@ -157,6 +157,57 @@ describe('allocation preparation service', () => {
         });
     });
 
+    test('reads warmup history while preserving the requested calculation window', async () => {
+        const assets = [
+            buildAsset('asset-a', 'SPY', 'equity'),
+            buildAsset('asset-b', 'AGG', 'fixed_income'),
+        ];
+        const marketDataOrchestrator = {
+            ensure: vi.fn().mockResolvedValue({ warnings: [] }),
+        };
+        const service = new AllocationPreparationService({
+            clock: () => new Date('2026-04-15T12:00:00.000Z'),
+            marketDataOrchestrator,
+            reader: createReader({
+                assets,
+                priceRowsByAsset: {
+                    'asset-a': buildPriceRows({ assetId: 'asset-a', basePrice: 100, length: 170, startDate: '2025-08-24' }),
+                    'asset-b': buildPriceRows({ assetId: 'asset-b', basePrice: 80, length: 170, startDate: '2025-08-24' }),
+                },
+            }),
+        });
+
+        const result = await service.prepare({
+            assetIds: ['asset-a', 'asset-b'],
+            baseCurrency: 'USD',
+            endDate: '2026-01-31',
+            startDate: '2026-01-01',
+            warmupDays: 30,
+        });
+
+        expect(marketDataOrchestrator.ensure).toHaveBeenCalledWith(expect.objectContaining({
+            window: {
+                endDate: '2026-01-31',
+                startDate: '2025-12-02',
+            },
+        }));
+        expect(result.ok).toBe(true);
+
+        if (!result.ok) {
+            throw new Error('Expected preparation to succeed.');
+        }
+
+        expect(result.effectiveDateRange).toEqual({
+            endDate: '2026-01-31',
+            startDate: '2026-01-01',
+        });
+        expect(result.calculationDateRange).toEqual({
+            endDate: '2026-01-31',
+            startDate: '2026-01-01',
+        });
+        expect(result.prepared.alignedDates[0]).toBe('2025-12-02');
+    });
+
     test('returns a structured insufficient history error instead of throwing', async () => {
         const assets = [
             buildAsset('short-a', 'SPY', 'equity'),

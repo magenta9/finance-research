@@ -29,6 +29,16 @@ export interface ActiveDualMomentumSleeveSelection {
 }
 
 export const activeDualMomentumTradingDaysPerWeek = 5;
+export const activeDualMomentumWarmupBufferWeeks = 4;
+
+export const resolveActiveDualMomentumWarmupCalendarDays = (
+    config?: ActiveDualMomentumStrategyConfig,
+) => {
+    const normalized = normalizeActiveDualMomentumConfig(config);
+    const maxLookbackWeeks = Math.max(normalized.shortLookbackWeeks, normalized.longLookbackWeeks);
+
+    return (maxLookbackWeeks + activeDualMomentumWarmupBufferWeeks) * 7;
+};
 
 export const normalizeActiveDualMomentumConfig = (
     config?: ActiveDualMomentumStrategyConfig,

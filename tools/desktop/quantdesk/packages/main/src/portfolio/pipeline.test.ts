@@ -264,7 +264,7 @@ describe('portfolio allocation pipeline', () => {
             buildAsset('asset-future-up', 'RB9999', 'commodity', { market: 'COMMODITY', metadata: { instrumentType: 'future' } }),
             buildAsset('asset-future-down', 'FU9999', 'commodity', { market: 'COMMODITY', metadata: { instrumentType: 'future' } }),
         ];
-        const { pipeline } = createPipeline({
+        const { pipeline, preparationService } = createPipeline({
             preparationResult: buildPreparedSuccess({
                 assets,
                 length,
@@ -295,6 +295,9 @@ describe('portfolio allocation pipeline', () => {
             expect.objectContaining({ direction: 'long', symbol: 'RB9999' }),
         ]));
         expect(outcome.result.portfolioPath).toHaveLength(length);
+        expect(preparationService.prepare).toHaveBeenCalledWith(expect.objectContaining({
+            warmupDays: 203,
+        }));
     });
 
     test('configuration strategies ignore legacy allocation sleeve subsets', async () => {

@@ -117,6 +117,32 @@ const latestAllocations = (prepared: PreparedAllocationData, positions: ActiveDu
         };
     }).sort((left, right) => right.weight - left.weight);
 
+const resolveCalculationSlice = (
+    alignedDates: string[],
+    calculationDateRange: { startDate: string; endDate: string },
+) => {
+    const startIndex = alignedDates.findIndex((date) => date >= calculationDateRange.startDate);
+    let endIndex = alignedDates.length - 1;
+
+    while (endIndex >= 0 && (alignedDates[endIndex] ?? '') > calculationDateRange.endDate) {
+        endIndex -= 1;
+    }
+
+    if (startIndex < 0 || endIndex < startIndex) {
+        return {
+            dates: alignedDates,
+            endIndex: alignedDates.length - 1,
+            startIndex: 0,
+        };
+    }
+
+    return {
+        dates: alignedDates.slice(startIndex, endIndex + 1),
+        endIndex,
+        startIndex,
+    };
+};
+
 export const runActiveDualMomentumBacktest = ({
     annualizedMeanReturns,
     annualizedVolatility,
@@ -139,6 +165,10 @@ export const runActiveDualMomentumBacktest = ({
         latestWeekday: 3,
         minimumIndex: maxLookbackDays,
     });
+    const calculationSlice = resolveCalculationSlice(prepared.alignedDates, calculationDateRange);
+    const calculationRebalanceIndexes = rebalanceIndexes.filter((index) =>
+        index >= calculationSlice.startIndex && index <= calculationSlice.endIndex,
+    );
     const warnings = [...prepared.warnings];
 
     if (prepared.series.length < 3) {
@@ -179,7 +209,7 @@ export const runActiveDualMomentumBacktest = ({
         };
     }
 
-    if (rebalanceIndexes.length < 26) {
+    if (calculationRebalanceIndexes.length < 26) {
         warnings.push('最大 lookback 后可回测周数不足 26 周，结果标记为 degraded。');
     }
 
@@ -206,6 +236,7 @@ export const runActiveDualMomentumBacktest = ({
         let rebalanceCost = 0;
 
         if (rebalanceIndexSet.has(dayIndex)) {
+            const isCalculationRebalance = dayIndex >= calculationSlice.startIndex && dayIndex <= calculationSlice.endIndex;
             const shortSleeve = selectActiveDualMomentumSleeve({
                 config,
                 lookbackWeeks: config.shortLookbackWeeks,
@@ -224,34 +255,40 @@ export const runActiveDualMomentumBacktest = ({
             const turnover = turnoverBetween(currentPositions, nextPositions, prepared.series.length);
             const cost = turnover * (config.transactionCostBps + config.slippageBps) / 10_000;
 
-            totalTurnover += turnover;
-            totalCost += cost;
+            if (isCalculationRebalance) {
+                totalTurnover += turnover;
+                totalCost += cost;
+            }
             rebalanceCost = cost;
-            trades.push(...buildTrades({
-                date: prepared.alignedDates[dayIndex],
-                nextPositions,
-                prepared,
-                previousPositions: currentPositions,
-            }));
+            if (isCalculationRebalance) {
+                trades.push(...buildTrades({
+                    date: prepared.alignedDates[dayIndex],
+                    nextPositions,
+                    prepared,
+                    previousPositions: currentPositions,
+                }));
+            }
 
             const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight;
-            rebalanceRecords.push({
-                cashWeight,
-                date: prepared.alignedDates[dayIndex],
-                holdings: nextPositions.map((position) => {
-                    const entry = prepared.series[position.assetIndex];
-                    return {
-                        assetId: entry.asset.id,
-                        direction: position.direction,
-                        longMomentum: position.longMomentum,
-                        shortMomentum: position.shortMomentum,
-                        source: position.source,
-                        symbol: entry.asset.symbol,
-                        weight: position.weight,
-                    };
-                }),
-                selectedButFiltered: [...shortSleeve.filtered, ...longSleeve.filtered],
-            });
+            if (isCalculationRebalance) {
+                rebalanceRecords.push({
+                    cashWeight,
+                    date: prepared.alignedDates[dayIndex],
+                    holdings: nextPositions.map((position) => {
+                        const entry = prepared.series[position.assetIndex];
+                        return {
+                            assetId: entry.asset.id,
+                            direction: position.direction,
+                            longMomentum: position.longMomentum,
+                            shortMomentum: position.shortMomentum,
+                            source: position.source,
+                            symbol: entry.asset.symbol,
+                            weight: position.weight,
+                        };
+                    }),
+                    selectedButFiltered: [...shortSleeve.filtered, ...longSleeve.filtered],
+                });
+            }
 
             currentPositions = nextPositions;
             latestPositions = nextPositions;
@@ -263,12 +300,15 @@ export const runActiveDualMomentumBacktest = ({
         netExposures.push(currentPositions.reduce((sum, position) => sum + signedActiveDualMomentumWeight(position), 0));
     }
 
-    const { equityCurve, path } = buildPortfolioPathFromDailyReturns(prepared.alignedDates, dailyReturns);
-    const metrics = metricsFromReturns(dailyReturns, equityCurve);
+    const calculationDailyReturns = dailyReturns.slice(calculationSlice.startIndex, calculationSlice.endIndex);
+    const calculationNominalExposures = nominalExposures.slice(calculationSlice.startIndex, calculationSlice.endIndex);
+    const calculationNetExposures = netExposures.slice(calculationSlice.startIndex, calculationSlice.endIndex);
+    const { equityCurve, path } = buildPortfolioPathFromDailyReturns(calculationSlice.dates, calculationDailyReturns);
+    const metrics = metricsFromReturns(calculationDailyReturns, equityCurve);
     const allocations = latestAllocations(prepared, latestPositions, annualizedMeanReturns, annualizedVolatility);
     const status = warnings.length > prepared.warnings.length ? 'degraded' : 'ok';
-    const maxNominalExposure = Math.max(0, ...nominalExposures);
-    const maxNetExposure = Math.max(0, ...netExposures.map((value) => Math.abs(value)));
+    const maxNominalExposure = Math.max(0, ...calculationNominalExposures);
+    const maxNetExposure = Math.max(0, ...calculationNetExposures.map((value) => Math.abs(value)));
 
     return {
         allocations,
@@ -276,8 +316,8 @@ export const runActiveDualMomentumBacktest = ({
         correlationMatrix: { labels: prepared.series.map((entry) => entry.asset.symbol), matrix: [] },
         diagnostics: {
             activeDualMomentum: {
-                averageNetExposure: meanPortfolioValues(netExposures.map((value) => Math.abs(value))),
-                averageNominalExposure: meanPortfolioValues(nominalExposures),
+                averageNetExposure: meanPortfolioValues(calculationNetExposures.map((value) => Math.abs(value))),
+                averageNominalExposure: meanPortfolioValues(calculationNominalExposures),
                 calmarRatio: metrics.calmarRatio,
                 cashWeight: rebalanceRecords.at(-1)?.cashWeight ?? 0,
                 maxNetExposure,
@@ -288,7 +328,7 @@ export const runActiveDualMomentumBacktest = ({
                 turnover: totalTurnover,
                 winRate: metrics.winRate,
             },
-            alignedDates: prepared.alignedDates.length,
+            alignedDates: calculationSlice.dates.length,
             assetDateCoverage: prepared.assetDateCoverage,
             dateRange: calculationDateRange,
             excludedAssets: prepared.excludedAssets,
