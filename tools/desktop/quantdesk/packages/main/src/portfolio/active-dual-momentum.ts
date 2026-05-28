@@ -99,6 +99,63 @@ const turnoverBetween = (previousPositions: ActiveDualMomentumPosition[], nextPo
     return turnover;
 };
 
+const positionsByAssetIndex = (positions: ActiveDualMomentumPosition[]) => new Map(positions.map((position) => [position.assetIndex, position]));
+
+const smoothRebalancePositions = ({
+    assetCount,
+    previousPositions,
+    targetPositions,
+    rebalanceStep,
+    weightHoldBand,
+}: {
+    assetCount: number;
+    previousPositions: ActiveDualMomentumPosition[];
+    rebalanceStep?: number;
+    targetPositions: ActiveDualMomentumPosition[];
+    weightHoldBand?: number;
+}) => {
+    if (!rebalanceStep && !weightHoldBand) {
+        return targetPositions;
+    }
+
+    const previousByAssetIndex = positionsByAssetIndex(previousPositions);
+    const targetByAssetIndex = positionsByAssetIndex(targetPositions);
+    const nextPositions: ActiveDualMomentumPosition[] = [];
+    const step = rebalanceStep && rebalanceStep > 0 && rebalanceStep < 1 ? rebalanceStep : 1;
+
+    for (let assetIndex = 0; assetIndex < assetCount; assetIndex += 1) {
+        const previous = previousByAssetIndex.get(assetIndex);
+        const target = targetByAssetIndex.get(assetIndex);
+
+        if (!previous && !target) {
+            continue;
+        }
+
+        const fromSigned = previous ? signedActiveDualMomentumWeight(previous) : 0;
+        const toSigned = target ? signedActiveDualMomentumWeight(target) : 0;
+        const diff = toSigned - fromSigned;
+        const resolvedSigned = weightHoldBand && Math.abs(diff) < weightHoldBand
+            ? fromSigned
+            : fromSigned + diff * step;
+
+        if (Math.abs(resolvedSigned) < 0.000001) {
+            continue;
+        }
+
+        const template = target ?? previous;
+
+        if (template) {
+            nextPositions.push({
+                ...template,
+                direction: resolvedSigned < 0 ? 'short' : 'long',
+                weight: Math.abs(resolvedSigned),
+            });
+        }
+    }
+
+    return nextPositions;
+};
+
 const latestAllocations = (prepared: PreparedAllocationData, positions: ActiveDualMomentumPosition[], annualizedReturns: number[], annualizedVolatility: number[]): AllocationAssetWeight[] =>
     positions.map((position) => {
         const entry = prepared.series[position.assetIndex];
@@ -255,8 +312,16 @@ export const runActiveDualMomentumBacktest = ({
                 sleeve: 'long',
             });
             const grossPositions = mergeActiveDualMomentumSleeves(shortSleeve, longSleeve);
-            const cashBufferWeight = grossPositions.reduce((sum, position) => sum + position.weight * 0.2, 0);
-            const nextPositions = grossPositions.map((position) => ({ ...position, weight: position.weight * 0.8 }));
+            const cashBufferMultiplier = config.researchProfile?.cashBufferMultiplier ?? 0.75;
+            const cashBufferWeight = grossPositions.reduce((sum, position) => sum + position.weight * (1 - cashBufferMultiplier), 0);
+            const targetPositions = grossPositions.map((position) => ({ ...position, weight: position.weight * cashBufferMultiplier }));
+            const nextPositions = smoothRebalancePositions({
+                assetCount: prepared.series.length,
+                previousPositions: currentPositions,
+                rebalanceStep: config.researchProfile?.rebalanceStep,
+                targetPositions,
+                weightHoldBand: config.researchProfile?.rebalanceWeightHoldBand,
+            });
             const turnover = turnoverBetween(currentPositions, nextPositions, prepared.series.length);
             const cost = turnover * (config.transactionCostBps + config.slippageBps) / 10_000;
 

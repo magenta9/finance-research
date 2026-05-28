@@ -6,11 +6,28 @@ import type { PreparedAllocationData } from './preprocessor';
 export interface NormalizedActiveDualMomentumConfig {
     absoluteMomentumFilter: boolean;
     longLookbackWeeks: number;
+    researchProfile?: ActiveDualMomentumResearchProfile;
     shortLookbackWeeks: number;
     slippageBps: number;
     sleeveWeights: { long: number; short: number };
     topK: number;
     transactionCostBps: number;
+}
+
+export interface ActiveDualMomentumResearchProfile {
+    cashBufferMultiplier?: number;
+    closeScoreCashFactor?: number;
+    closeScoreThreshold?: number;
+    confirmFuturesShort?: boolean;
+    decayPenaltyFactor?: number;
+    etfHighWaterFilter?: boolean;
+    futuresShortWeightMultiplier?: number;
+    maxPositionWeight?: number;
+    rankMode?: 'default' | 'riskAdjusted' | 'downsideRiskAdjusted' | 'drawdownPenalty' | 'momentumSlope' | 'positiveFuturesBias';
+    rebalanceStep?: number;
+    rebalanceWeightHoldBand?: number;
+    riskMode?: 'inverseVolatility' | 'inverseDownsideVolatility' | 'sqrtInverseVolatility' | 'equalWeight';
+    shockToCash?: boolean;
 }
 
 export interface ActiveDualMomentumPosition {
@@ -40,11 +57,19 @@ export const resolveActiveDualMomentumWarmupCalendarDays = (
     return (maxLookbackWeeks + activeDualMomentumWarmupBufferWeeks) * 7;
 };
 
+const researchProfileFromConfig = (config?: ActiveDualMomentumStrategyConfig) => {
+    const profile = (config as ActiveDualMomentumStrategyConfig & { researchProfile?: ActiveDualMomentumResearchProfile } | undefined)
+        ?.researchProfile;
+
+    return profile && typeof profile === 'object' ? profile : undefined;
+};
+
 export const normalizeActiveDualMomentumConfig = (
     config?: ActiveDualMomentumStrategyConfig,
 ): NormalizedActiveDualMomentumConfig => ({
     absoluteMomentumFilter: config?.absoluteMomentumFilter ?? true,
     longLookbackWeeks: config?.longLookbackWeeks ?? 25,
+    researchProfile: researchProfileFromConfig(config),
     shortLookbackWeeks: config?.shortLookbackWeeks ?? 10,
     slippageBps: config?.slippageBps ?? 0,
     sleeveWeights: config?.sleeveWeights ?? { long: 0.5, short: 0.5 },
@@ -65,7 +90,7 @@ export const signedActiveDualMomentumWeight = (
     position: Pick<ActiveDualMomentumPosition, 'direction' | 'weight'>,
 ) => position.direction === 'short' ? -position.weight : position.weight;
 
-const realizedVolatility = (prices: number[], startIndex: number, endIndex: number) => {
+const dailyReturnsInRange = (prices: number[], startIndex: number, endIndex: number) => {
     const returns: number[] = [];
 
     for (let index = startIndex + 1; index <= endIndex; index += 1) {
@@ -77,6 +102,10 @@ const realizedVolatility = (prices: number[], startIndex: number, endIndex: numb
         }
     }
 
+    return returns;
+};
+
+const volatilityFromReturns = (returns: number[]) => {
     if (returns.length < 2) {
         return 0;
     }
@@ -85,6 +114,112 @@ const realizedVolatility = (prices: number[], startIndex: number, endIndex: numb
     const variance = returns.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (returns.length - 1);
 
     return Math.sqrt(Math.max(0, variance));
+};
+
+const realizedVolatility = (prices: number[], startIndex: number, endIndex: number) => {
+    const returns = dailyReturnsInRange(prices, startIndex, endIndex);
+
+    return volatilityFromReturns(returns);
+};
+
+const downsideVolatility = (prices: number[], startIndex: number, endIndex: number) => {
+    const downsideReturns = dailyReturnsInRange(prices, startIndex, endIndex).filter((value) => value < 0);
+
+    return volatilityFromReturns(downsideReturns);
+};
+
+const maxLookbackDrawdown = (prices: number[], startIndex: number, endIndex: number) => {
+    let peak = prices[startIndex] ?? 0;
+    let maxDrawdown = 0;
+
+    for (let index = startIndex + 1; index <= endIndex; index += 1) {
+        const price = prices[index] ?? 0;
+
+        if (price <= 0) {
+            continue;
+        }
+        peak = Math.max(peak, price);
+        if (peak > 0) {
+            maxDrawdown = Math.max(maxDrawdown, 1 - price / peak);
+        }
+    }
+
+    return maxDrawdown;
+};
+
+const recentMomentum = (prices: number[], endIndex: number, days: number) => {
+    const startIndex = Math.max(0, endIndex - days);
+    const previousPrice = prices[startIndex] ?? 0;
+    const currentPrice = prices[endIndex] ?? 0;
+
+    return previousPrice > 0 && currentPrice > 0 ? currentPrice / previousPrice - 1 : 0;
+};
+
+const highestPrice = (prices: number[], startIndex: number, endIndex: number) => {
+    let high = 0;
+
+    for (let index = startIndex; index <= endIndex; index += 1) {
+        high = Math.max(high, prices[index] ?? 0);
+    }
+
+    return high;
+};
+
+const resolveRankScore = ({
+    downsideRisk,
+    drawdown,
+    futures,
+    momentum,
+    profile,
+    recent,
+    volatility,
+}: {
+    downsideRisk: number;
+    drawdown: number;
+    futures: boolean;
+    momentum: number;
+    profile?: ActiveDualMomentumResearchProfile;
+    recent: number;
+    volatility: number;
+}) => {
+    const baseScore = futures ? Math.abs(momentum) : momentum;
+    const rankMode = profile?.rankMode ?? 'downsideRiskAdjusted';
+
+    switch (rankMode) {
+        case 'riskAdjusted':
+            return baseScore / Math.max(volatility, 0.0001);
+        case 'downsideRiskAdjusted':
+            return baseScore / Math.max(downsideRisk, 0.0001);
+        case 'drawdownPenalty':
+            return baseScore * Math.max(0, 1 - drawdown);
+        case 'momentumSlope':
+            return baseScore + recent;
+        case 'positiveFuturesBias':
+            return futures && momentum < 0 ? baseScore * 0.85 : baseScore;
+        default:
+            return baseScore;
+    }
+};
+
+const resolveRiskScore = ({
+    downsideRisk,
+    profile,
+    volatility,
+}: {
+    downsideRisk: number;
+    profile?: ActiveDualMomentumResearchProfile;
+    volatility: number;
+}) => {
+    switch (profile?.riskMode) {
+        case 'equalWeight':
+            return 1;
+        case 'inverseDownsideVolatility':
+            return 1 / Math.max(downsideRisk || volatility, 0.0001);
+        case 'sqrtInverseVolatility':
+            return Math.sqrt(1 / Math.max(volatility, 0.0001));
+        default:
+            return 1 / Math.max(volatility, 0.0001);
+    }
 };
 
 export const selectActiveDualMomentumSleeve = ({
@@ -101,6 +236,7 @@ export const selectActiveDualMomentumSleeve = ({
     sleeve: 'short' | 'long';
 }): ActiveDualMomentumSleeveSelection => {
     const lookbackDays = lookbackWeeks * activeDualMomentumTradingDaysPerWeek;
+    const profile = config.researchProfile;
     const candidates = prepared.series.flatMap((entry, assetIndex) => {
         const previousPrice = entry.prices[rebalanceIndex - lookbackDays];
         const currentPrice = entry.prices[rebalanceIndex];
@@ -111,12 +247,21 @@ export const selectActiveDualMomentumSleeve = ({
 
         const momentum = currentPrice / previousPrice - 1;
         const futures = isActiveDualMomentumFuturesAsset(entry.asset);
+        const volatility = realizedVolatility(entry.prices, rebalanceIndex - lookbackDays, rebalanceIndex);
+        const downsideRisk = downsideVolatility(entry.prices, rebalanceIndex - lookbackDays, rebalanceIndex);
+        const drawdown = maxLookbackDrawdown(entry.prices, rebalanceIndex - lookbackDays, rebalanceIndex);
+        const recent = recentMomentum(entry.prices, rebalanceIndex, Math.min(10, Math.max(1, Math.floor(lookbackDays / 3))));
         return [{
             assetIndex,
+            currentPrice,
+            downsideRisk,
+            drawdown,
             futures,
             momentum,
-            rankScore: futures ? Math.abs(momentum) : momentum,
-            riskScore: 1 / Math.max(realizedVolatility(entry.prices, rebalanceIndex - lookbackDays, rebalanceIndex), 0.0001),
+            recent,
+            rankScore: resolveRankScore({ downsideRisk, drawdown, futures, momentum, profile, recent, volatility }),
+            riskScore: resolveRiskScore({ downsideRisk, profile, volatility }),
+            volatility,
         }];
     }).sort((left, right) => right.rankScore - left.rankScore).slice(0, config.topK);
 
@@ -126,31 +271,72 @@ export const selectActiveDualMomentumSleeve = ({
 
     const sleeveWeight = config.sleeveWeights[sleeve];
     const totalRiskScore = candidates.reduce((sum, candidate) => sum + candidate.riskScore, 0);
+    const rankSpread = (candidates[0]?.rankScore ?? 0) - (candidates.at(-1)?.rankScore ?? 0);
     const filtered: ActiveDualMomentumSleeveSelection['filtered'] = [];
     const positions: ActiveDualMomentumPosition[] = [];
     let cashWeight = 0;
 
     candidates.forEach((candidate) => {
         const asset = prepared.series[candidate.assetIndex].asset;
-        const slotWeight = totalRiskScore > 0
+        let slotWeight = totalRiskScore > 0
             ? sleeveWeight * candidate.riskScore / totalRiskScore
             : sleeveWeight / candidates.length;
+        const closeScoreThreshold = profile?.closeScoreThreshold ?? 0;
+
+        if (profile?.closeScoreCashFactor && rankSpread > 0 && rankSpread < closeScoreThreshold) {
+            const retainedWeight = slotWeight * profile.closeScoreCashFactor;
+            cashWeight += slotWeight - retainedWeight;
+            slotWeight = retainedWeight;
+        }
+
+        if (profile?.decayPenaltyFactor && Math.sign(candidate.momentum) !== Math.sign(candidate.recent) && candidate.recent !== 0) {
+            const retainedWeight = slotWeight * profile.decayPenaltyFactor;
+            cashWeight += slotWeight - retainedWeight;
+            slotWeight = retainedWeight;
+        }
+
+        if (profile?.shockToCash && candidate.volatility > 0 && Math.abs(candidate.recent) > candidate.volatility * 5) {
+            cashWeight += slotWeight;
+            return;
+        }
+
+        if (profile?.maxPositionWeight && slotWeight > profile.maxPositionWeight) {
+            cashWeight += slotWeight - profile.maxPositionWeight;
+            slotWeight = profile.maxPositionWeight;
+        }
 
         if (candidate.futures) {
             if (candidate.momentum === 0) {
                 return;
             }
 
-                if (sleeve === 'long' && candidate.momentum < 0) {
-                    cashWeight += slotWeight;
-                    filtered.push({
-                        assetId: asset.id,
-                        momentum: candidate.momentum,
-                        reason: 'NEGATIVE_MOMENTUM',
-                        symbol: asset.symbol,
-                    });
-                    return;
-                }
+            if (sleeve === 'long' && candidate.momentum < 0) {
+                cashWeight += slotWeight;
+                filtered.push({
+                    assetId: asset.id,
+                    momentum: candidate.momentum,
+                    reason: 'NEGATIVE_MOMENTUM',
+                    symbol: asset.symbol,
+                });
+                return;
+            }
+
+            if (profile?.confirmFuturesShort && candidate.momentum < 0 && candidate.recent >= 0) {
+                cashWeight += slotWeight;
+                filtered.push({
+                    assetId: asset.id,
+                    momentum: candidate.momentum,
+                    reason: 'NEGATIVE_MOMENTUM',
+                    symbol: asset.symbol,
+                });
+                return;
+            }
+
+            if (profile?.futuresShortWeightMultiplier && candidate.momentum < 0) {
+                const retainedWeight = slotWeight * profile.futuresShortWeightMultiplier;
+                cashWeight += slotWeight - retainedWeight;
+                slotWeight = retainedWeight;
+            }
 
             positions.push({
                 assetIndex: candidate.assetIndex,
@@ -161,6 +347,21 @@ export const selectActiveDualMomentumSleeve = ({
                 weight: slotWeight,
             });
             return;
+        }
+
+        if (profile?.etfHighWaterFilter) {
+            const high = highestPrice(prepared.series[candidate.assetIndex].prices, rebalanceIndex - lookbackDays, rebalanceIndex);
+
+            if (high > 0 && candidate.currentPrice < high * 0.9) {
+                cashWeight += slotWeight;
+                filtered.push({
+                    assetId: asset.id,
+                    momentum: candidate.momentum,
+                    reason: 'NEGATIVE_MOMENTUM',
+                    symbol: asset.symbol,
+                });
+                return;
+            }
         }
 
         if (config.absoluteMomentumFilter && candidate.momentum <= 0) {
