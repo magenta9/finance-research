@@ -16,6 +16,7 @@ export interface NormalizedActiveDualMomentumConfig {
 
 export interface ActiveDualMomentumResearchProfile {
     cashBufferMultiplier?: number;
+    cashReturnMode?: 'zero' | 'riskFreeRate';
     closeScoreCashFactor?: number;
     closeScoreThreshold?: number;
     confirmFuturesShort?: boolean;

@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	portfolio-downside-contribution-target	72.161	43.9813	76.6959	93.2472	63.7071	discard	Apply the portfolio downside-vol haircut mainly to positions that contributed to downside portfolio days.	"{""portfolioDownsideContributionTarget"": true}"

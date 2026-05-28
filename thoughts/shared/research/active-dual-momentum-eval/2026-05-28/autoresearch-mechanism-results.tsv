@@ -23,3 +23,9 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 62f	downside-risk rank plus inverse downside-volatility weights plus 25 percent cash buffer full eval	73.4557	51.1093	66.7518	full eval passed	keep	pending
 63	searched direction: portfolio downside-volatility target overlay	73.4590	45.7774	65.1545	budget eval passed	keep candidate	pending
 63f	portfolio downside-volatility target overlay full eval	74.4075	52.4746	67.8276	full eval passed	keep	pending
+64	searched direction: downside contribution selective haircut	72.1610	43.9813	63.7071	below current budget baseline	discard	not committed
+65	searched direction: downside loss breadth overlay	72.2378	43.5691	63.6372	below current budget baseline	discard	not committed
+66	searched direction: recent momentum decay penalty	72.3358	46.4217	64.5616	p10 improved but combined below current budget baseline	discard	not committed
+67	searched direction: signed correlation stress gate	72.2384	45.1597	64.1148	below current budget baseline	discard	not committed
+68	searched direction: risk-free cash return accrual	74.5776	50.5527	67.3701	budget eval passed	keep candidate	pending
+68f	risk-free cash return accrual full eval	76.8205	56.0719	70.5959	full eval passed	keep	pending

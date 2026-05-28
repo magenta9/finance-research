@@ -179,7 +179,88 @@ Full confirmation：
 | p90Score | 94.2375 |
 | combinedScore | 67.8276 |
 
-## 7. 最终结论
+## 7. 第 64 轮顺序迭代
+
+第 64 轮搜索方向：组合下行贡献选择性 haircut。
+
+搜索依据：第 63 轮的组合层下行波动目标化使用统一缩放，可能同时降低拖累仓位和对冲仓位。第 64 轮尝试只对组合下跌日贡献更大的仓位施加更多 haircut，低贡献仓位保留更多基础暴露，不反向放大。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 64 | 组合下行贡献选择性 haircut | 72.1610 | 43.9813 | 63.7071 | discard |
+
+结论：第 64 轮低于当前 budget baseline（mean 73.4590 / p10 45.7774 / combined 65.1545），不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。
+
+## 8. 第 65 轮顺序迭代
+
+第 65 轮搜索方向：组合下行亏损广度覆盖。
+
+搜索依据：第 64 轮逐仓贡献 haircut 失败后，继续沿组合层状态识别，但避免选择性惩罚单仓。该机制统计组合下跌日亏损是否集中在少数仓位；若集中度过高，则在第 63 轮统一降风险基础上再统一降低暴露。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 65 | 组合下行亏损广度覆盖 | 72.2378 | 43.5691 | 63.6372 | discard |
+
+结论：第 65 轮仍低于当前 budget baseline（mean 73.4590 / p10 45.7774 / combined 65.1545），不进入 full confirmation，不 commit。第 64/65 两轮共同说明，在第 63 轮之后继续叠加“下跌来源惩罚”会损伤当前 Eval。
+
+## 9. 第 66 轮顺序迭代
+
+第 66 轮搜索方向：近期动量反向衰减覆盖。
+
+搜索依据：第 64/65 轮说明继续做组合下跌贡献和集中度惩罚会伤害当前组合，因此第 66 轮回到信号质量层，尝试削减长周期动量仍强但近期动量已经反向的 stale momentum 仓位。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 66 | 近期动量反向衰减覆盖 | 72.3358 | 46.4217 | 64.5616 | discard |
+
+结论：第 66 轮 p10 高于当前 budget baseline，但 meanScore 下滑导致 combinedScore 低于 baseline（65.1545），不进入 full confirmation，不 commit。
+
+## 10. 第 67 轮顺序迭代
+
+第 67 轮搜索方向：组合签名相关性压力门控。
+
+搜索依据：第 64/65 轮显示继续追踪下跌贡献和集中度会拖累，第 67 轮改为观察 signed positions 的相关性压力，只有相关性上升且最近组合收益为负时才统一轻微降暴露。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 67 | 组合签名相关性压力门控 | 72.2384 | 45.1597 | 64.1148 | discard |
+
+结论：第 67 轮低于当前 budget baseline（mean 73.4590 / p10 45.7774 / combined 65.1545），不进入 full confirmation，不 commit。第 64-67 轮共同显示，在第 63 轮之后继续叠加风险削减类 overlay 的边际收益不足。
+
+## 11. 第 68 轮顺序迭代
+
+第 68 轮搜索方向：现金缓冲收益入账。
+
+搜索依据：第 63 轮 best 之后继续增加风险削减类 overlay 的效果变差，因此第 68 轮改为非降风险机制：不改变仓位，只让已经存在的现金权重按 base currency 无风险利率获得低波动收益。该方向修正的是现金机会成本建模，而不是参数优化。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 68 | 现金缓冲收益入账 | 74.5776 | 50.5527 | 67.3701 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 68 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 76.8205 |
+| p10Score | 56.0719 |
+| p50Score | 80.4666 |
+| p90Score | 94.5625 |
+| combinedScore | 70.5959 |
+
+## 12. 最终结论
 
 当前推荐保留的新机制为：
 
@@ -188,32 +269,34 @@ Full confirmation：
 3. 将 sleeve 权重从 inverse realized volatility 改为 inverse downside volatility。
 4. 将 standing cash buffer 从 20% 提高到 25%。
 5. 增加组合层下行波动目标化覆盖：合并后的 signed portfolio 近期下行波动过高时，进一步降低总风险暴露并转为现金。
+6. 对现金权重按 base currency 无风险利率入账，默认使用 `riskFreeRates`。
 
 相对 ADM V1 baseline：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +15.8542 |
-| p10Score | +25.1971 |
-| combinedScore | +18.6570 |
+| meanScore | +18.2672 |
+| p10Score | +28.7944 |
+| combinedScore | +21.4253 |
 
-相对第 62 轮 best：
+相对第 63 轮 best：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +0.9518 |
-| p10Score | +1.3653 |
-| combinedScore | +1.0758 |
+| meanScore | +2.4130 |
+| p10Score | +3.5973 |
+| combinedScore | +2.7683 |
 
 研究解释：
 
 - 下行波动调整排序比单纯追逐动量更能区分“上涨但回撤质量差”的标的，尤其提升 p10 tail cases。
 - 下行波动反比权重进一步把风险预算从左尾更差的标的移开，full Eval 中 p10 从 48.8738 提高到 51.1093。
 - 组合层下行波动目标化覆盖把风险控制从单资产推进到真实合并组合路径，full Eval 中 p10 从 51.1093 提高到 52.4746。
+- 现金收益入账不改变风险暴露，但把高现金状态下的机会成本纳入收益路径，full Eval 中 p10 从 52.4746 提高到 56.0719。
 - 25% 现金缓冲进一步降低跨品种随机篮子中的尾部暴露，同时没有牺牲 meanScore。
 - 单独的小幅变化保持带在非标准抽样中表现很好，但标准 full confirmation 不如第 45 轮稳健，因此没有进入最终默认机制。
 
-## 8. 证据路径
+## 13. 证据路径
 
 - 标准 50 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter11-60-mechanism-sweep-standard-cases/`
 - 第 45 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter45-downside-risk-larger-cash-standard-cases/`
@@ -223,9 +306,16 @@ Full confirmation：
 - 第 63 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter63-portfolio-downside-vol-target-budget/`
 - 第 63 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter63-portfolio-downside-vol-target/`
 - 第 63 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter63-portfolio-downside-vol-target/`
+- 第 64 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter64-portfolio-downside-contribution-budget/`
+- 第 65 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter65-portfolio-downside-breadth-budget/`
+- 第 66 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter66-decay-penalty-budget/`
+- 第 67 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter67-portfolio-correlation-stress-budget/`
+- 第 68 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter68-cash-risk-free-return-budget/`
+- 第 68 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter68-cash-risk-free-return/`
+- 第 68 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter68-cash-risk-free-return/`
 - 迭代日志：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-mechanism-results.tsv`
 
-## 9. 后续建议
+## 14. 后续建议
 
 下一轮机制研究可以优先围绕第 63 轮继续做三类验证：
 

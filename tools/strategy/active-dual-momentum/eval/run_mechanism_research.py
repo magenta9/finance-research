@@ -32,10 +32,10 @@ from run_eval import (
 )
 
 
-REFERENCE_BUDGET_BEFORE_ITER11 = {
-    "meanScore": 73.4590,
-    "p10Score": 45.7774,
-    "combinedScore": 65.1545,
+CURRENT_REFERENCE_BUDGET = {
+    "meanScore": 74.5776,
+    "p10Score": 50.5527,
+    "combinedScore": 67.3701,
 }
 
 
@@ -194,6 +194,11 @@ def mechanism_candidates(limit: int) -> list[MechanismCandidate]:
             {"portfolioDownsideVolTarget": True},
             "Scale total exposure down only when the merged signed portfolio has high downside volatility.",
         ),
+        MechanismCandidate(
+            "cash-risk-free-return",
+            {"cashReturnMode": "riskFreeRate"},
+            "Accrue base-currency risk-free return on existing ADM cash weight.",
+        ),
     ]
     combo_indexes = [
         (0, 5),
@@ -304,7 +309,7 @@ def main() -> int:
         "seed": args.seed,
         "endDate": end_date,
         "requiredStartDate": required_start,
-        "referenceBudgetBeforeIter11": REFERENCE_BUDGET_BEFORE_ITER11,
+        "referenceBudget": CURRENT_REFERENCE_BUDGET,
     }
     write_json(run_dir / "cases.json", cases)
     write_json(run_dir / "eval-plan.json", plan)
@@ -347,10 +352,10 @@ def main() -> int:
                 and isinstance(summary.get("p10Score"), (int, float))
                 and isinstance(combined, float)
                 and float(summary["meanScore"])
-                >= REFERENCE_BUDGET_BEFORE_ITER11["meanScore"]
+                >= CURRENT_REFERENCE_BUDGET["meanScore"]
                 and float(summary["p10Score"])
-                >= REFERENCE_BUDGET_BEFORE_ITER11["p10Score"]
-                and combined > REFERENCE_BUDGET_BEFORE_ITER11["combinedScore"]
+                >= CURRENT_REFERENCE_BUDGET["p10Score"]
+                and combined > CURRENT_REFERENCE_BUDGET["combinedScore"]
             )
             else "discard"
         )

@@ -9,6 +9,7 @@ import type {
 } from '@quantdesk/shared';
 
 import { isMaterialAllocationTradeChange } from './allocation-trade-orchestrator';
+import { annualizationFactor, riskFreeRates } from './analytics-constants';
 import type { PreparedAllocationData } from './preprocessor';
 import { buildScenarioAnalysis } from './scenarios';
 import { correlationMatrix } from './statistics';
@@ -345,6 +346,7 @@ export const runActiveDualMomentumBacktest = ({
     }
 
     let currentPositions: ActiveDualMomentumPosition[] = [];
+    let currentCashWeight = 1;
     let latestPositions: ActiveDualMomentumPosition[] = [];
     let totalTurnover = 0;
     let totalCost = 0;
@@ -418,6 +420,7 @@ export const runActiveDualMomentumBacktest = ({
             }
 
             const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight + cashBufferWeight;
+            currentCashWeight = cashWeight;
             if (isCalculationRebalance) {
                 rebalanceRecords.push({
                     cashWeight,
@@ -442,7 +445,10 @@ export const runActiveDualMomentumBacktest = ({
             latestPositions = nextPositions;
         }
 
-        const netReturn = grossReturn - rebalanceCost;
+        const cashReturn = config.researchProfile?.cashReturnMode !== 'zero'
+            ? currentCashWeight * (riskFreeRates[baseCurrency] / annualizationFactor)
+            : 0;
+        const netReturn = grossReturn + cashReturn - rebalanceCost;
         dailyReturns.push(netReturn);
         nominalExposures.push(currentPositions.reduce((sum, position) => sum + position.weight, 0));
         netExposures.push(currentPositions.reduce((sum, position) => sum + signedActiveDualMomentumWeight(position), 0));
