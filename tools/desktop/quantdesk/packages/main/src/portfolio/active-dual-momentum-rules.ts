@@ -20,6 +20,7 @@ export interface ActiveDualMomentumResearchProfile {
     closeScoreCashFactor?: number;
     closeScoreThreshold?: number;
     confirmFuturesShort?: boolean;
+    correlatedSameDirectionBudgetDedup?: boolean;
     crossSignOffsetCash?: boolean;
     decayPenaltyFactor?: number;
     deduplicateSameAssetSleeveBudget?: boolean;

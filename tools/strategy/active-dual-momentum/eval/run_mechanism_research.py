@@ -33,9 +33,9 @@ from run_eval import (
 
 
 CURRENT_REFERENCE_BUDGET = {
-    "meanScore": 72.7483,
-    "p10Score": 54.8798,
-    "combinedScore": 67.3877,
+    "meanScore": 75.3479,
+    "p10Score": 55.2229,
+    "combinedScore": 69.3104,
 }
 
 REFERENCE_GUARD_MULTIPLIER = 0.9
@@ -220,6 +220,11 @@ def mechanism_candidates(limit: int) -> list[MechanismCandidate]:
             "cross-sign-offset-cash",
             {"crossSignOffsetCash": True},
             "Compress offsetting long and short gross exposure into cash while keeping the portfolio net direction.",
+        ),
+        MechanismCandidate(
+            "correlated-same-direction-budget-dedup",
+            {"correlatedSameDirectionBudgetDedup": True},
+            "Compress highly correlated same-direction selected positions into cash instead of treating them as independent risk budgets.",
         ),
     ]
     combo_indexes = [

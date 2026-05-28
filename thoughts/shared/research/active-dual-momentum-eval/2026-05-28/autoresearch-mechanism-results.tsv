@@ -47,3 +47,6 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 79s	sharpe ceiling 2 scoring baseline reset	71.9568	54.1614	66.6182	new scoring baseline	baseline	pending
 80	searched direction: cross-sign offset cash	72.7483	54.8798	67.3877	budget eval passed	keep candidate	pending
 80f	cross-sign offset cash full eval	74.9330	55.8955	69.2218	full eval passed	keep	pending
+81	searched direction: correlated same-direction budget dedup	75.3479	55.2229	69.3104	budget eval passed	keep candidate	pending
+81f	correlated same-direction budget dedup full eval	75.6414	58.1620	70.3976	full eval passed	keep candidate	pending
+81d	correlated same-direction budget dedup default full eval	77.2767	58.9542	71.7800	default full eval passed	keep	pending
