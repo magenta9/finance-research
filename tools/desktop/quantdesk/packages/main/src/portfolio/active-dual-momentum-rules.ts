@@ -141,6 +141,17 @@ export const selectActiveDualMomentumSleeve = ({
                 return;
             }
 
+                if (sleeve === 'long' && candidate.momentum < 0) {
+                    cashWeight += slotWeight;
+                    filtered.push({
+                        assetId: asset.id,
+                        momentum: candidate.momentum,
+                        reason: 'NEGATIVE_MOMENTUM',
+                        symbol: asset.symbol,
+                    });
+                    return;
+                }
+
             positions.push({
                 assetIndex: candidate.assetIndex,
                 direction: candidate.momentum > 0 ? 'long' : 'short',

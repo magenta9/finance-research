@@ -100,4 +100,33 @@ describe('active dual momentum rules', () => {
         expect(selection.positions.reduce((sum, position) => sum + position.weight, 0)).toBeCloseTo(0.6, 6);
         expect(lowVolWeight).toBeGreaterThan(highVolWeight);
     });
+
+    test('keeps long sleeve futures focused on positive trend', () => {
+        const assets = [
+            buildAsset('asset-future-up', 'UP9999', 'commodity', { market: 'COMMODITY', metadata: { instrumentType: 'future' } }),
+            buildAsset('asset-future-down', 'DN9999', 'commodity', { market: 'COMMODITY', metadata: { instrumentType: 'future' } }),
+            buildAsset('asset-etf-up', 'ETF', 'equity'),
+        ];
+        const prepared = buildPrepared(assets, [
+            [100, 105],
+            [100, 80],
+            [100, 103],
+        ]);
+
+        const selection = selectActiveDualMomentumSleeve({
+            config: normalizeActiveDualMomentumConfig({ sleeveWeights: { long: 0.6, short: 0.4 }, topK: 3 }),
+            lookbackWeeks: 0.2,
+            prepared,
+            rebalanceIndex: 1,
+            sleeve: 'long',
+        });
+
+        expect(selection.positions).toEqual(expect.arrayContaining([
+            expect.objectContaining({ assetIndex: 0, direction: 'long' }),
+            expect.objectContaining({ assetIndex: 2, direction: 'long' }),
+        ]));
+        expect(selection.positions).not.toEqual(expect.arrayContaining([
+            expect.objectContaining({ assetIndex: 1 }),
+        ]));
+    });
 });
