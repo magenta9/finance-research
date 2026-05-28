@@ -254,7 +254,9 @@ export const runActiveDualMomentumBacktest = ({
                 rebalanceIndex: dayIndex,
                 sleeve: 'long',
             });
-            const nextPositions = mergeActiveDualMomentumSleeves(shortSleeve, longSleeve);
+            const grossPositions = mergeActiveDualMomentumSleeves(shortSleeve, longSleeve);
+            const cashBufferWeight = grossPositions.reduce((sum, position) => sum + position.weight * 0.2, 0);
+            const nextPositions = grossPositions.map((position) => ({ ...position, weight: position.weight * 0.8 }));
             const turnover = turnoverBetween(currentPositions, nextPositions, prepared.series.length);
             const cost = turnover * (config.transactionCostBps + config.slippageBps) / 10_000;
 
@@ -272,7 +274,7 @@ export const runActiveDualMomentumBacktest = ({
                 }));
             }
 
-            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight;
+            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight + cashBufferWeight;
             if (isCalculationRebalance) {
                 rebalanceRecords.push({
                     cashWeight,
