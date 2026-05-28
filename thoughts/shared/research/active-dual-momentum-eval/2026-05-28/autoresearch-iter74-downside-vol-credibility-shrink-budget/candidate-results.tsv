@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	downside-vol-credibility-shrink	74.2147	49.8005	78.0644	93.2564	66.8904	discard	Shrink sparse downside-vol estimates toward the cross-sectional median downside volatility.	"{""downsideVolCredibilityShrink"": true}"

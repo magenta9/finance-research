@@ -356,7 +356,76 @@ Full confirmation：
 
 结论：第 73 轮 full confirmation 小幅高于第 68 轮默认机制 full baseline（mean 76.8205 / p10 56.0719 / combined 70.5959），因此提升为当前默认机制并 commit。连续未改进计数重置为 0。
 
-## 17. 最终结论
+## 17. 第 74 轮顺序迭代
+
+第 74 轮搜索方向：下行波动稀疏样本可信度收缩。
+
+搜索依据：当前 best 高度依赖 downsideVol 排名和下行波动反比权重。第 74 轮测试当下跌样本太少时，将 downsideVol 向横截面中位下行波动收缩，避免低估风险的资产同时获得更高排名和更高权重。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 74 | 下行波动可信度收缩 | 74.2147 | 49.8005 | 66.8904 | discard |
+
+结论：第 74 轮低于当前 budget baseline（mean 74.6236 / p10 50.6345 / combined 67.4269），不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：1。
+
+## 18. 第 75 轮顺序迭代
+
+第 75 轮搜索方向：双周期同向确认过滤。
+
+搜索依据：在趋势切换期，10 周与 25 周动量可能互相冲突。第 75 轮测试不改变任何周期，只要求每个 sleeve 已选仓位的方向被另一条既有动量周期确认；不确认则转现金。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 75 | 双周期同向确认过滤 | 72.8361 | 49.2996 | 65.7751 | discard |
+
+结论：第 75 轮显著低于当前 budget baseline（mean 74.6236 / p10 50.6345 / combined 67.4269），不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：2。
+
+## 19. 第 76 轮顺序迭代
+
+第 76 轮搜索方向：双 sleeve 共识仓位释放 standing cash buffer。
+
+搜索依据：如果同一资产同时被 10 周和 25 周 sleeve 选中且合并后为多头，可能代表更高趋势置信度。第 76 轮测试仅对这类 `source: both` 多头释放 standing cash buffer，但保留组合下行波动 overlay。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 76 | 共识仓位释放 standing cash | 68.6486 | 42.4591 | 60.7918 | discard |
+
+结论：第 76 轮显著低于当前 budget baseline，说明当前 Eval 中释放 standing cash buffer 会明显破坏第 68/73 轮形成的防守结构。不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：3。
+
+## 20. 第 77 轮顺序迭代
+
+第 77 轮搜索方向：双 sleeve 同标的去重，不把同一趋势证据重复加杠杆。
+
+搜索依据：10 周和 25 周 sleeve 不是两份完全独立的风险预算。同一资产被两个 sleeve 同向选中时，当前 merge 会把两份权重相加，等于重复计算同一个趋势证据。第 77 轮测试相反方向：同向重复预算不加仓，而是只保留较大权重，较小重复权重转为现金。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 77 | 同标的同向 sleeve 预算去重 | 81.9641 | 60.6761 | 75.5777 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 77 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 84.0880 |
+| p10Score | 65.9341 |
+| p50Score | 87.8353 |
+| p90Score | 96.5418 |
+| combinedScore | 78.6418 |
+
+结论：第 77 轮显著高于第 73 轮默认机制 full baseline（mean 76.8599 / p10 56.0802 / combined 70.6260），提升为当前默认机制并 commit。连续未改进计数重置为 0。
+
+## 21. 最终结论
 
 当前推荐保留的新机制为：
 
@@ -367,22 +436,23 @@ Full confirmation：
 5. 增加组合层下行波动目标化覆盖：合并后的 signed portfolio 近期下行波动过高时，进一步降低总风险暴露并转为现金。
 6. 对现金权重按 base currency 无风险利率入账，默认使用 `riskFreeRates`。
 7. 净额化后按 fully funded 口径将 residual capital 视为现金，并纳入现金收益路径。
+8. 当两个 sleeve 同向选中同一资产时，只保留较大 sleeve 权重，重复预算转现金，避免把同一趋势证据重复加杠杆。
 
 相对 ADM V1 baseline：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +18.3066 |
-| p10Score | +28.8027 |
-| combinedScore | +21.4554 |
+| meanScore | +25.5347 |
+| p10Score | +38.6566 |
+| combinedScore | +29.4712 |
 
-相对第 68 轮 best：
+相对第 73 轮 best：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +0.0394 |
-| p10Score | +0.0083 |
-| combinedScore | +0.0301 |
+| meanScore | +7.2281 |
+| p10Score | +9.8539 |
+| combinedScore | +8.0158 |
 
 研究解释：
 
@@ -391,10 +461,11 @@ Full confirmation：
 - 组合层下行波动目标化覆盖把风险控制从单资产推进到真实合并组合路径，full Eval 中 p10 从 51.1093 提高到 52.4746。
 - 现金收益入账不改变风险暴露，但把高现金状态下的机会成本纳入收益路径，full Eval 中 p10 从 52.4746 提高到 56.0719。
 - 净额 residual cash 入账进一步修正 fully funded 资本口径，提升幅度很小，但 full Eval 的 mean、p10 和 combined 均高于第 68 轮。
+- 同标的同向 sleeve 预算去重是第 77 轮最大新增改善，说明当前 ADM 的 10 周和 25 周共识更适合作为确认信号，而不是重复加仓信号。
 - 25% 现金缓冲进一步降低跨品种随机篮子中的尾部暴露，同时没有牺牲 meanScore。
 - 单独的小幅变化保持带在非标准抽样中表现很好，但标准 full confirmation 不如第 45 轮稳健，因此没有进入最终默认机制。
 
-## 18. 证据路径
+## 22. 证据路径
 
 - 标准 50 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter11-60-mechanism-sweep-standard-cases/`
 - 第 45 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter45-downside-risk-larger-cash-standard-cases/`
@@ -419,9 +490,15 @@ Full confirmation：
 - 第 73 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter73-netted-residual-cash-return-budget/`
 - 第 73 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter73-netted-residual-cash-return/`
 - 第 73 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter73-netted-residual-cash-return/`
+- 第 74 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter74-downside-vol-credibility-shrink-budget/`
+- 第 75 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter75-dual-horizon-direction-confirm-budget/`
+- 第 76 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter76-consensus-standing-cash-release-budget/`
+- 第 77 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter77-deduplicate-same-asset-sleeve-budget/`
+- 第 77 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter77-deduplicate-same-asset-sleeve-budget/`
+- 第 77 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter77-deduplicate-same-asset-sleeve-budget/`
 - 迭代日志：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-mechanism-results.tsv`
 
-## 19. 后续建议
+## 23. 后续建议
 
 下一轮机制研究可以优先围绕第 63 轮继续做三类验证：
 

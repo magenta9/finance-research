@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	deduplicate-same-asset-sleeve-budget	81.9641	60.6761	86.3151	95.4568	75.5777	budget-pass	Convert duplicate same-direction budget from both ADM sleeves into cash instead of stacking exposure.	"{""deduplicateSameAssetSleeveBudget"": true}"

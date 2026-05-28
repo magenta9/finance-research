@@ -33,9 +33,9 @@ from run_eval import (
 
 
 CURRENT_REFERENCE_BUDGET = {
-    "meanScore": 74.6236,
-    "p10Score": 50.6345,
-    "combinedScore": 67.4269,
+    "meanScore": 81.9641,
+    "p10Score": 60.6761,
+    "combinedScore": 75.5777,
 }
 
 
@@ -203,6 +203,11 @@ def mechanism_candidates(limit: int) -> list[MechanismCandidate]:
             "netted-residual-cash-return",
             {"nettedResidualCashReturn": True},
             "Accrue cash return on residual fully-funded capital after netted positions.",
+        ),
+        MechanismCandidate(
+            "deduplicate-same-asset-sleeve-budget",
+            {"deduplicateSameAssetSleeveBudget": True},
+            "Convert duplicate same-direction budget from both ADM sleeves into cash instead of stacking exposure.",
         ),
     ]
     combo_indexes = [

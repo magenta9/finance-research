@@ -15,7 +15,7 @@ import { buildScenarioAnalysis } from './scenarios';
 import { correlationMatrix } from './statistics';
 import {
     activeDualMomentumTradingDaysPerWeek,
-    mergeActiveDualMomentumSleeves,
+    mergeActiveDualMomentumSleevesWithCash,
     normalizeActiveDualMomentumConfig,
     selectActiveDualMomentumSleeve,
     signedActiveDualMomentumWeight,
@@ -384,7 +384,10 @@ export const runActiveDualMomentumBacktest = ({
                 rebalanceIndex: dayIndex,
                 sleeve: 'long',
             });
-            const grossPositions = mergeActiveDualMomentumSleeves(shortSleeve, longSleeve);
+            const mergedSleeves = mergeActiveDualMomentumSleevesWithCash(shortSleeve, longSleeve, {
+                deduplicateSameDirection: config.researchProfile?.deduplicateSameAssetSleeveBudget !== false,
+            });
+            const grossPositions = mergedSleeves.positions;
             const cashBufferMultiplier = resolveCashBufferMultiplier({
                 baseMultiplier: config.researchProfile?.cashBufferMultiplier ?? 0.75,
                 config,
@@ -419,7 +422,7 @@ export const runActiveDualMomentumBacktest = ({
                 }));
             }
 
-            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight + cashBufferWeight;
+            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight + mergedSleeves.cashWeight + cashBufferWeight;
             const residualCashWeight = Math.max(0, 1 - nextPositions.reduce((sum, position) => sum + position.weight, 0));
             const resolvedCashWeight = config.researchProfile?.nettedResidualCashReturn !== false
                 ? Math.max(cashWeight, residualCashWeight)

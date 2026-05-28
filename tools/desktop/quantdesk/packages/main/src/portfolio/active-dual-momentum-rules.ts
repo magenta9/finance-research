@@ -21,6 +21,7 @@ export interface ActiveDualMomentumResearchProfile {
     closeScoreThreshold?: number;
     confirmFuturesShort?: boolean;
     decayPenaltyFactor?: number;
+    deduplicateSameAssetSleeveBudget?: boolean;
     etfHighWaterFilter?: boolean;
     futuresShortWeightMultiplier?: number;
     maxPositionWeight?: number;
@@ -394,17 +395,28 @@ export const selectActiveDualMomentumSleeve = ({
     return { cashWeight, filtered, positions };
 };
 
-export const mergeActiveDualMomentumSleeves = (
+export const mergeActiveDualMomentumSleevesWithCash = (
     shortSleeve: ActiveDualMomentumSleeveSelection,
     longSleeve: ActiveDualMomentumSleeveSelection,
+    options?: { deduplicateSameDirection?: boolean },
 ) => {
     const merged = new Map<number, ActiveDualMomentumPosition>();
+    let cashWeight = 0;
 
     [...shortSleeve.positions, ...longSleeve.positions].forEach((position) => {
         const existing = merged.get(position.assetIndex);
 
         if (!existing) {
             merged.set(position.assetIndex, { ...position });
+            return;
+        }
+
+        if (options?.deduplicateSameDirection && existing.direction === position.direction) {
+            cashWeight += Math.min(existing.weight, position.weight);
+            existing.weight = Math.max(existing.weight, position.weight);
+            existing.source = 'both';
+            existing.shortMomentum = existing.shortMomentum ?? position.shortMomentum;
+            existing.longMomentum = existing.longMomentum ?? position.longMomentum;
             return;
         }
 
@@ -416,5 +428,13 @@ export const mergeActiveDualMomentumSleeves = (
         existing.longMomentum = existing.longMomentum ?? position.longMomentum;
     });
 
-    return [...merged.values()].filter((position) => position.weight >= minimumPortfolioTradeWeight);
+    return {
+        cashWeight,
+        positions: [...merged.values()].filter((position) => position.weight >= minimumPortfolioTradeWeight),
+    };
 };
+
+export const mergeActiveDualMomentumSleeves = (
+    shortSleeve: ActiveDualMomentumSleeveSelection,
+    longSleeve: ActiveDualMomentumSleeveSelection,
+) => mergeActiveDualMomentumSleevesWithCash(shortSleeve, longSleeve).positions;

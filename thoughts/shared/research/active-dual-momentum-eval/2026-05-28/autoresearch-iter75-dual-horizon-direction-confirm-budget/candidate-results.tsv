@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	dual-horizon-direction-confirm	72.8361	49.2996	73.3647	93.4878	65.7751	discard	Route sleeve positions to cash unless the other existing ADM lookback confirms the same direction.	"{""dualHorizonDirectionConfirm"": true}"

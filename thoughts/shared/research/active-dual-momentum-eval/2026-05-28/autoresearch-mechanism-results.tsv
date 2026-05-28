@@ -36,3 +36,8 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 72	searched direction: excess cash hurdle rank	74.3826	50.3066	67.1598	below current budget baseline	discard	not committed
 73	searched direction: netted residual cash return	74.6236	50.6345	67.4269	budget eval passed	keep candidate	pending
 73f	netted residual cash return full eval	76.8599	56.0802	70.6260	full eval passed	keep	pending
+74	searched direction: downside-vol credibility shrink	74.2147	49.8005	66.8904	below current budget baseline	discard	not committed
+75	searched direction: dual-horizon direction confirm	72.8361	49.2996	65.7751	below current budget baseline	discard	not committed
+76	searched direction: consensus standing cash release	68.6486	42.4591	60.7918	below current budget baseline	discard	not committed
+77	searched direction: deduplicate same-asset sleeve budget	81.9641	60.6761	75.5777	budget eval passed	keep candidate	pending
+77f	deduplicate same-asset sleeve budget full eval	84.0880	65.9341	78.6418	full eval passed	keep	pending
