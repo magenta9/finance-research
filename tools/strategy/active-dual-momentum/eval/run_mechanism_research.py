@@ -33,9 +33,9 @@ from run_eval import (
 
 
 REFERENCE_BUDGET_BEFORE_ITER11 = {
-    "meanScore": 71.4550,
-    "p10Score": 43.6283,
-    "combinedScore": 63.1070,
+    "meanScore": 73.4590,
+    "p10Score": 45.7774,
+    "combinedScore": 65.1545,
 }
 
 
@@ -188,6 +188,11 @@ def mechanism_candidates(limit: int) -> list[MechanismCandidate]:
             "smaller-cash-buffer",
             {"cashBufferMultiplier": 0.85},
             "Release a little cash to see whether the best mechanism is too defensive.",
+        ),
+        MechanismCandidate(
+            "portfolio-downside-vol-target",
+            {"portfolioDownsideVolTarget": True},
+            "Scale total exposure down only when the merged signed portfolio has high downside volatility.",
         ),
     ]
     combo_indexes = [

@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "portfolio-downside-vol-target",
+    "thesis": "Scale total exposure down only when the merged signed portfolio has high downside volatility.",
+    "profile": {
+      "portfolioDownsideVolTarget": true
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 73.459,
+      "p10Score": 45.7774,
+      "p50Score": 74.6109,
+      "p90Score": 89.7022,
+      "combinedScore": 65.1545
+    }
+  }
+]

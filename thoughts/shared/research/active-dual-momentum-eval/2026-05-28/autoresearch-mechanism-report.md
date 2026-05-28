@@ -152,7 +152,34 @@ Full confirmation：
 | p90Score | 94.2375 |
 | combinedScore | 66.7518 |
 
-## 6. 最终结论
+## 6. 第 63 轮顺序迭代
+
+按你的修正，本轮开始改为严格顺序迭代：每轮先搜索一个方向，只尝试这一个方向，保存 Eval 结果；只有提升 baseline 才 commit。
+
+第 63 轮搜索方向：组合层下行波动目标化覆盖。
+
+搜索依据：当前 best 已经完成单资产层面的下行风险排序和下行风险分权，下一步应检查合并后的 signed portfolio 是否进入高下行波动状态。该方向来自 volatility-managed portfolios 的思想：高波动状态下降低风险暴露，目标是改善 p10 和回撤/波动评分。实现上不加杠杆，只在合并组合的近期下行波动超过固定目标时把额外风险转为现金。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 63 | 组合层下行波动目标化覆盖 | 73.4590 | 45.7774 | 65.1545 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 63 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 74.4075 |
+| p10Score | 52.4746 |
+| p50Score | 77.1963 |
+| p90Score | 94.2375 |
+| combinedScore | 67.8276 |
+
+## 7. 最终结论
 
 当前推荐保留的新机制为：
 
@@ -160,42 +187,47 @@ Full confirmation：
 2. 将候选排序从原始动量改为 `momentum / downsideVolatility`。
 3. 将 sleeve 权重从 inverse realized volatility 改为 inverse downside volatility。
 4. 将 standing cash buffer 从 20% 提高到 25%。
+5. 增加组合层下行波动目标化覆盖：合并后的 signed portfolio 近期下行波动过高时，进一步降低总风险暴露并转为现金。
 
 相对 ADM V1 baseline：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +14.9024 |
-| p10Score | +23.8318 |
-| combinedScore | +17.5812 |
+| meanScore | +15.8542 |
+| p10Score | +25.1971 |
+| combinedScore | +18.6570 |
 
-相对第 45 轮 best：
+相对第 62 轮 best：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +0.6925 |
-| p10Score | +2.2355 |
-| combinedScore | +1.1554 |
+| meanScore | +0.9518 |
+| p10Score | +1.3653 |
+| combinedScore | +1.0758 |
 
 研究解释：
 
 - 下行波动调整排序比单纯追逐动量更能区分“上涨但回撤质量差”的标的，尤其提升 p10 tail cases。
 - 下行波动反比权重进一步把风险预算从左尾更差的标的移开，full Eval 中 p10 从 48.8738 提高到 51.1093。
+- 组合层下行波动目标化覆盖把风险控制从单资产推进到真实合并组合路径，full Eval 中 p10 从 51.1093 提高到 52.4746。
 - 25% 现金缓冲进一步降低跨品种随机篮子中的尾部暴露，同时没有牺牲 meanScore。
 - 单独的小幅变化保持带在非标准抽样中表现很好，但标准 full confirmation 不如第 45 轮稳健，因此没有进入最终默认机制。
 
-## 7. 证据路径
+## 8. 证据路径
 
 - 标准 50 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter11-60-mechanism-sweep-standard-cases/`
 - 第 45 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter45-downside-risk-larger-cash-standard-cases/`
 - 默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-downside-risk-25cash/`
 - 追加 20 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter62-81-searched-directions-budget/`
 - 第 62 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter62-default-downside-rank-risk-weight/`
+- 第 63 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter63-portfolio-downside-vol-target-budget/`
+- 第 63 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter63-portfolio-downside-vol-target/`
+- 第 63 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter63-portfolio-downside-vol-target/`
 - 迭代日志：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-mechanism-results.tsv`
 
-## 8. 后续建议
+## 9. 后续建议
 
-下一轮机制研究可以优先围绕第 62 轮继续做三类验证：
+下一轮机制研究可以优先围绕第 63 轮继续做三类验证：
 
 - 在标准 cases 上评估交易成本和滑点压力。
 - 用不同 random seed 做 out-of-sample robustness check。

@@ -21,3 +21,5 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 61	current default budget baseline before searched 20-round loop	70.6348	41.8233	61.9914	baseline	baseline	7512606
 62	searched direction: inverse downside-volatility sleeve weights	71.4550	43.6283	63.1070	budget eval passed	keep candidate	pending
 62f	downside-risk rank plus inverse downside-volatility weights plus 25 percent cash buffer full eval	73.4557	51.1093	66.7518	full eval passed	keep	pending
+63	searched direction: portfolio downside-volatility target overlay	73.4590	45.7774	65.1545	budget eval passed	keep candidate	pending
+63f	portfolio downside-volatility target overlay full eval	74.4075	52.4746	67.8276	full eval passed	keep	pending
