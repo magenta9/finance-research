@@ -90,22 +90,40 @@ export const selectActiveDualMomentumSleeve = ({
         const momentum = currentPrice / previousPrice - 1;
         const futures = isActiveDualMomentumFuturesAsset(entry.asset);
         return [{
+            assetClass: entry.asset.assetClass,
             assetIndex,
             futures,
             momentum,
             rankScore: futures ? Math.abs(momentum) : momentum,
         }];
-    }).sort((left, right) => right.rankScore - left.rankScore).slice(0, config.topK);
+    }).sort((left, right) => right.rankScore - left.rankScore);
+    const candidates = [];
+    const assetClassCounts = new Map<string, number>();
+
+    for (const candidate of rankedCandidates) {
+        const assetClassCount = assetClassCounts.get(candidate.assetClass) ?? 0;
+
+        if (assetClassCount >= 2) {
+            continue;
+        }
+
+        candidates.push(candidate);
+        assetClassCounts.set(candidate.assetClass, assetClassCount + 1);
+
+        if (candidates.length >= config.topK) {
+            break;
+        }
+    }
 
     if (candidates.length === 0) {
         return { cashWeight: 0, filtered: [], positions: [] };
     }
 
     const sleeveWeight = config.sleeveWeights[sleeve];
-    const slotWeight = sleeveWeight / candidates.length;
+    const slotWeight = sleeveWeight / config.topK;
     const filtered: ActiveDualMomentumSleeveSelection['filtered'] = [];
     const positions: ActiveDualMomentumPosition[] = [];
-    let cashWeight = 0;
+    let cashWeight = slotWeight * (config.topK - candidates.length);
 
     candidates.forEach((candidate) => {
         const asset = prepared.series[candidate.assetIndex].asset;
