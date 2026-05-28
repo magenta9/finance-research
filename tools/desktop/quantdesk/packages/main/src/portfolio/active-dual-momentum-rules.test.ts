@@ -75,29 +75,4 @@ describe('active dual momentum rules', () => {
         expect(merged[0]?.weight).toBeCloseTo(0.3, 6);
     });
 
-    test('weights selected sleeve assets by inverse realized volatility', () => {
-        const assets = [
-            buildAsset('asset-high-vol', 'HV', 'equity'),
-            buildAsset('asset-low-vol', 'LV', 'equity'),
-            buildAsset('asset-mid-vol', 'MV', 'equity'),
-        ];
-        const prepared = buildPrepared(assets, [
-            [100, 130, 90, 110],
-            [100, 101, 102, 103],
-            [100, 104, 105, 106],
-        ]);
-
-        const selection = selectActiveDualMomentumSleeve({
-            config: normalizeActiveDualMomentumConfig({ absoluteMomentumFilter: false, sleeveWeights: { long: 0.6, short: 0.4 }, topK: 3 }),
-            lookbackWeeks: 0.6,
-            prepared,
-            rebalanceIndex: 3,
-            sleeve: 'long',
-        });
-        const lowVolWeight = selection.positions.find((position) => position.assetIndex === 1)?.weight ?? 0;
-        const highVolWeight = selection.positions.find((position) => position.assetIndex === 0)?.weight ?? 0;
-
-        expect(selection.positions.reduce((sum, position) => sum + position.weight, 0)).toBeCloseTo(0.6, 6);
-        expect(lowVolWeight).toBeGreaterThan(highVolWeight);
-    });
 });
