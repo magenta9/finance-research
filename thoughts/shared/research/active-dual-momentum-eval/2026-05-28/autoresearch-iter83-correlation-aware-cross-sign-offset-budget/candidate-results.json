@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "correlation-aware-cross-sign-offset",
+    "thesis": "Only cash out opposite-direction gross exposure when the long and short assets are positively correlated.",
+    "profile": {
+      "correlationAwareCrossSignOffset": true
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 75.342,
+      "p10Score": 55.5105,
+      "p50Score": 75.9972,
+      "p90Score": 96.5197,
+      "combinedScore": 69.3925
+    }
+  }
+]

@@ -33,9 +33,9 @@ from run_eval import (
 
 
 CURRENT_REFERENCE_BUDGET = {
-    "meanScore": 75.3479,
-    "p10Score": 55.2229,
-    "combinedScore": 69.3104,
+    "meanScore": 76.3154,
+    "p10Score": 55.0343,
+    "combinedScore": 69.9311,
 }
 
 REFERENCE_GUARD_MULTIPLIER = 0.9
@@ -225,6 +225,11 @@ def mechanism_candidates(limit: int) -> list[MechanismCandidate]:
             "correlated-same-direction-budget-dedup",
             {"correlatedSameDirectionBudgetDedup": True},
             "Compress highly correlated same-direction selected positions into cash instead of treating them as independent risk budgets.",
+        ),
+        MechanismCandidate(
+            "correlated-same-direction-cluster-representative",
+            {"correlatedSameDirectionClusterRepresentative": True},
+            "Keep only the largest-weight representative inside each highly correlated same-direction cluster and cash out the rest.",
         ),
     ]
     combo_indexes = [

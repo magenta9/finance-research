@@ -285,11 +285,13 @@ const applyCorrelatedSameDirectionBudgetDedup = ({
     positions,
     prepared,
     rebalanceIndex,
+    representativeOnly,
 }: {
     maxLookbackDays: number;
     positions: ActiveDualMomentumPosition[];
     prepared: PreparedAllocationData;
     rebalanceIndex: number;
+    representativeOnly?: boolean;
 }) => {
     const returnsByAsset = selectedDailyReturns({
         endIndex: rebalanceIndex,
@@ -314,6 +316,15 @@ const applyCorrelatedSameDirectionBudgetDedup = ({
             const retainedRatio = grossWeight > 0 ? retainedWeight / grossWeight : 1;
 
             cashWeight += grossWeight - retainedWeight;
+            if (representativeOnly && clusterPositions.length > 1) {
+                const representative = clusterPositions.reduce((best, position) =>
+                    position.weight > best.weight ? position : best,
+                );
+
+                nextPositions.push({ ...representative, weight: retainedWeight });
+                return;
+            }
+
             clusterPositions.forEach((position) => {
                 const weight = position.weight * retainedRatio;
 
@@ -629,6 +640,7 @@ export const runActiveDualMomentumBacktest = ({
                     positions: baseTargetPositions,
                     prepared,
                     rebalanceIndex: dayIndex,
+                    representativeOnly: config.researchProfile?.correlatedSameDirectionClusterRepresentative !== false,
                 })
                 : { cashWeight: 0, positions: baseTargetPositions };
             const crossSignOffset = config.researchProfile?.crossSignOffsetCash !== false

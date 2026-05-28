@@ -552,7 +552,116 @@ Full confirmation：
 
 结论：第 81 轮候选 full 高于第 80 轮 full baseline（mean 74.9330 / p10 55.8955 / combined 69.2218），默认路径复核进一步提高到 combined 71.7800，因此提升为当前默认机制并 commit。连续未改进计数重置为 0。
 
-## 26. 最终结论
+## 26. 第 82 轮顺序迭代
+
+第 82 轮搜索方向：方向感知 adverse volatility。
+
+搜索依据：当前默认的 `downsideVolatility` 对多头风险定义合理，但对空头方向可能符号错配。第 82 轮测试空头侧使用 upside volatility 作为 adverse risk，多头仍使用 downside volatility；该方向不改变长短动量周期、候选补位、现金 buffer 或组合后处理机制。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 82 | 方向感知 adverse volatility | 75.5798 | 54.8533 | 69.3619 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 82 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 73.8113 |
+| p10Score | 54.5244 |
+| p50Score | 72.8180 |
+| p90Score | 96.6174 |
+| combinedScore | 68.0252 |
+
+结论：第 82 轮 budget 小幅通过，但 full confirmation 低于第 81 轮当前默认机制 full baseline（mean 77.2767 / p10 58.9542 / combined 71.7800）。不提升默认机制，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：1。
+
+## 27. 第 83 轮顺序迭代
+
+第 83 轮搜索方向：相关性极性约束的跨多空抵消现金化。
+
+搜索依据：第 80 轮的跨多空抵消现金化有效，但无条件压缩所有反向 gross exposure 可能过度防守。第 83 轮测试只对正相关的反向 long/short 持仓做抵消现金化，保留低相关或负相关反向持仓作为潜在分散来源。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 83 | 相关性极性约束跨多空抵消 | 75.3420 | 55.5105 | 69.3925 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 83 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 77.2543 |
+| p10Score | 58.9250 |
+| p50Score | 76.3169 |
+| p90Score | 96.9758 |
+| combinedScore | 71.7555 |
+
+结论：第 83 轮 full confirmation 非常接近当前默认机制，但 combinedScore 仍低于第 81 轮 full baseline（71.7555 < 71.7800）。不提升默认机制，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：2。
+
+## 28. 第 84 轮顺序迭代
+
+第 84 轮搜索方向：新入选仓位一轮 probation cash。
+
+搜索依据：第 79 轮风险退出预算冷却有效，说明调仓换手时释放出来的预算不宜立即再部署。第 84 轮从入场端测试同类思想：新入选或翻向仓位先观察一个 rebalance 周期，若下一轮仍同向入选才允许进入。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 84 | 新仓一轮 probation cash | 74.0907 | 50.6755 | 67.0661 | discard |
+
+结论：修正后的第 84 轮低于当前 budget baseline（mean 75.3479 / p10 55.2229 / combined 69.3104），不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：3。
+
+## 29. 第 85 轮顺序迭代
+
+第 85 轮搜索方向：高相关同向持仓替换，而不是现金化。
+
+搜索依据：第 81 轮高相关同向预算去重有效，但直接现金化可能压低 mean/p50。第 85 轮测试在 sleeve 选择阶段跳过与已选同向候选高度相关的标的，并尝试顺延选择下一个低相关候选，目标是在保留风险去重的同时减少现金化。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 85 | 高相关同向候选顺延替换 | 76.3431 | 52.7740 | 69.2724 | discard |
+
+结论：第 85 轮 meanScore 提升，但 p10Score 明显低于当前 baseline，combinedScore 也略低于当前 budget baseline（69.2724 < 69.3104）。不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：4。
+
+## 30. 第 86 轮顺序迭代
+
+第 86 轮搜索方向：高相关同向簇代表资产保留。
+
+搜索依据：第 81 轮证明高相关同向预算现金化有效，但按比例保留簇内所有碎片仓位可能留下多个同质表达。第 86 轮测试只保留高相关簇内当前权重最大的代表资产，簇内其余预算继续现金化。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 86 | 高相关簇代表资产保留 | 76.3154 | 55.0343 | 69.9311 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 86 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 78.2198 |
+| p10Score | 58.7312 |
+| p50Score | 77.4412 |
+| p90Score | 97.1941 |
+| combinedScore | 72.3732 |
+
+结论：第 86 轮 full confirmation 高于第 81 轮当前默认机制 full baseline（combined 72.3732 > 71.7800），且 meanScore 提升。p10Score 略低于第 81 轮但满足 90% 保护条件，因此提升为当前默认机制并 commit。连续未改进计数重置为 0。
+
+## 31. 最终结论
 
 当前推荐保留的新机制为：
 
@@ -567,6 +676,7 @@ Full confirmation：
 9. 旧仓位退出或反向时，将对应退出预算在本轮调仓先冷却为现金，避免立即再部署给新开仓或增配仓。
 10. 当组合层同时持有多头和空头 gross exposure 时，压缩互相抵消的双边预算并转入现金，保留净方向但降低低效率 gross exposure。
 11. 同方向持仓若在近期窗口内高度相关，将相关簇预算压缩到最大单仓权重，其余预算转现金，降低伪分散暴露。
+12. 对高相关同向簇只保留当前最大权重代表资产，簇内其余碎片仓位继续现金化，减少同质仓位残留。
 
 相对 ADM V1 baseline：
 
@@ -584,13 +694,13 @@ Full confirmation：
 | p10Score | +0.2037 |
 | combinedScore | +0.4954 |
 
-Sharpe ceiling 2 新评分口径下，第 81 轮相对重算 full baseline：
+Sharpe ceiling 2 新评分口径下，第 86 轮相对重算 full baseline：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +8.3319 |
-| p10Score | +7.5643 |
-| combinedScore | +8.1017 |
+| meanScore | +9.2750 |
+| p10Score | +7.3413 |
+| combinedScore | +8.6949 |
 
 研究解释：
 
@@ -603,10 +713,11 @@ Sharpe ceiling 2 新评分口径下，第 81 轮相对重算 full baseline：
 - 风险退出预算冷却进一步验证了“释放出来的预算先现金化”优于立即再部署，full Eval 的 mean、p10 和 combined 均继续改善。
 - 跨多空抵消预算现金化说明低净敞口不需要依赖高双边 gross exposure 实现；在新评分口径下，它显著改善 mean、p10 和 combined。
 - 高相关同向预算去重进一步降低了伪分散风险，在默认 full Eval 中把 p10Score 从 55.8955 提升到 58.9542。
+- 高相关簇代表资产保留提升了 meanScore 和 combinedScore，说明第 81 轮的相关簇保留方式仍有碎片化拖累。
 - 25% 现金缓冲进一步降低跨品种随机篮子中的尾部暴露，同时没有牺牲 meanScore。
 - 单独的小幅变化保持带在非标准抽样中表现很好，但标准 full confirmation 不如第 45 轮稳健，因此没有进入最终默认机制。
 
-## 27. 证据路径
+## 32. 证据路径
 
 - 标准 50 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter11-60-mechanism-sweep-standard-cases/`
 - 第 45 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter45-downside-risk-larger-cash-standard-cases/`
@@ -650,9 +761,19 @@ Sharpe ceiling 2 新评分口径下，第 81 轮相对重算 full baseline：
 - 第 81 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter81-correlated-same-direction-budget-dedup/`
 - 第 81 轮默认机制 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-baseline-final-default-iter81-correlated-same-direction-budget-dedup/`
 - 第 81 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter81-correlated-same-direction-budget-dedup/`
+- 第 82 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter82-direction-aware-adverse-volatility-budget/`
+- 第 82 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter82-direction-aware-adverse-volatility/`
+- 第 83 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter83-correlation-aware-cross-sign-offset-budget/`
+- 第 83 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter83-correlation-aware-cross-sign-offset/`
+- 第 84 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter84-entry-probation-cash-budget/`
+- 第 85 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter85-correlation-diversified-replacement-budget/`
+- 第 86 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter86-correlated-same-direction-cluster-representative-budget/`
+- 第 86 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter86-correlated-same-direction-cluster-representative/`
+- 第 86 轮默认机制 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-baseline-final-default-iter86-correlated-same-direction-cluster-representative-rerun/`
+- 第 86 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter86-correlated-same-direction-cluster-representative/`
 - 迭代日志：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-mechanism-results.tsv`
 
-## 28. 后续建议
+## 33. 后续建议
 
 下一轮机制研究可以优先围绕第 63 轮继续做三类验证：
 

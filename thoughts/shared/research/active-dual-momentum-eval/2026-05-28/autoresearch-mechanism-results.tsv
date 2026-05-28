@@ -50,3 +50,11 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 81	searched direction: correlated same-direction budget dedup	75.3479	55.2229	69.3104	budget eval passed	keep candidate	pending
 81f	correlated same-direction budget dedup full eval	75.6414	58.1620	70.3976	full eval passed	keep candidate	pending
 81d	correlated same-direction budget dedup default full eval	77.2767	58.9542	71.7800	default full eval passed	keep	pending
+82	searched direction: direction-aware adverse volatility	75.5798	54.8533	69.3619	budget eval passed	keep candidate	pending
+82f	direction-aware adverse volatility full eval	73.8113	54.5244	68.0252	full eval below current baseline	discard	not committed
+83	searched direction: correlation-aware cross-sign offset	75.3420	55.5105	69.3925	budget eval passed	keep candidate	pending
+83f	correlation-aware cross-sign offset full eval	77.2543	58.9250	71.7555	full eval below current baseline	discard	not committed
+84	searched direction: entry probation cash	74.0907	50.6755	67.0661	below current budget baseline	discard	not committed
+85	searched direction: correlation diversified replacement	76.3431	52.7740	69.2724	below current budget baseline	discard	not committed
+86	searched direction: correlated same-direction cluster representative	76.3154	55.0343	69.9311	budget eval passed	keep candidate	pending
+86f	correlated same-direction cluster representative full eval	78.2198	58.7312	72.3732	full eval passed	keep	pending
