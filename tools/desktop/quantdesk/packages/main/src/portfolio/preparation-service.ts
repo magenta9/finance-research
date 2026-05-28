@@ -11,6 +11,7 @@ import {
 import {
     resolveAllocationPreparationDateRange,
     resolvePreparedCalculationDateRange,
+    resolveWarmupPreparationDateRange,
     type AllocationPreparationDateRange,
 } from './preparation-date-range';
 import { classifyAllocationPreparationError } from './preparation-error-classifier';
@@ -71,25 +72,28 @@ export class AllocationPreparationService {
         baseCurrency,
         endDate,
         startDate,
+        warmupDays,
     }: {
         assetIds: string[];
         baseCurrency: Currency;
         endDate?: string;
         startDate?: string;
+        warmupDays?: number;
     }): Promise<AllocationPreparationOutcome> {
         const effectiveDateRange = resolveAllocationPreparationDateRange({
             clock: this.clock,
             endDate,
             startDate,
         });
+        const dataDateRange = resolveWarmupPreparationDateRange(effectiveDateRange, warmupDays);
         let prepared = emptyPreparedAllocationData;
         let syncWarnings: string[] = [];
 
         try {
             const { assets } = this.deps.reader.readPreparationContext({
                 assetIds,
-                endDate: effectiveDateRange.endDate,
-                startDate: effectiveDateRange.startDate,
+                endDate: dataDateRange.endDate,
+                startDate: dataDateRange.startDate,
             });
             this.assertAllAssetsPresent(assetIds, assets);
 
@@ -99,8 +103,8 @@ export class AllocationPreparationService {
                     intent: 'allocation',
                     priority: 'interactive',
                     window: {
-                        endDate: effectiveDateRange.endDate,
-                        startDate: effectiveDateRange.startDate,
+                        endDate: dataDateRange.endDate,
+                        startDate: dataDateRange.startDate,
                     },
                 });
                 syncWarnings = syncSummary.warnings.map((warning) => warning.message);
@@ -109,9 +113,9 @@ export class AllocationPreparationService {
             prepared = prepareAllocationData({
                 assets,
                 baseCurrency,
-                endDate: effectiveDateRange.endDate,
+                endDate: dataDateRange.endDate,
                 reader: this.deps.reader,
-                startDate: effectiveDateRange.startDate,
+                startDate: dataDateRange.startDate,
             });
             prepared = {
                 ...prepared,

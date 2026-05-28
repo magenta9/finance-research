@@ -1,4 +1,4 @@
-import { formatUtcDate, normalizeIsoDateString, shiftUtcDateByDays } from '@quantdesk/shared/date-utils';
+import { formatUtcDate, normalizeIsoDateString, shiftIsoDateByDays, shiftUtcDateByDays } from '@quantdesk/shared/date-utils';
 
 import type { PreparedAllocationData } from './preprocessor';
 
@@ -47,7 +47,27 @@ export const resolveAllocationPreparationDateRange = ({
 export const resolvePreparedCalculationDateRange = (
     prepared: PreparedAllocationData,
     fallbackRange: AllocationPreparationDateRange,
-): AllocationPreparationDateRange => ({
-    endDate: prepared.alignedDates.at(-1) ?? fallbackRange.endDate,
-    startDate: prepared.alignedDates[0] ?? fallbackRange.startDate,
-});
+): AllocationPreparationDateRange => {
+    const calculationDates = prepared.alignedDates.filter((date) =>
+        date >= fallbackRange.startDate && date <= fallbackRange.endDate,
+    );
+
+    return {
+        endDate: calculationDates.at(-1) ?? prepared.alignedDates.at(-1) ?? fallbackRange.endDate,
+        startDate: calculationDates[0] ?? prepared.alignedDates[0] ?? fallbackRange.startDate,
+    };
+};
+
+export const resolveWarmupPreparationDateRange = (
+    effectiveDateRange: AllocationPreparationDateRange,
+    warmupDays = 0,
+): AllocationPreparationDateRange => {
+    if (warmupDays <= 0) {
+        return effectiveDateRange;
+    }
+
+    return {
+        endDate: effectiveDateRange.endDate,
+        startDate: shiftIsoDateByDays(effectiveDateRange.startDate, -warmupDays),
+    };
+};

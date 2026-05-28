@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
     resolveAllocationPreparationDateRange,
     resolvePreparedCalculationDateRange,
+    resolveWarmupPreparationDateRange,
 } from './preparation-date-range';
 import type { PreparedAllocationData } from './preprocessor';
 
@@ -56,6 +57,16 @@ describe('preparation date range', () => {
         });
     });
 
+    test('keeps warmup dates out of the calculation range', () => {
+        expect(resolvePreparedCalculationDateRange({
+            ...emptyPrepared,
+            alignedDates: ['2025-12-15', '2026-01-03', '2026-01-05'],
+        }, { endDate: '2026-01-31', startDate: '2026-01-01' })).toEqual({
+            endDate: '2026-01-05',
+            startDate: '2026-01-03',
+        });
+    });
+
     test('falls back to the effective range when prepared dates are empty', () => {
         expect(resolvePreparedCalculationDateRange(emptyPrepared, {
             endDate: '2026-01-31',
@@ -63,6 +74,16 @@ describe('preparation date range', () => {
         })).toEqual({
             endDate: '2026-01-31',
             startDate: '2026-01-01',
+        });
+    });
+
+    test('extends preparation start date for warmup history', () => {
+        expect(resolveWarmupPreparationDateRange({
+            endDate: '2026-05-27',
+            startDate: '2025-05-27',
+        }, 203)).toEqual({
+            endDate: '2026-05-27',
+            startDate: '2024-11-05',
         });
     });
 });
