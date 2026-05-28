@@ -164,11 +164,6 @@ export const mergeActiveDualMomentumSleeves = (
             return;
         }
 
-        if (existing.direction !== position.direction) {
-            merged.delete(position.assetIndex);
-            return;
-        }
-
         const netWeight = signedActiveDualMomentumWeight(existing) + signedActiveDualMomentumWeight(position);
         existing.direction = netWeight < 0 ? 'short' : 'long';
         existing.weight = Math.abs(netWeight);
