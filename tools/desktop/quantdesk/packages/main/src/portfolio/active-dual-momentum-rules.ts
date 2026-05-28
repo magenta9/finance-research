@@ -132,11 +132,9 @@ export const selectActiveDualMomentumSleeve = ({
 
     candidates.forEach((candidate) => {
         const asset = prepared.series[candidate.assetIndex].asset;
-        const equalWeight = sleeveWeight / candidates.length;
-        const inverseVolatilityWeight = totalRiskScore > 0
+        const slotWeight = totalRiskScore > 0
             ? sleeveWeight * candidate.riskScore / totalRiskScore
-            : equalWeight;
-        const slotWeight = (equalWeight + inverseVolatilityWeight) / 2;
+            : sleeveWeight / candidates.length;
 
         if (candidate.futures) {
             if (candidate.momentum === 0) {
