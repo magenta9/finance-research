@@ -226,18 +226,14 @@ export const runActiveDualMomentumBacktest = ({
     const netExposures: number[] = [];
     const rebalanceRecords: ActiveDualMomentumDiagnostics['rebalanceRecords'] = [];
     const rebalanceIndexSet = new Set(rebalanceIndexes);
-    let portfolioEquity = 1;
-    let portfolioPeak = 1;
 
     for (let dayIndex = 1; dayIndex < prepared.alignedDates.length; dayIndex += 1) {
-        const currentDrawdown = portfolioPeak > 0 ? portfolioEquity / portfolioPeak - 1 : 0;
-        const exposureScale = currentDrawdown <= -0.08 ? 0.5 : 1;
         const grossReturn = currentPositions.reduce((sum, position) => {
             const prices = prepared.series[position.assetIndex].prices;
             const previousPrice = prices[dayIndex - 1] ?? 0;
             const currentPrice = prices[dayIndex] ?? previousPrice;
             const assetReturn = previousPrice > 0 ? currentPrice / previousPrice - 1 : 0;
-            return sum + exposureScale * signedActiveDualMomentumWeight(position) * assetReturn;
+            return sum + signedActiveDualMomentumWeight(position) * assetReturn;
         }, 0);
 
         let rebalanceCost = 0;
@@ -302,11 +298,9 @@ export const runActiveDualMomentumBacktest = ({
         }
 
         const netReturn = grossReturn - rebalanceCost;
-        portfolioEquity *= 1 + netReturn;
-        portfolioPeak = Math.max(portfolioPeak, portfolioEquity);
         dailyReturns.push(netReturn);
-        nominalExposures.push(exposureScale * currentPositions.reduce((sum, position) => sum + position.weight, 0));
-        netExposures.push(exposureScale * currentPositions.reduce((sum, position) => sum + signedActiveDualMomentumWeight(position), 0));
+        nominalExposures.push(currentPositions.reduce((sum, position) => sum + position.weight, 0));
+        netExposures.push(currentPositions.reduce((sum, position) => sum + signedActiveDualMomentumWeight(position), 0));
     }
 
     const calculationDailyReturns = dailyReturns.slice(calculationSlice.startIndex, calculationSlice.endIndex);

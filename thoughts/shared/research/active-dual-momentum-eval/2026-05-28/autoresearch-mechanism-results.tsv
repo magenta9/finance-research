@@ -3,3 +3,4 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 1	inverse volatility sleeve weights	59.9703	30.8001	51.2192	p10 regressed	discard	a21d23c
 1r	50/50 equal and inverse volatility sleeve weights	58.0859	28.9276	49.3384	p10 regressed	discard	961c522
 2	conflicting sleeve signal gate	55.6904	25.5576	46.6506	p10 regressed	discard	04ac652
+3	drawdown exposure circuit breaker	55.1610	26.6318	46.6022	p10 regressed	discard	9e15d4f
