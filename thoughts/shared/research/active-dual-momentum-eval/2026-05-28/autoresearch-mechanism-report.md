@@ -425,7 +425,48 @@ Full confirmation：
 
 结论：第 77 轮显著高于第 73 轮默认机制 full baseline（mean 76.8599 / p10 56.0802 / combined 70.6260），提升为当前默认机制并 commit。连续未改进计数重置为 0。
 
-## 21. 最终结论
+## 21. 第 78 轮顺序迭代
+
+第 78 轮搜索方向：同标的重复 sleeve 槽位向下递补。
+
+搜索依据：第 77 轮证明同标的同向重复预算转现金有效。第 78 轮测试是否应把重复的 sleeve 槽位递补给下一个合格候选，以保留分散化趋势机会；若找不到递补，再退回第 77 轮转现金。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 78 | 重复 sleeve 槽位递补 | 80.3057 | 57.2828 | 73.3988 | discard |
+
+结论：第 78 轮低于当前 budget baseline（mean 81.9641 / p10 60.6761 / combined 75.5777），说明第 77 轮中重复预算转现金优于向下递补次级候选。不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：1。
+
+## 22. 第 79 轮顺序迭代
+
+第 79 轮搜索方向：风险退出后的预算冷却。
+
+搜索依据：第 78 轮说明退出或重复释放出来的预算不应急着递补给次级候选。第 79 轮将这个逻辑扩展到调仓路径：当旧仓位消失或反向时，释放出来的风险预算本轮优先进入现金，不立刻喂给新开仓或增配仓。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 79 | 风险退出预算冷却 | 82.3529 | 64.0293 | 76.8558 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 79 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 84.7084 |
+| p10Score | 66.1378 |
+| p50Score | 88.8499 |
+| p90Score | 96.7642 |
+| combinedScore | 79.1372 |
+
+结论：第 79 轮高于第 77 轮默认机制 full baseline（mean 84.0880 / p10 65.9341 / combined 78.6418），提升为当前默认机制并 commit。连续未改进计数重置为 0。
+
+## 23. 最终结论
 
 当前推荐保留的新机制为：
 
@@ -437,22 +478,23 @@ Full confirmation：
 6. 对现金权重按 base currency 无风险利率入账，默认使用 `riskFreeRates`。
 7. 净额化后按 fully funded 口径将 residual capital 视为现金，并纳入现金收益路径。
 8. 当两个 sleeve 同向选中同一资产时，只保留较大 sleeve 权重，重复预算转现金，避免把同一趋势证据重复加杠杆。
+9. 旧仓位退出或反向时，将对应退出预算在本轮调仓先冷却为现金，避免立即再部署给新开仓或增配仓。
 
 相对 ADM V1 baseline：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +25.5347 |
-| p10Score | +38.6566 |
-| combinedScore | +29.4712 |
+| meanScore | +26.1551 |
+| p10Score | +38.8603 |
+| combinedScore | +29.9666 |
 
-相对第 73 轮 best：
+相对第 77 轮 best：
 
 | 指标 | 改善 |
 |---|---:|
-| meanScore | +7.2281 |
-| p10Score | +9.8539 |
-| combinedScore | +8.0158 |
+| meanScore | +0.6204 |
+| p10Score | +0.2037 |
+| combinedScore | +0.4954 |
 
 研究解释：
 
@@ -462,10 +504,11 @@ Full confirmation：
 - 现金收益入账不改变风险暴露，但把高现金状态下的机会成本纳入收益路径，full Eval 中 p10 从 52.4746 提高到 56.0719。
 - 净额 residual cash 入账进一步修正 fully funded 资本口径，提升幅度很小，但 full Eval 的 mean、p10 和 combined 均高于第 68 轮。
 - 同标的同向 sleeve 预算去重是第 77 轮最大新增改善，说明当前 ADM 的 10 周和 25 周共识更适合作为确认信号，而不是重复加仓信号。
+- 风险退出预算冷却进一步验证了“释放出来的预算先现金化”优于立即再部署，full Eval 的 mean、p10 和 combined 均继续改善。
 - 25% 现金缓冲进一步降低跨品种随机篮子中的尾部暴露，同时没有牺牲 meanScore。
 - 单独的小幅变化保持带在非标准抽样中表现很好，但标准 full confirmation 不如第 45 轮稳健，因此没有进入最终默认机制。
 
-## 22. 证据路径
+## 24. 证据路径
 
 - 标准 50 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter11-60-mechanism-sweep-standard-cases/`
 - 第 45 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter45-downside-risk-larger-cash-standard-cases/`
@@ -496,9 +539,13 @@ Full confirmation：
 - 第 77 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter77-deduplicate-same-asset-sleeve-budget/`
 - 第 77 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter77-deduplicate-same-asset-sleeve-budget/`
 - 第 77 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter77-deduplicate-same-asset-sleeve-budget/`
+- 第 78 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter78-replace-duplicate-sleeve-slots-budget/`
+- 第 79 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter79-risk-exit-redeployment-cooldown-budget/`
+- 第 79 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter79-risk-exit-redeployment-cooldown/`
+- 第 79 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter79-risk-exit-redeployment-cooldown/`
 - 迭代日志：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-mechanism-results.tsv`
 
-## 23. 后续建议
+## 25. 后续建议
 
 下一轮机制研究可以优先围绕第 63 轮继续做三类验证：
 

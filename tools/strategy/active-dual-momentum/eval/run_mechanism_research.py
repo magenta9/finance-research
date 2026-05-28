@@ -33,9 +33,9 @@ from run_eval import (
 
 
 CURRENT_REFERENCE_BUDGET = {
-    "meanScore": 81.9641,
-    "p10Score": 60.6761,
-    "combinedScore": 75.5777,
+    "meanScore": 82.3529,
+    "p10Score": 64.0293,
+    "combinedScore": 76.8558,
 }
 
 
@@ -208,6 +208,11 @@ def mechanism_candidates(limit: int) -> list[MechanismCandidate]:
             "deduplicate-same-asset-sleeve-budget",
             {"deduplicateSameAssetSleeveBudget": True},
             "Convert duplicate same-direction budget from both ADM sleeves into cash instead of stacking exposure.",
+        ),
+        MechanismCandidate(
+            "risk-exit-redeployment-cooldown",
+            {"riskExitRedeploymentCooldown": True},
+            "Route exited or flipped risk budget to cash for the current rebalance instead of immediately redeploying it.",
         ),
     ]
     combo_indexes = [

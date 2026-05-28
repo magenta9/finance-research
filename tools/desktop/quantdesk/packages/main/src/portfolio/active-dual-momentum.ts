@@ -102,6 +102,58 @@ const turnoverBetween = (previousPositions: ActiveDualMomentumPosition[], nextPo
 
 const positionsByAssetIndex = (positions: ActiveDualMomentumPosition[]) => new Map(positions.map((position) => [position.assetIndex, position]));
 
+const applyRiskExitRedeploymentCooldown = ({
+    assetCount,
+    previousPositions,
+    targetPositions,
+}: {
+    assetCount: number;
+    previousPositions: ActiveDualMomentumPosition[];
+    targetPositions: ActiveDualMomentumPosition[];
+}) => {
+    const previousByAssetIndex = positionsByAssetIndex(previousPositions);
+    const targetByAssetIndex = positionsByAssetIndex(targetPositions);
+    let exitWeight = 0;
+    let increaseWeight = 0;
+
+    for (let assetIndex = 0; assetIndex < assetCount; assetIndex += 1) {
+        const previous = previousByAssetIndex.get(assetIndex);
+        const target = targetByAssetIndex.get(assetIndex);
+        const previousSigned = previous ? signedActiveDualMomentumWeight(previous) : 0;
+        const targetSigned = target ? signedActiveDualMomentumWeight(target) : 0;
+
+        if (previous && (!target || Math.sign(previousSigned) !== Math.sign(targetSigned))) {
+            exitWeight += previous.weight;
+        }
+        if (target) {
+            increaseWeight += Math.sign(previousSigned) === Math.sign(targetSigned)
+                ? Math.max(0, target.weight - Math.abs(previousSigned))
+                : target.weight;
+        }
+    }
+
+    const cooldownWeight = Math.min(exitWeight, increaseWeight);
+    if (cooldownWeight <= 0 || increaseWeight <= 0) {
+        return { cashWeight: 0, positions: targetPositions };
+    }
+
+    const retainedIncreaseRatio = (increaseWeight - cooldownWeight) / increaseWeight;
+    const positions = targetPositions.flatMap((target) => {
+        const previous = previousByAssetIndex.get(target.assetIndex);
+        const previousSigned = previous ? signedActiveDualMomentumWeight(previous) : 0;
+        const targetSigned = signedActiveDualMomentumWeight(target);
+        const retainedBaseWeight = Math.sign(previousSigned) === Math.sign(targetSigned)
+            ? Math.min(Math.abs(previousSigned), target.weight)
+            : 0;
+        const increase = target.weight - retainedBaseWeight;
+        const weight = retainedBaseWeight + increase * retainedIncreaseRatio;
+
+        return weight >= 0.000001 ? [{ ...target, weight }] : [];
+    });
+
+    return { cashWeight: cooldownWeight, positions };
+};
+
 const portfolioDownsideVolatility = ({
     endIndex,
     positions,
@@ -397,7 +449,15 @@ export const runActiveDualMomentumBacktest = ({
                 rebalanceIndex: dayIndex,
             });
             const cashBufferWeight = grossPositions.reduce((sum, position) => sum + position.weight * (1 - cashBufferMultiplier), 0);
-            const targetPositions = grossPositions.map((position) => ({ ...position, weight: position.weight * cashBufferMultiplier }));
+            const baseTargetPositions = grossPositions.map((position) => ({ ...position, weight: position.weight * cashBufferMultiplier }));
+            const cooldown = config.researchProfile?.riskExitRedeploymentCooldown !== false
+                ? applyRiskExitRedeploymentCooldown({
+                    assetCount: prepared.series.length,
+                    previousPositions: currentPositions,
+                    targetPositions: baseTargetPositions,
+                })
+                : { cashWeight: 0, positions: baseTargetPositions };
+            const targetPositions = cooldown.positions;
             const nextPositions = smoothRebalancePositions({
                 assetCount: prepared.series.length,
                 previousPositions: currentPositions,
@@ -422,7 +482,7 @@ export const runActiveDualMomentumBacktest = ({
                 }));
             }
 
-            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight + mergedSleeves.cashWeight + cashBufferWeight;
+            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight + mergedSleeves.cashWeight + cashBufferWeight + cooldown.cashWeight;
             const residualCashWeight = Math.max(0, 1 - nextPositions.reduce((sum, position) => sum + position.weight, 0));
             const resolvedCashWeight = config.researchProfile?.nettedResidualCashReturn !== false
                 ? Math.max(cashWeight, residualCashWeight)

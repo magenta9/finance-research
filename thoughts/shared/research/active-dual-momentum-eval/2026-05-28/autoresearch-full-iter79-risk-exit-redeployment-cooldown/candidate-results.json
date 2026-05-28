@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "risk-exit-redeployment-cooldown",
+    "thesis": "Route exited or flipped risk budget to cash for the current rebalance instead of immediately redeploying it.",
+    "profile": {
+      "riskExitRedeploymentCooldown": true
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 600,
+      "successCount": 600,
+      "failureCount": 0,
+      "meanScore": 84.7084,
+      "p10Score": 66.1378,
+      "p50Score": 88.8499,
+      "p90Score": 96.7642,
+      "combinedScore": 79.1372
+    }
+  }
+]

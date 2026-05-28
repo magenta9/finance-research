@@ -30,6 +30,7 @@ export interface ActiveDualMomentumResearchProfile {
     rankMode?: 'default' | 'riskAdjusted' | 'downsideRiskAdjusted' | 'drawdownPenalty' | 'momentumSlope' | 'positiveFuturesBias';
     rebalanceStep?: number;
     rebalanceWeightHoldBand?: number;
+    riskExitRedeploymentCooldown?: boolean;
     riskMode?: 'inverseVolatility' | 'inverseDownsideVolatility' | 'sqrtInverseVolatility' | 'equalWeight';
     shockToCash?: boolean;
 }
