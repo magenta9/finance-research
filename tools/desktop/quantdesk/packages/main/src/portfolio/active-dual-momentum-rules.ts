@@ -1,6 +1,7 @@
 import type { ActiveDualMomentumDiagnostics, ActiveDualMomentumStrategyConfig } from '@quantdesk/shared';
 
 import { buildActiveDualMomentumCandidateScores } from './active-dual-momentum-candidate-scoring';
+import { resolveActiveDualMomentumSleeveCandidate } from './active-dual-momentum-sleeve-policy';
 import { minimumPortfolioTradeWeight } from './portfolio-constants';
 import type { PreparedAllocationData } from './preprocessor';
 
@@ -91,16 +92,6 @@ export const signedActiveDualMomentumWeight = (
     position: Pick<ActiveDualMomentumPosition, 'direction' | 'weight'>,
 ) => position.direction === 'short' ? -position.weight : position.weight;
 
-const highestPrice = (prices: number[], startIndex: number, endIndex: number) => {
-    let high = 0;
-
-    for (let index = startIndex; index <= endIndex; index += 1) {
-        high = Math.max(high, prices[index] ?? 0);
-    }
-
-    return high;
-};
-
 export const selectActiveDualMomentumSleeve = ({
     config,
     lookbackWeeks,
@@ -137,111 +128,26 @@ export const selectActiveDualMomentumSleeve = ({
 
     candidates.forEach((candidate) => {
         const asset = prepared.series[candidate.assetIndex].asset;
-        let slotWeight = totalRiskScore > 0
+        const slotWeight = totalRiskScore > 0
             ? sleeveWeight * candidate.riskScore / totalRiskScore
             : sleeveWeight / candidates.length;
-        const closeScoreThreshold = profile?.closeScoreThreshold ?? 0;
-
-        if (profile?.closeScoreCashFactor && rankSpread > 0 && rankSpread < closeScoreThreshold) {
-            const retainedWeight = slotWeight * profile.closeScoreCashFactor;
-            cashWeight += slotWeight - retainedWeight;
-            slotWeight = retainedWeight;
-        }
-
-        if (profile?.decayPenaltyFactor && Math.sign(candidate.momentum) !== Math.sign(candidate.recent) && candidate.recent !== 0) {
-            const retainedWeight = slotWeight * profile.decayPenaltyFactor;
-            cashWeight += slotWeight - retainedWeight;
-            slotWeight = retainedWeight;
-        }
-
-        if (profile?.shockToCash && candidate.volatility > 0 && Math.abs(candidate.recent) > candidate.volatility * 5) {
-            cashWeight += slotWeight;
-            return;
-        }
-
-        if (profile?.maxPositionWeight && slotWeight > profile.maxPositionWeight) {
-            cashWeight += slotWeight - profile.maxPositionWeight;
-            slotWeight = profile.maxPositionWeight;
-        }
-
-        if (candidate.futures) {
-            if (candidate.momentum === 0) {
-                return;
-            }
-
-            if (sleeve === 'long' && candidate.momentum < 0) {
-                cashWeight += slotWeight;
-                filtered.push({
-                    assetId: asset.id,
-                    momentum: candidate.momentum,
-                    reason: 'NEGATIVE_MOMENTUM',
-                    symbol: asset.symbol,
-                });
-                return;
-            }
-
-            if (profile?.confirmFuturesShort && candidate.momentum < 0 && candidate.recent >= 0) {
-                cashWeight += slotWeight;
-                filtered.push({
-                    assetId: asset.id,
-                    momentum: candidate.momentum,
-                    reason: 'NEGATIVE_MOMENTUM',
-                    symbol: asset.symbol,
-                });
-                return;
-            }
-
-            if (profile?.futuresShortWeightMultiplier && candidate.momentum < 0) {
-                const retainedWeight = slotWeight * profile.futuresShortWeightMultiplier;
-                cashWeight += slotWeight - retainedWeight;
-                slotWeight = retainedWeight;
-            }
-
-            positions.push({
-                assetIndex: candidate.assetIndex,
-                direction: candidate.momentum > 0 ? 'long' : 'short',
-                longMomentum: sleeve === 'long' ? candidate.momentum : undefined,
-                shortMomentum: sleeve === 'short' ? candidate.momentum : undefined,
-                source: sleeve,
-                weight: slotWeight,
-            });
-            return;
-        }
-
-        if (profile?.etfHighWaterFilter) {
-            const high = highestPrice(prepared.series[candidate.assetIndex].prices, rebalanceIndex - lookbackDays, rebalanceIndex);
-
-            if (high > 0 && candidate.currentPrice < high * 0.9) {
-                cashWeight += slotWeight;
-                filtered.push({
-                    assetId: asset.id,
-                    momentum: candidate.momentum,
-                    reason: 'NEGATIVE_MOMENTUM',
-                    symbol: asset.symbol,
-                });
-                return;
-            }
-        }
-
-        if (config.absoluteMomentumFilter && candidate.momentum <= 0) {
-            cashWeight += slotWeight;
-            filtered.push({
-                assetId: asset.id,
-                momentum: candidate.momentum,
-                reason: 'NEGATIVE_MOMENTUM',
-                symbol: asset.symbol,
-            });
-            return;
-        }
-
-        positions.push({
-            assetIndex: candidate.assetIndex,
-            direction: 'long',
-            longMomentum: sleeve === 'long' ? candidate.momentum : undefined,
-            shortMomentum: sleeve === 'short' ? candidate.momentum : undefined,
-            source: sleeve,
-            weight: slotWeight,
+        const result = resolveActiveDualMomentumSleeveCandidate({
+            asset,
+            candidate,
+            config,
+            lookbackDays,
+            prepared,
+            rankSpread,
+            rebalanceIndex,
+            sleeve,
+            slotWeight,
         });
+
+        cashWeight += result.cashWeight;
+        filtered.push(...result.filtered);
+        if (result.position) {
+            positions.push(result.position);
+        }
     });
 
     return { cashWeight, filtered, positions };
