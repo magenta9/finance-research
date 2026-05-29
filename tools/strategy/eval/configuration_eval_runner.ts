@@ -40,6 +40,16 @@ interface PriceCacheEntry {
     warnings?: string[];
 }
 
+type EvalStrategyId = AllocationType | 'max_diversification_research_v1';
+
+interface MaxDiversificationResearchConfig {
+    covarianceShrinkage?: number;
+    diagonalLoad?: number;
+    maxSingleWeight?: number;
+    minCorrelation?: number;
+    volatilityPower?: number;
+}
+
 interface EvalCaseInput {
     basketSize: number;
     caseId: string;
@@ -57,7 +67,8 @@ interface RunnerPayload {
     cases: EvalCaseInput[];
     constraints: AllocationConstraints;
     pricesBySymbol: Record<string, PriceCacheEntry>;
-    strategies: AllocationType[];
+    strategies: EvalStrategyId[];
+    strategyConfigs?: Record<string, MaxDiversificationResearchConfig>;
 }
 
 const fixtureTimestamp = '2026-05-28T00:00:00.000Z';
@@ -76,6 +87,102 @@ const toStoredAsset = (input: EvalAssetInput): StoredAsset => ({
 });
 
 const priceValue = (row: QuantDataPriceRow) => row.calculationClose ?? row.adjustedClose ?? row.close ?? null;
+
+const cloneMatrix = (matrix: number[][]) => matrix.map((row) => [...row]);
+
+const applyCovarianceShrinkage = (covariance: number[][], shrinkage: number) => {
+    const bounded = Math.min(1, Math.max(0, shrinkage));
+
+    return covariance.map((row, rowIndex) => row.map((value, columnIndex) => (
+        rowIndex === columnIndex ? value : value * (1 - bounded)
+    )));
+};
+
+const applyDiagonalLoad = (covariance: number[][], load: number) => covariance.map((row, rowIndex) => row.map((value, columnIndex) => {
+    if (rowIndex !== columnIndex) {
+        return value;
+    }
+
+    return value + Math.max(value, 1e-12) * Math.max(0, load);
+}));
+
+const applyMinCorrelation = (covariance: number[][], minCorrelation: number) => {
+    const bounded = Math.min(0.95, Math.max(-0.95, minCorrelation));
+    const standardDeviations = covariance.map((row, index) => Math.sqrt(Math.max(row[index] ?? 0, 0)));
+
+    return covariance.map((row, rowIndex) => row.map((value, columnIndex) => {
+        if (rowIndex === columnIndex) {
+            return value;
+        }
+
+        const denominator = standardDeviations[rowIndex] * standardDeviations[columnIndex];
+
+        if (denominator <= 0) {
+            return value;
+        }
+
+        return Math.max(value / denominator, bounded) * denominator;
+    }));
+};
+
+const applyVolatilityPower = (volatilities: number[], power: number) => volatilities.map((volatility) => (
+    Math.pow(Math.max(volatility, 1e-8), power)
+));
+
+const resolveOptimizationInput = ({
+    baseConstraints,
+    baseCovariance,
+    baseVolatilities,
+    strategy,
+    strategyConfigs,
+}: {
+    baseConstraints: AllocationConstraints;
+    baseCovariance: number[][];
+    baseVolatilities: number[];
+    strategy: EvalStrategyId;
+    strategyConfigs?: Record<string, MaxDiversificationResearchConfig>;
+}) => {
+    if (strategy !== 'max_diversification_research_v1') {
+        return {
+            constraints: baseConstraints,
+            covariance: baseCovariance,
+            mode: strategy,
+            volatilities: baseVolatilities,
+        };
+    }
+
+    const config = strategyConfigs?.[strategy] ?? {};
+    let covariance = cloneMatrix(baseCovariance);
+    let volatilities = [...baseVolatilities];
+    let constraints = { ...baseConstraints };
+
+    if (typeof config.covarianceShrinkage === 'number') {
+        covariance = applyCovarianceShrinkage(covariance, config.covarianceShrinkage);
+    }
+
+    if (typeof config.diagonalLoad === 'number') {
+        covariance = applyDiagonalLoad(covariance, config.diagonalLoad);
+    }
+
+    if (typeof config.minCorrelation === 'number') {
+        covariance = applyMinCorrelation(covariance, config.minCorrelation);
+    }
+
+    if (typeof config.volatilityPower === 'number') {
+        volatilities = applyVolatilityPower(volatilities, config.volatilityPower);
+    }
+
+    if (typeof config.maxSingleWeight === 'number') {
+        constraints = { ...constraints, maxSingleWeight: config.maxSingleWeight };
+    }
+
+    return {
+        constraints,
+        covariance,
+        mode: 'max_diversification' as const,
+        volatilities,
+    };
+};
 
 const prepareEvalData = ({
     assetBySymbol,
@@ -179,20 +286,29 @@ const runCaseStrategy = ({
     evalCase,
     preparedCase,
     strategy,
+    strategyConfigs,
 }: {
     baseCurrency: Currency;
     constraints: AllocationConstraints;
     evalCase: EvalCaseInput;
     preparedCase: ReturnType<typeof prepareEvalCase>;
-    strategy: AllocationType;
+    strategy: EvalStrategyId;
+    strategyConfigs?: Record<string, MaxDiversificationResearchConfig>;
 }) => {
     const assetClasses = preparedCase.prepared.series.map((entry) => entry.asset.assetClass);
+    const optimizationInput = resolveOptimizationInput({
+        baseConstraints: constraints,
+        baseCovariance: preparedCase.covariance,
+        baseVolatilities: preparedCase.volatility,
+        strategy,
+        strategyConfigs,
+    });
     const optimization = optimizeWeights({
         assetClasses,
-        constraints,
-        covariance: preparedCase.covariance,
-        mode: strategy,
-        volatilities: preparedCase.volatility,
+        constraints: optimizationInput.constraints,
+        covariance: optimizationInput.covariance,
+        mode: optimizationInput.mode,
+        volatilities: optimizationInput.volatilities,
     });
     const result = assembleAllocationResult({
         annualizedAssetVolatility: preparedCase.volatility,
@@ -202,14 +318,14 @@ const runCaseStrategy = ({
             endDate: evalCase.endDate,
             startDate: evalCase.startDate,
         },
-        covariance: preparedCase.covariance,
+        covariance: optimizationInput.covariance,
         diversificationRatio: optimization.diversificationRatio,
-        mode: strategy,
+        mode: optimizationInput.mode,
         optimizer: 'js',
         optimizerDiagnostics: optimization.diagnostics,
         prepared: preparedCase.prepared,
         rebalanceCadence: evalCase.rebalanceCadence,
-        strategy,
+        strategy: optimizationInput.mode,
         trendFollowing: null,
         weights: optimization.weights,
     });
@@ -256,6 +372,7 @@ const main = async () => {
                         evalCase,
                         preparedCase,
                         strategy,
+                        strategyConfigs: payload.strategyConfigs,
                     });
                 } catch (error) {
                     return {

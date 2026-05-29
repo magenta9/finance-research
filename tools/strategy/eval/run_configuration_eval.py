@@ -143,6 +143,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--seed", type=int, default=int(defaults["seed"]))
     parser.add_argument("--end-date", default=str(defaults["endDate"]))
+    parser.add_argument("--strategy-config", default=None)
+    parser.add_argument("--strategy-config-json", default=None)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--dry-run", action="store_true")
@@ -369,6 +371,14 @@ def run_ts_runner(payload: dict[str, Any]) -> dict[str, Any]:
     return json.loads(process.stdout)
 
 
+def load_strategy_config(path: str | None, inline_json: str | None) -> dict[str, Any]:
+    if inline_json:
+        return json.loads(inline_json)
+    if path is None:
+        return {}
+    return load_json(Path(path))
+
+
 def score_rows(
     rows: list[dict[str, Any]], scoring: dict[str, Any]
 ) -> list[dict[str, Any]]:
@@ -493,6 +503,7 @@ def main() -> int:
     basket_sizes = parse_int_list(args.sizes)
     windows_years = parse_int_list(args.windows)
     cadences = parse_csv_list(args.cadences)
+    strategy_config = load_strategy_config(args.strategy_config, args.strategy_config_json)
     assets = load_universe(Path(args.universe), markets)
     required_start = start_date_for_window(args.end_date, max(windows_years))
 
@@ -541,6 +552,8 @@ def main() -> int:
         "requiredStartDate": required_start,
         "samplesPerCell": args.samples_per_cell,
         "seed": args.seed,
+        "strategyConfig": strategy_config,
+        "strategyConfigPath": args.strategy_config,
         "strategies": strategies,
         "tsRunner": str(TS_RUNNER_PATH),
         "universe": str(Path(args.universe)),
@@ -568,6 +581,7 @@ def main() -> int:
             "cases": cases,
             "constraints": defaults["constraints"],
             "pricesBySymbol": prices_by_symbol,
+            "strategyConfigs": strategy_config,
             "strategies": strategies,
         }
     )
