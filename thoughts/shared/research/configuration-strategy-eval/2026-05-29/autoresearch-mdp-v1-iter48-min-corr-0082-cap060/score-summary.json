@@ -1,0 +1,37 @@
+{
+  "overall": {
+    "caseCount": 540,
+    "successCount": 540,
+    "failureCount": 0,
+    "meanScore": 69.5074,
+    "p10Score": 61.9595,
+    "p50Score": 71.0376,
+    "p90Score": 75.5375,
+    "finalScore": 69.893
+  },
+  "byStrategy": {
+    "max_diversification_research_v1": {
+      "caseCount": 540,
+      "successCount": 540,
+      "failureCount": 0,
+      "meanScore": 69.5074,
+      "p10Score": 61.9595,
+      "p50Score": 71.0376,
+      "p90Score": 75.5375,
+      "finalScore": 69.893
+    }
+  },
+  "leaderboard": [
+    {
+      "strategyId": "max_diversification_research_v1",
+      "caseCount": 540,
+      "successCount": 540,
+      "failureCount": 0,
+      "meanScore": 69.5074,
+      "p10Score": 61.9595,
+      "p50Score": 71.0376,
+      "p90Score": 75.5375,
+      "finalScore": 69.893
+    }
+  ]
+}
