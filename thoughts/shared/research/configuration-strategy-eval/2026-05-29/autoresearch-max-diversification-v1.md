@@ -7,9 +7,9 @@
 - Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0}`
-- Current best scores: mean `74.3063`, P10 `65.2213`, P50 `75.4239`, P90 `81.1640`, final `74.3083`
-- Consecutive non-improving iterations: `0` after iteration 54
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.25}`
+- Current best scores: mean `75.4616`, P10 `66.4891`, P50 `76.3108`, P90 `82.1280`, final `75.3097`
+- Consecutive non-improving iterations: `0` after iteration 60
 
 ## Current Research Process Rules
 
@@ -75,7 +75,13 @@
 | 51 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6}` | 69.5075 | 61.9820 | 71.0674 | 75.5300 | 69.9117 | Kept: final improved and all scores above 80% floor | `44f46c8` |
 | 52 | Cash reserve | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.2}` | 71.6194 | 64.8035 | 72.8972 | 77.1525 | 71.9376 | Kept: final improved and all scores above 80% floor | `bba4529` |
 | 53 | Cash reserve | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25}` | 72.1496 | 65.5302 | 73.3918 | 77.5599 | 72.4684 | Kept: final improved and all scores above 80% floor | `51b1dcf` |
-| 54 | Absolute momentum pre-filter | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0}` | 74.3063 | 65.2213 | 75.4239 | 81.1640 | 74.3083 | Kept: final improved and all scores above 80% floor | pending |
+| 54 | Absolute momentum pre-filter | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0}` | 74.3063 | 65.2213 | 75.4239 | 81.1640 | 74.3083 | Kept: final improved and all scores above 80% floor | `03d2b61` |
+| 55 | CVaR95 tail-risk pre-filter | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0, "cvarTailProbability": 0.05, "cvarExcludeFraction": 0.25}` | 74.2119 | 64.9307 | 75.3500 | 81.3629 | 74.2484 | Discarded: final below current best; candidate code reverted | - |
+| 56 | Downside covariance | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0, "downsideCovariance": true}` | 73.0567 | 63.9830 | 75.1401 | 80.2496 | 73.6282 | Discarded: final below current best; candidate code reverted | - |
+| 57 | Covariance shrinkage | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0, "covarianceShrinkage": 0.2}` | 73.8276 | 64.9920 | 74.7261 | 80.6422 | 73.7716 | Discarded: final below current best | - |
+| 58 | Inverse volatility blend | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0, "inverseVolatilityBlend": 0.3}` | 70.5616 | 62.3374 | 72.1339 | 76.1783 | 70.6959 | Discarded: final below current best; candidate code reverted | - |
+| 59 | Relative momentum Top 50% | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0, "relativeMomentumTopFraction": 0.5}` | 63.7949 | 44.5390 | 66.3921 | 76.2428 | 63.3915 | Discarded: final below current best and P10 below 80% floor; candidate code reverted | - |
+| 60 | Momentum breadth dynamic cash | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.25}` | 75.4616 | 66.4891 | 76.3108 | 82.1280 | 75.3097 | Kept: final improved and all scores above 80% floor | pending |
 
 ## Continuation Rule
 

@@ -6,6 +6,7 @@
         "minCorrelation": 0.08,
         "absoluteMomentumLookbackDays": 252,
         "absoluteMomentumThreshold": 0,
+        "momentumBreadthCashScale": 0.25,
         "volatilityPower": 0
     }
 }

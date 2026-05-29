@@ -50,6 +50,7 @@ interface MaxDiversificationResearchConfig {
     diagonalLoad?: number;
     maxSingleWeight?: number;
     minCorrelation?: number;
+    momentumBreadthCashScale?: number;
     volatilityPower?: number;
 }
 
@@ -135,6 +136,25 @@ const applyVolatilityPower = (volatilities: number[], power: number) => volatili
 ));
 
 const boundedCashReserve = (value: number) => Math.min(0.95, Math.max(0, value));
+
+const applyMomentumBreadthCashScale = ({
+    assetCount,
+    baseCashReserve,
+    eligibleCount,
+    scale,
+}: {
+    assetCount: number;
+    baseCashReserve: number;
+    eligibleCount: number;
+    scale: number;
+}) => {
+    if (assetCount <= 0) {
+        return baseCashReserve;
+    }
+
+    const breadth = eligibleCount / assetCount;
+    return boundedCashReserve(baseCashReserve + (1 - breadth) * Math.max(0, scale));
+};
 
 const subsetArray = <T>(values: T[], indices: number[]) => indices.map((index) => values[index]);
 
@@ -465,9 +485,13 @@ const runCaseStrategy = ({
         strategyConfigs,
     });
     const optimizationAssetClasses = subsetArray(assetClasses, eligibleIndices);
+    const optimizationConstraints = ensureFeasibleConstraints(
+        optimizationInput.constraints,
+        optimizationAssetClasses.length,
+    );
     const optimization = optimizeWeights({
         assetClasses: optimizationAssetClasses,
-        constraints: ensureFeasibleConstraints(optimizationInput.constraints, optimizationAssetClasses.length),
+        constraints: optimizationConstraints,
         covariance: optimizationInput.covariance,
         mode: optimizationInput.mode,
         volatilities: optimizationInput.volatilities,
@@ -477,9 +501,17 @@ const runCaseStrategy = ({
         eligibleIndices,
         preparedCase.prepared.series.length,
     );
+    const cashReserve = typeof researchConfig.momentumBreadthCashScale === 'number'
+        ? applyMomentumBreadthCashScale({
+            assetCount: preparedCase.prepared.series.length,
+            baseCashReserve: fullOptimizationInput.cashReserve,
+            eligibleCount: eligibleIndices.length,
+            scale: researchConfig.momentumBreadthCashScale,
+        })
+        : fullOptimizationInput.cashReserve;
     const assemblyInput = appendCashReserve({
         baseCurrency,
-        cashReserve: fullOptimizationInput.cashReserve,
+        cashReserve,
         covariance: fullOptimizationInput.covariance,
         meanReturns: preparedCase.meanReturns,
         prepared: preparedCase.prepared,
