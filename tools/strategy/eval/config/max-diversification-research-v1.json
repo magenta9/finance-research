@@ -11,7 +11,7 @@
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": 0,
-        "momentumBreadthCashScale": 0.75,
+        "momentumBreadthCashScale": 1.0,
         "volatilityPower": 0
     }
 }

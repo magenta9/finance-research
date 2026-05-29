@@ -7,9 +7,9 @@
 - Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.75}`
-- Current best scores: mean `83.8027`, P10 `74.3794`, P50 `85.0313`, P90 `90.5670`, final `83.7523`
-- Consecutive non-improving iterations: `0` after iteration 64
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 1.0}`
+- Current best scores: mean `86.0486`, P10 `77.5229`, P50 `87.3854`, P90 `92.5949`, final `86.2221`
+- Consecutive non-improving iterations: `0` after iteration 65
 
 ## Current Research Process Rules
 
@@ -85,7 +85,8 @@
 | 61 | Multi-horizon absolute momentum | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.25}` | 79.1731 | 67.0189 | 81.0170 | 87.1932 | 79.0615 | Kept: final improved and all scores above 80% floor | `9d7c390` |
 | 62 | EWMA covariance | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.25, "ewmaCovariance": true}` | 77.8063 | 65.8664 | 80.3961 | 85.5925 | 78.0628 | Discarded: final below current best; candidate code reverted | - |
 | 63 | Momentum breadth dynamic cash | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.5}` | 81.4737 | 70.4716 | 82.9263 | 88.9165 | 81.3102 | Kept: final improved and all scores above 80% floor | `35ee095` |
-| 64 | Momentum breadth dynamic cash | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.75}` | 83.8027 | 74.3794 | 85.0313 | 90.5670 | 83.7523 | Kept: final improved and all scores above 80% floor | pending |
+| 64 | Momentum breadth dynamic cash | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.75}` | 83.8027 | 74.3794 | 85.0313 | 90.5670 | 83.7523 | Kept: final improved and all scores above 80% floor | `bfad7d3` |
+| 65 | Momentum breadth dynamic cash | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 1.0}` | 86.0486 | 77.5229 | 87.3854 | 92.5949 | 86.2221 | Kept: final improved and all scores above 80% floor | pending |
 
 ## Continuation Rule
 
