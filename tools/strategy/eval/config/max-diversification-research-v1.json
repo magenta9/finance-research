@@ -1,6 +1,6 @@
 {
     "max_diversification_research_v1": {
-        "minCorrelation": 0.06,
+        "minCorrelation": 0.0605,
         "volatilityPower": 0
     }
 }

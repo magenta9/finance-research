@@ -7,9 +7,9 @@
 - Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.06}`
-- Current best scores: mean `68.6888`, P10 `60.3968`, P50 `70.1233`, P90 `74.6352`, final `68.8196`
-- Consecutive non-improving iterations: `0` after iteration 16
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.0605}`
+- Current best scores: mean `68.6883`, P10 `60.3967`, P50 `70.1336`, P90 `74.6351`, final `68.8247`
+- Consecutive non-improving iterations: `0` after iteration 22
 
 ## Iterations
 
@@ -31,6 +31,12 @@
 | 14 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.025}` | 68.4455 | 60.0178 | 69.9263 | 74.2907 | 68.5403 | Discarded: final below current best | - |
 | 15 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.04}` | 68.6238 | 60.2752 | 69.9756 | 74.4838 | 68.6775 | Discarded: final below current best | - |
 | 16 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.06}` | 68.6888 | 60.3968 | 70.1233 | 74.6352 | 68.8196 | Kept: improved current best | pending |
+| 17 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.07}` | 68.6715 | 60.3455 | 70.0390 | 74.6027 | 68.7566 | Discarded: final below current best | - |
+| 18 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.065}` | 68.6826 | 60.3391 | 70.0674 | 74.5831 | 68.7643 | Discarded: final below current best | - |
+| 19 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.055}` | 68.6890 | 60.3379 | 70.1113 | 74.6288 | 68.7973 | Discarded: final below current best | - |
+| 20 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.058}` | 68.6903 | 60.3732 | 70.0947 | 74.6353 | 68.7995 | Discarded: final below current best | - |
+| 21 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.061}` | 68.6878 | 60.3884 | 70.1256 | 74.6338 | 68.8183 | Discarded: final below current best | - |
+| 22 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.0605}` | 68.6883 | 60.3967 | 70.1336 | 74.6351 | 68.8247 | Kept: improved current best | pending |
 
 ## Continuation Rule
 
