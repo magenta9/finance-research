@@ -43,6 +43,8 @@ interface PriceCacheEntry {
 type EvalStrategyId = AllocationType | 'max_diversification_research_v1';
 
 interface MaxDiversificationResearchConfig {
+    absoluteMomentumLookbackDays?: number;
+    absoluteMomentumThreshold?: number;
     cashReserve?: number;
     covarianceShrinkage?: number;
     diagonalLoad?: number;
@@ -133,6 +135,66 @@ const applyVolatilityPower = (volatilities: number[], power: number) => volatili
 ));
 
 const boundedCashReserve = (value: number) => Math.min(0.95, Math.max(0, value));
+
+const subsetArray = <T>(values: T[], indices: number[]) => indices.map((index) => values[index]);
+
+const subsetMatrix = (matrix: number[][], indices: number[]) => indices.map((rowIndex) => (
+    indices.map((columnIndex) => matrix[rowIndex]?.[columnIndex] ?? 0)
+));
+
+const mapSubsetWeights = (weights: number[], indices: number[], assetCount: number) => {
+    const mappedWeights = Array.from({ length: assetCount }, () => 0);
+
+    indices.forEach((assetIndex, weightIndex) => {
+        mappedWeights[assetIndex] = weights[weightIndex] ?? 0;
+    });
+
+    return mappedWeights;
+};
+
+const ensureFeasibleConstraints = (constraints: AllocationConstraints, assetCount: number) => {
+    if (constraints.allowLeverage || assetCount <= 0 || constraints.maxSingleWeight * assetCount >= 1) {
+        return constraints;
+    }
+
+    return {
+        ...constraints,
+        maxSingleWeight: 1 / assetCount,
+    };
+};
+
+const resolveAbsoluteMomentumEligibleIndices = (
+    prepared: PreparedAllocationData,
+    config: MaxDiversificationResearchConfig,
+) => {
+    if (typeof config.absoluteMomentumLookbackDays !== 'number') {
+        return prepared.series.map((_, index) => index);
+    }
+
+    const lookbackDays = Math.max(1, Math.floor(config.absoluteMomentumLookbackDays));
+    const threshold = typeof config.absoluteMomentumThreshold === 'number'
+        ? config.absoluteMomentumThreshold
+        : 0;
+    const momentumScores = prepared.series.map((entry, index) => {
+        const current = entry.prices.at(-1) ?? 0;
+        const referenceIndex = Math.max(0, entry.prices.length - 1 - lookbackDays);
+        const reference = entry.prices[referenceIndex] ?? 0;
+        const momentum = current > 0 && reference > 0 ? current / reference - 1 : -Infinity;
+
+        return { index, momentum };
+    });
+    const eligible = momentumScores
+        .filter((entry) => entry.momentum > threshold)
+        .map((entry) => entry.index);
+
+    if (eligible.length > 0) {
+        return eligible;
+    }
+
+    return [momentumScores.reduce((best, entry) => (
+        entry.momentum > best.momentum ? entry : best
+    ), momentumScores[0]).index];
+};
 
 const appendCashReserve = ({
     baseCurrency,
@@ -382,28 +444,47 @@ const runCaseStrategy = ({
     strategyConfigs?: Record<string, MaxDiversificationResearchConfig>;
 }) => {
     const assetClasses = preparedCase.prepared.series.map((entry) => entry.asset.assetClass);
-    const optimizationInput = resolveOptimizationInput({
+    const researchConfig = strategy === 'max_diversification_research_v1'
+        ? strategyConfigs?.[strategy] ?? {}
+        : {};
+    const eligibleIndices = strategy === 'max_diversification_research_v1'
+        ? resolveAbsoluteMomentumEligibleIndices(preparedCase.prepared, researchConfig)
+        : assetClasses.map((_, index) => index);
+    const fullOptimizationInput = resolveOptimizationInput({
         baseConstraints: constraints,
         baseCovariance: preparedCase.covariance,
         baseVolatilities: preparedCase.volatility,
         strategy,
         strategyConfigs,
     });
+    const optimizationInput = resolveOptimizationInput({
+        baseConstraints: constraints,
+        baseCovariance: subsetMatrix(preparedCase.covariance, eligibleIndices),
+        baseVolatilities: subsetArray(preparedCase.volatility, eligibleIndices),
+        strategy,
+        strategyConfigs,
+    });
+    const optimizationAssetClasses = subsetArray(assetClasses, eligibleIndices);
     const optimization = optimizeWeights({
-        assetClasses,
-        constraints: optimizationInput.constraints,
+        assetClasses: optimizationAssetClasses,
+        constraints: ensureFeasibleConstraints(optimizationInput.constraints, optimizationAssetClasses.length),
         covariance: optimizationInput.covariance,
         mode: optimizationInput.mode,
         volatilities: optimizationInput.volatilities,
     });
+    const riskyWeights = mapSubsetWeights(
+        optimization.weights,
+        eligibleIndices,
+        preparedCase.prepared.series.length,
+    );
     const assemblyInput = appendCashReserve({
         baseCurrency,
-        cashReserve: optimizationInput.cashReserve,
-        covariance: optimizationInput.covariance,
+        cashReserve: fullOptimizationInput.cashReserve,
+        covariance: fullOptimizationInput.covariance,
         meanReturns: preparedCase.meanReturns,
         prepared: preparedCase.prepared,
         volatility: preparedCase.volatility,
-        weights: optimization.weights,
+        weights: riskyWeights,
     });
     const result = assembleAllocationResult({
         annualizedAssetVolatility: assemblyInput.volatility,

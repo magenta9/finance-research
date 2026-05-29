@@ -4,6 +4,8 @@
         "cashReserve": 0.25,
         "maxSingleWeight": 0.6,
         "minCorrelation": 0.08,
+        "absoluteMomentumLookbackDays": 252,
+        "absoluteMomentumThreshold": 0,
         "volatilityPower": 0
     }
 }

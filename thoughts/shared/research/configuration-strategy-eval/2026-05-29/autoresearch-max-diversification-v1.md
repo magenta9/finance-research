@@ -7,9 +7,9 @@
 - Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25}`
-- Current best scores: mean `72.1496`, P10 `65.5302`, P50 `73.3918`, P90 `77.5599`, final `72.4684`
-- Consecutive non-improving iterations: `0` after iteration 53
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0}`
+- Current best scores: mean `74.3063`, P10 `65.2213`, P50 `75.4239`, P90 `81.1640`, final `74.3083`
+- Consecutive non-improving iterations: `0` after iteration 54
 
 ## Current Research Process Rules
 
@@ -74,7 +74,8 @@
 | 50 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.125, "maxSingleWeight": 0.6}` | 69.5147 | 61.9817 | 71.0752 | 75.5132 | 69.9113 | Kept: final improved and all scores above 80% floor | `b0492a6` |
 | 51 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6}` | 69.5075 | 61.9820 | 71.0674 | 75.5300 | 69.9117 | Kept: final improved and all scores above 80% floor | `44f46c8` |
 | 52 | Cash reserve | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.2}` | 71.6194 | 64.8035 | 72.8972 | 77.1525 | 71.9376 | Kept: final improved and all scores above 80% floor | `bba4529` |
-| 53 | Cash reserve | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25}` | 72.1496 | 65.5302 | 73.3918 | 77.5599 | 72.4684 | Kept: final improved and all scores above 80% floor | pending |
+| 53 | Cash reserve | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25}` | 72.1496 | 65.5302 | 73.3918 | 77.5599 | 72.4684 | Kept: final improved and all scores above 80% floor | `51b1dcf` |
+| 54 | Absolute momentum pre-filter | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0}` | 74.3063 | 65.2213 | 75.4239 | 81.1640 | 74.3083 | Kept: final improved and all scores above 80% floor | pending |
 
 ## Continuation Rule
 
