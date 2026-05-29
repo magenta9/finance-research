@@ -7,9 +7,16 @@
 - Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6}`
-- Current best scores: mean `69.5075`, P10 `61.9820`, P50 `71.0674`, P90 `75.5300`, final `69.9117`
-- Consecutive non-improving iterations: `0` after iteration 51
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.2}`
+- Current best scores: mean `71.6194`, P10 `64.8035`, P50 `72.8972`, P90 `77.1525`, final `71.9376`
+- Consecutive non-improving iterations: `0` after iteration 52
+
+## Current Research Process Rules
+
+- Before choosing the next mechanism, run a web search pass for evidence-backed optimization directions.
+- Prefer mechanism-level candidates over narrow numeric sweeps.
+- From iteration 52 onward, tune any single parameter no more than 5 times before switching mechanism.
+- Current web search shortlist: fixed cash reserve, absolute momentum pre-filter, downside volatility/CVaR filtering, structural covariance regularization, risk contribution cap.
 
 ## Iterations
 
@@ -64,9 +71,10 @@
 | 47 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.075, "diagonalLoad": 0.1125, "maxSingleWeight": 0.6}` | 69.5362 | 61.9369 | 71.1127 | 75.4075 | 69.8924 | Discarded: final below current best | - |
 | 48 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.082, "diagonalLoad": 0.1125, "maxSingleWeight": 0.6}` | 69.5074 | 61.9595 | 71.0376 | 75.5375 | 69.8930 | Discarded: final below current best | - |
 | 49 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.1, "maxSingleWeight": 0.6}` | 69.5144 | 61.9510 | 71.0686 | 75.4987 | 69.8967 | Discarded: final below current best | - |
-| 50 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.125, "maxSingleWeight": 0.6}` | 69.5147 | 61.9817 | 71.0752 | 75.5132 | 69.9113 | Kept: final improved and all scores above 80% floor | pending |
-| 51 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6}` | 69.5075 | 61.9820 | 71.0674 | 75.5300 | 69.9117 | Kept: final improved and all scores above 80% floor | pending |
+| 50 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.125, "maxSingleWeight": 0.6}` | 69.5147 | 61.9817 | 71.0752 | 75.5132 | 69.9113 | Kept: final improved and all scores above 80% floor | `b0492a6` |
+| 51 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6}` | 69.5075 | 61.9820 | 71.0674 | 75.5300 | 69.9117 | Kept: final improved and all scores above 80% floor | `44f46c8` |
+| 52 | Cash reserve | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.2}` | 71.6194 | 64.8035 | 72.8972 | 77.1525 | 71.9376 | Kept: final improved and all scores above 80% floor | pending |
 
 ## Continuation Rule
 
-Continue one mechanism per iteration. Stop only after 10 consecutive iterations fail to improve the current best finalScore while meeting the 80% floor rule.
+Continue one mechanism per iteration. Stop only after 10 consecutive iterations fail to improve the current best finalScore while meeting the 80% floor rule. From iteration 52 onward, do a web search pass before selecting a new mechanism and do not tune any single parameter more than 5 times.

@@ -43,6 +43,7 @@ interface PriceCacheEntry {
 type EvalStrategyId = AllocationType | 'max_diversification_research_v1';
 
 interface MaxDiversificationResearchConfig {
+    cashReserve?: number;
     covarianceShrinkage?: number;
     diagonalLoad?: number;
     maxSingleWeight?: number;
@@ -72,6 +73,8 @@ interface RunnerPayload {
 }
 
 const fixtureTimestamp = '2026-05-28T00:00:00.000Z';
+const cashReserveAssetId = 'eval-cash-reserve';
+const cashReserveSymbol = 'CASH_RESERVE';
 
 const toStoredAsset = (input: EvalAssetInput): StoredAsset => ({
     assetClass: input.assetClass,
@@ -129,6 +132,85 @@ const applyVolatilityPower = (volatilities: number[], power: number) => volatili
     Math.pow(Math.max(volatility, 1e-8), power)
 ));
 
+const boundedCashReserve = (value: number) => Math.min(0.95, Math.max(0, value));
+
+const appendCashReserve = ({
+    baseCurrency,
+    cashReserve,
+    covariance,
+    meanReturns,
+    prepared,
+    volatility,
+    weights,
+}: {
+    baseCurrency: Currency;
+    cashReserve: number;
+    covariance: number[][];
+    meanReturns: number[];
+    prepared: PreparedAllocationData;
+    volatility: number[];
+    weights: number[];
+}) => {
+    if (cashReserve <= 0) {
+        return {
+            covariance,
+            meanReturns,
+            prepared,
+            volatility,
+            weights,
+        };
+    }
+
+    const riskyScale = 1 - cashReserve;
+    const cashAsset: StoredAsset = {
+        assetClass: 'cash',
+        createdAt: fixtureTimestamp,
+        currency: baseCurrency,
+        id: cashReserveAssetId,
+        market: 'A',
+        metadata: { synthetic: true },
+        name: 'Cash Reserve',
+        symbol: cashReserveSymbol,
+        tags: ['eval', 'cash-reserve'],
+        updatedAt: fixtureTimestamp,
+    };
+
+    return {
+        covariance: [
+            ...covariance.map((row) => [...row, 0]),
+            Array.from({ length: covariance.length + 1 }, () => 0),
+        ],
+        meanReturns: [...meanReturns, 0],
+        prepared: {
+            ...prepared,
+            assetDateCoverage: [
+                ...prepared.assetDateCoverage,
+                {
+                    actualEndDate: prepared.alignedDates.at(-1) ?? '',
+                    actualStartDate: prepared.alignedDates[0] ?? '',
+                    assetId: cashReserveAssetId,
+                    isFallback: false,
+                    requestedEndDate: prepared.alignedDates.at(-1) ?? '',
+                    requestedStartDate: prepared.alignedDates[0] ?? '',
+                    symbol: cashReserveSymbol,
+                    tradingDays: prepared.alignedDates.length,
+                },
+            ],
+            series: [
+                ...prepared.series,
+                {
+                    annualizedReturn: 0,
+                    annualizedVolatility: 0,
+                    asset: cashAsset,
+                    prices: prepared.alignedDates.map(() => 1),
+                },
+            ],
+        },
+        volatility: [...volatility, 0],
+        weights: [...weights.map((weight) => weight * riskyScale), cashReserve],
+    };
+};
+
 const resolveOptimizationInput = ({
     baseConstraints,
     baseCovariance,
@@ -144,6 +226,7 @@ const resolveOptimizationInput = ({
 }) => {
     if (strategy !== 'max_diversification_research_v1') {
         return {
+            cashReserve: 0,
             constraints: baseConstraints,
             covariance: baseCovariance,
             mode: strategy,
@@ -177,6 +260,9 @@ const resolveOptimizationInput = ({
     }
 
     return {
+        cashReserve: typeof config.cashReserve === 'number'
+            ? boundedCashReserve(config.cashReserve)
+            : 0,
         constraints,
         covariance,
         mode: 'max_diversification' as const,
@@ -310,24 +396,33 @@ const runCaseStrategy = ({
         mode: optimizationInput.mode,
         volatilities: optimizationInput.volatilities,
     });
+    const assemblyInput = appendCashReserve({
+        baseCurrency,
+        cashReserve: optimizationInput.cashReserve,
+        covariance: optimizationInput.covariance,
+        meanReturns: preparedCase.meanReturns,
+        prepared: preparedCase.prepared,
+        volatility: preparedCase.volatility,
+        weights: optimization.weights,
+    });
     const result = assembleAllocationResult({
-        annualizedAssetVolatility: preparedCase.volatility,
-        annualizedMeanReturns: preparedCase.meanReturns,
+        annualizedAssetVolatility: assemblyInput.volatility,
+        annualizedMeanReturns: assemblyInput.meanReturns,
         baseCurrency,
         calculationDateRange: {
             endDate: evalCase.endDate,
             startDate: evalCase.startDate,
         },
-        covariance: optimizationInput.covariance,
+        covariance: assemblyInput.covariance,
         diversificationRatio: optimization.diversificationRatio,
         mode: optimizationInput.mode,
         optimizer: 'js',
         optimizerDiagnostics: optimization.diagnostics,
-        prepared: preparedCase.prepared,
+        prepared: assemblyInput.prepared,
         rebalanceCadence: evalCase.rebalanceCadence,
         strategy: optimizationInput.mode,
         trendFollowing: null,
-        weights: optimization.weights,
+        weights: assemblyInput.weights,
     });
     const diagnostics = result.diagnostics;
 
