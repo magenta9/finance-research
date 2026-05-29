@@ -7,15 +7,19 @@
 - Baseline scores v1: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Baseline source v2: `baseline-a-bond-config-v2-return-score`
 - Baseline scores v2: mean `61.2992`, P10 `53.6278`, P50 `62.8766`, P90 `66.9038`, final `61.5712`
+- Baseline source v3: `baseline-a-bond-config-v3-return-ceiling-050`
+- Baseline scores v3: mean `56.5178`, P10 `49.7859`, P50 `57.8134`, P90 `61.5296`, final `56.7356`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.4, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 1.25}`
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 1.25}`
 - Current best scores v1: mean `87.6351`, P10 `78.1482`, P50 `88.8290`, P90 `93.8124`, final `87.4047`
 - Current best scores v2: mean `70.8732`, P10 `63.3281`, P50 `71.8514`, P90 `75.7631`, final `70.6985`
+- Current best scores v3: mean `70.9255`, P10 `64.2234`, P50 `72.3890`, P90 `75.5049`, final `71.1266`
 - Consecutive non-improving iterations v1: `3` after iteration 73
 - Consecutive non-improving iterations v2: `0` after scoring recalculation
+- Consecutive non-improving iterations v3: `0` after cash reserve recalibration
 - Parameter limit reached: `momentumBreadthCashScale` has 5 attempts after iteration 66; do not tune it again.
-- Parameter limit reached: `cashReserve` has 5 attempts after iteration 70; do not tune it again.
+- Parameter limit reached: `cashReserve` has 5 v1/v2 attempts after iteration 70 and 5 v3 recalibration runs; do not tune it again unless the scoring contract changes.
 
 ## Current Research Process Rules
 
@@ -27,10 +31,25 @@
 ## Scoring Revision
 
 - Iterations 1-73 were evaluated with scoring v1: Sharpe 50%, max drawdown 30%, volatility 20%.
-- From the next recalculation onward, scoring v2 adds expected return: expected return 20%, Sharpe 40%, max drawdown 24%, volatility 16%.
-- Expected return is scored from 0% to 20% annualized expected return, then clamped to the 0-100 component range.
+- Scoring v2 adds expected return: expected return 20%, Sharpe 40%, max drawdown 24%, volatility 16%.
+- Scoring v3 keeps the same weights and changes `expectedReturnCeiling` from `0.2` to `0.5`.
+- Expected return is scored from 0% to 50% annualized expected return, then clamped to the 0-100 component range.
 - Current best was recomputed under scoring v2 in `autoresearch-mdp-v1-scoring-v2-current-best`.
 - Continue the stop-count loop under scoring v2 from 0 consecutive non-improving iterations.
+
+### Scoring v3 Cash Reserve Recalibration
+
+- User requested changing `expectedReturnCeiling` to `0.5` and rerunning the five cash-reserve iterations.
+- Candidate cash reserves to rerun: `0.20`, `0.25`, `0.30`, `0.35`, `0.40`.
+- Result: `cashReserve: 0.25` is the v3 baseline, with finalScore `71.1266`.
+
+| Cash Reserve | Mean | P10 | P50 | P90 | Final | Run |
+| ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 0.20 | 70.1856 | 62.7212 | 71.1455 | 75.2116 | 70.0559 | `autoresearch-mdp-v1-v3-cash-020` |
+| 0.25 | 70.9255 | 64.2234 | 72.3890 | 75.5049 | 71.1266 | `autoresearch-mdp-v1-v3-cash-025` |
+| 0.30 | 70.3631 | 62.7845 | 71.3819 | 75.3109 | 70.2148 | `autoresearch-mdp-v1-v3-cash-030` |
+| 0.35 | 70.3978 | 62.8163 | 71.4000 | 75.3109 | 70.2318 | `autoresearch-mdp-v1-v3-cash-035` |
+| 0.40 | 70.4141 | 62.8163 | 71.4100 | 75.3907 | 70.2567 | `autoresearch-mdp-v1-v3-cash-040` |
 
 ## Iterations
 

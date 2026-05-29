@@ -35,7 +35,7 @@
         "maxDrawdownWeight": 0.24,
         "volatilityWeight": 0.16,
         "expectedReturnFloor": 0,
-        "expectedReturnCeiling": 0.2,
+        "expectedReturnCeiling": 0.5,
         "sharpeFloor": -0.5,
         "sharpeCeiling": 2.0,
         "maxDrawdownCeiling": 0.35,
