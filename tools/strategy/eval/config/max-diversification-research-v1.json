@@ -1,6 +1,6 @@
 {
     "max_diversification_research_v1": {
-        "diagonalLoad": 0.125,
+        "diagonalLoad": 0.15,
         "maxSingleWeight": 0.6,
         "minCorrelation": 0.08,
         "volatilityPower": 0
