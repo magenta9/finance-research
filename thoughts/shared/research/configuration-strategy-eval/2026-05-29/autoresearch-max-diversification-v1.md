@@ -3,13 +3,17 @@
 ## Baseline
 
 - Baseline strategy: `max_diversification`
-- Baseline source: `baseline-a-bond-config-v1`
-- Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
+- Baseline source v1: `baseline-a-bond-config-v1`
+- Baseline scores v1: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
+- Baseline source v2: `baseline-a-bond-config-v2-return-score`
+- Baseline scores v2: mean `61.2992`, P10 `53.6278`, P50 `62.8766`, P90 `66.9038`, final `61.5712`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
 - Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.4, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 1.25}`
-- Current best scores: mean `87.6351`, P10 `78.1482`, P50 `88.8290`, P90 `93.8124`, final `87.4047`
-- Consecutive non-improving iterations: `0` after iteration 70
+- Current best scores v1: mean `87.6351`, P10 `78.1482`, P50 `88.8290`, P90 `93.8124`, final `87.4047`
+- Current best scores v2: mean `70.8732`, P10 `63.3281`, P50 `71.8514`, P90 `75.7631`, final `70.6985`
+- Consecutive non-improving iterations v1: `3` after iteration 73
+- Consecutive non-improving iterations v2: `0` after scoring recalculation
 - Parameter limit reached: `momentumBreadthCashScale` has 5 attempts after iteration 66; do not tune it again.
 - Parameter limit reached: `cashReserve` has 5 attempts after iteration 70; do not tune it again.
 
@@ -19,6 +23,14 @@
 - Prefer mechanism-level candidates over narrow numeric sweeps.
 - From iteration 52 onward, tune any single parameter no more than 5 times before switching mechanism.
 - Current web search shortlist: fixed cash reserve, absolute momentum pre-filter, downside volatility/CVaR filtering, structural covariance regularization, risk contribution cap.
+
+## Scoring Revision
+
+- Iterations 1-73 were evaluated with scoring v1: Sharpe 50%, max drawdown 30%, volatility 20%.
+- From the next recalculation onward, scoring v2 adds expected return: expected return 20%, Sharpe 40%, max drawdown 24%, volatility 16%.
+- Expected return is scored from 0% to 20% annualized expected return, then clamped to the 0-100 component range.
+- Current best was recomputed under scoring v2 in `autoresearch-mdp-v1-scoring-v2-current-best`.
+- Continue the stop-count loop under scoring v2 from 0 consecutive non-improving iterations.
 
 ## Iterations
 
@@ -94,6 +106,9 @@
 | 68 | Base cash reserve | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.3, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 1.25}` | 87.5155 | 78.0461 | 88.7598 | 93.7216 | 87.3218 | Kept: final improved and all scores above 80% floor | `e2a69d4` |
 | 69 | Base cash reserve | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.35, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 1.25}` | 87.5971 | 78.0465 | 88.8290 | 93.8124 | 87.3792 | Kept: final improved and all scores above 80% floor | `ee6f0b0` |
 | 70 | Base cash reserve | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.4, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 1.25}` | 87.6351 | 78.1482 | 88.8290 | 93.8124 | 87.4047 | Kept: final improved and all scores above 80% floor; parameter limit reached for cashReserve | pending |
+| 71 | Multi-horizon absolute momentum | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.4, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 3, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 1.25}` | 82.0127 | 74.4433 | 83.1863 | 87.2857 | 82.0254 | Discarded: final below current best | - |
+| 72 | Multi-horizon absolute momentum | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.4, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 1, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 1.25}` | 81.9614 | 74.6551 | 82.8373 | 87.4138 | 81.9359 | Discarded: final below current best | - |
+| 73 | Multi-horizon absolute momentum | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.4, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0.05, "momentumBreadthCashScale": 1.25}` | 80.5381 | 74.3576 | 81.7676 | 88.4410 | 81.5834 | Discarded: final below current best | - |
 
 ## Continuation Rule
 

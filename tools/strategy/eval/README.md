@@ -11,7 +11,8 @@ The first runnable scope is Configuration Strategy Eval:
 - rebalance cadences: weekly, monthly, quarterly
 - samples: 20 unique baskets per size/window/cadence cell
 - price data: `quant-data get-price-series`
-- single-case score: Sharpe 50%, max drawdown 30%, volatility 20%
+- single-case score: expected return 20%, Sharpe 40%, max drawdown 24%, volatility 16%
+- expected return score bounds: 0% to 20% annualized expected return
 - final score: `0.5 * p50Score + 0.25 * p10Score + 0.25 * p90Score`
 
 Run a dry-run smoke check from the repository root:

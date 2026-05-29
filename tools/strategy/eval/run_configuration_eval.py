@@ -61,22 +61,66 @@ def clamp(value: float, lower: float = 0.0, upper: float = 1.0) -> float:
     return min(upper, max(lower, value))
 
 
+def score_component(value: float, floor: float, ceiling: float) -> float:
+    if ceiling <= floor:
+        raise ValueError(f"Invalid score bounds: floor={floor}, ceiling={ceiling}")
+    return clamp((value - floor) / (ceiling - floor))
+
+
 def score_result(metrics: dict[str, Any], scoring: dict[str, Any]) -> float:
+    expected_return = float(metrics.get("expectedReturn", 0) or 0)
     sharpe = float(metrics.get("sharpeRatio", metrics.get("sharpe", 0)) or 0)
     max_drawdown = abs(float(metrics.get("maxDrawdown", 0) or 0))
     volatility = float(metrics.get("volatility", 0) or 0)
-    sharpe_component = clamp(
-        (sharpe - float(scoring["sharpeFloor"]))
-        / (float(scoring["sharpeCeiling"]) - float(scoring["sharpeFloor"]))
+    expected_return_component = score_component(
+        expected_return,
+        float(scoring.get("expectedReturnFloor", 0)),
+        float(scoring.get("expectedReturnCeiling", 0.2)),
+    )
+    sharpe_component = score_component(
+        sharpe, float(scoring["sharpeFloor"]), float(scoring["sharpeCeiling"])
     )
     drawdown_component = clamp(1 - max_drawdown / float(scoring["maxDrawdownCeiling"]))
     volatility_component = clamp(1 - volatility / float(scoring["volatilityCeiling"]))
+    expected_return_weight = float(
+        scoring.get("expectedReturnWeight", scoring.get("returnWeight", 0))
+    )
+    sharpe_weight = float(scoring.get("sharpeWeight", 0))
+    max_drawdown_weight = float(scoring.get("maxDrawdownWeight", 0))
+    volatility_weight = float(scoring.get("volatilityWeight", 0))
+    weight_total = (
+        expected_return_weight + sharpe_weight + max_drawdown_weight + volatility_weight
+    )
+    if weight_total <= 0:
+        raise ValueError("At least one scoring weight must be positive.")
     score = 100 * (
-        float(scoring["sharpeWeight"]) * sharpe_component
-        + float(scoring["maxDrawdownWeight"]) * drawdown_component
-        + float(scoring["volatilityWeight"]) * volatility_component
+        expected_return_weight / weight_total * expected_return_component
+        + sharpe_weight / weight_total * sharpe_component
+        + max_drawdown_weight / weight_total * drawdown_component
+        + volatility_weight / weight_total * volatility_component
     )
     return round(score, 4)
+
+
+def describe_single_case_score(scoring: dict[str, Any]) -> str:
+    expected_return_weight = float(
+        scoring.get("expectedReturnWeight", scoring.get("returnWeight", 0))
+    )
+    weights = {
+        "expected return": expected_return_weight,
+        "Sharpe": float(scoring.get("sharpeWeight", 0)),
+        "max drawdown": float(scoring.get("maxDrawdownWeight", 0)),
+        "volatility": float(scoring.get("volatilityWeight", 0)),
+    }
+    weight_total = sum(weights.values())
+    if weight_total <= 0:
+        return "No active scoring weights."
+    active_weights = [
+        f"{name} {weight / weight_total:.0%}"
+        for name, weight in weights.items()
+        if weight > 0
+    ]
+    return ", ".join(active_weights) + "."
 
 
 def percentile(sorted_values: list[float], ratio: float) -> float | None:
@@ -489,7 +533,7 @@ def write_report(path: Path, summary: dict[str, Any], plan: dict[str, Any]) -> N
         [
             "",
             "Final score formula: `0.5 * p50Score + 0.25 * p10Score + 0.25 * p90Score`.",
-            "Single-case score formula: Sharpe 50%, max drawdown 30%, volatility 20%.",
+            f"Single-case score formula: {describe_single_case_score(plan['scoring'])}",
         ]
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -553,6 +597,7 @@ def main() -> int:
         "quantDataBin": args.quant_data_bin,
         "requiredStartDate": required_start,
         "samplesPerCell": args.samples_per_cell,
+        "scoring": defaults["scoring"],
         "seed": args.seed,
         "strategyConfig": strategy_config,
         "strategyConfigPath": args.strategy_config,
