@@ -11,25 +11,11 @@ from typing import Any
 from eval_lib import (
     DEFAULT_OUTPUT_ROOT,
     create_run_dir,
-    load_asset_candidates,
-    load_json,
-    parse_int_list,
-    resolve_end_date,
-    start_date_for_window,
     summarize_scores,
-    warmup_start_date,
     write_json,
 )
-from run_eval import (
-    CONFLICT_GROUPS_PATH,
-    DEFAULTS_PATH,
-    UNIVERSE_PATH,
-    asset_candidate_to_payload,
-    generate_eval_cases,
-    load_quant_data_price_cache,
-    run_ts_runner,
-    score_rows,
-)
+from eval_context import resolve_eval_config_context
+from run_eval import asset_candidate_to_payload, generate_eval_cases, load_quant_data_price_cache, run_ts_runner, score_rows
 
 
 CURRENT_REFERENCE_BUDGET = {
@@ -298,38 +284,27 @@ def mechanism_candidates(limit: int) -> list[MechanismCandidate]:
 
 def main() -> int:
     args = parse_args()
-    defaults = load_json(DEFAULTS_PATH)
-    conflict_groups = load_json(CONFLICT_GROUPS_PATH)
-    basket_sizes = parse_int_list(args.sizes)
-    windows_years = parse_int_list(args.windows)
-    end_date = resolve_end_date(args.end_date)
-    strategy_config = defaults["strategyConfig"]
-    warmup_days = (
-        max(
-            int(strategy_config["longLookbackWeeks"]),
-            int(strategy_config["shortLookbackWeeks"]),
-        )
-        + 4
-    ) * 7
-    earliest_start = start_date_for_window(end_date, max(windows_years))
-    required_start = warmup_start_date(earliest_start, warmup_days)
-    universe = load_asset_candidates(UNIVERSE_PATH)
+    context = resolve_eval_config_context(
+        sizes=args.sizes,
+        windows=args.windows,
+        end_date=args.end_date,
+    )
     price_cache = load_quant_data_price_cache(
         quant_data_bin=args.quant_data_bin,
-        candidates=universe,
-        start_date=required_start,
-        end_date=end_date,
+        candidates=context.universe,
+        start_date=context.required_start,
+        end_date=context.end_date,
     )
     candidates_with_prices = [
-        candidate for candidate in universe if candidate.symbol in price_cache
+        candidate for candidate in context.universe if candidate.symbol in price_cache
     ]
     cases = generate_eval_cases(
         candidates=candidates_with_prices,
-        basket_sizes=basket_sizes,
-        windows_years=windows_years,
+        basket_sizes=context.basket_sizes,
+        windows_years=context.windows_years,
         samples_per_size=args.samples_per_size,
-        end_date=end_date,
-        conflict_groups=conflict_groups,
+        end_date=context.end_date,
+        conflict_groups=context.conflict_groups,
         seed=args.seed,
         limit=None,
     )
@@ -340,12 +315,12 @@ def main() -> int:
         "dataSource": "quant-data-cli",
         "candidateCount": len(candidates_with_prices),
         "caseCount": len(cases),
-        "basketSizes": basket_sizes,
-        "windowsYears": windows_years,
+        "basketSizes": context.basket_sizes,
+        "windowsYears": context.windows_years,
         "samplesPerSize": args.samples_per_size,
         "seed": args.seed,
-        "endDate": end_date,
-        "requiredStartDate": required_start,
+        "endDate": context.end_date,
+        "requiredStartDate": context.required_start,
         "referenceBudget": CURRENT_REFERENCE_BUDGET,
     }
     write_json(run_dir / "cases.json", cases)
@@ -367,19 +342,19 @@ def main() -> int:
 
     for offset, candidate in enumerate(selected_candidates, start=11):
         candidate_strategy_config = {
-            **strategy_config,
+            **context.strategy_config,
             "researchProfile": candidate.profile,
         }
         runner_output = run_ts_runner(
             {
-                "baseCurrency": defaults["baseCurrency"],
+                "baseCurrency": context.defaults["baseCurrency"],
                 "assets": assets_payload,
                 "strategyConfig": candidate_strategy_config,
                 "cases": cases,
                 "pricesBySymbol": price_cache,
             }
         )
-        scored_rows = score_rows(runner_output["rows"], defaults["scoring"])
+        scored_rows = score_rows(runner_output["rows"], context.defaults["scoring"])
         summary = summarize_scores(scored_rows)
         combined = combined_score(summary)
         decision = (

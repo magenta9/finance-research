@@ -12,27 +12,21 @@ from typing import Any
 
 from eval_lib import (
     DEFAULT_OUTPUT_ROOT,
-    REPO_ROOT,
     create_run_dir,
     generate_cases,
-    load_asset_candidates,
     load_json,
-    parse_int_list,
-    resolve_end_date,
     score_result,
     start_date_for_window,
     summarize_scores,
-    warmup_start_date,
     write_json,
 )
-
-
-SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULTS_PATH = SCRIPT_DIR / "config/eval-defaults.json"
-CONFLICT_GROUPS_PATH = SCRIPT_DIR / "config/conflict-groups.json"
-UNIVERSE_PATH = SCRIPT_DIR / "config/universe.json"
-TS_RUNNER_PATH = SCRIPT_DIR / "adm_eval_runner.ts"
-QUANTDESK_DIR = REPO_ROOT / "tools/desktop/quantdesk"
+from eval_context import (
+    DEFAULTS_PATH,
+    QUANTDESK_DIR,
+    TS_RUNNER_PATH,
+    join_ints,
+    resolve_eval_config_context,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -82,55 +76,40 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def join_ints(values: list[int]) -> str:
-    return ",".join(str(value) for value in values)
-
-
 def main() -> int:
     args = parse_args()
     output_root = Path(args.output_root)
-    defaults = load_json(DEFAULTS_PATH)
-    conflict_groups = load_json(CONFLICT_GROUPS_PATH)
-    basket_sizes = parse_int_list(args.sizes)
-    windows_years = parse_int_list(args.windows)
-    end_date = resolve_end_date(args.end_date)
-    strategy_config = defaults["strategyConfig"]
-    warmup_days = (
-        max(
-            int(strategy_config["longLookbackWeeks"]),
-            int(strategy_config["shortLookbackWeeks"]),
-        )
-        + 4
-    ) * 7
-    earliest_start = start_date_for_window(end_date, max(windows_years))
-    required_start = warmup_start_date(earliest_start, warmup_days)
-    universe = load_asset_candidates(UNIVERSE_PATH)
+    context = resolve_eval_config_context(
+        sizes=args.sizes,
+        windows=args.windows,
+        end_date=args.end_date,
+    )
 
     if args.dry_run:
         price_cache: dict[str, Any] = {}
-        candidates = universe
+        candidates = context.universe
         coverage_checked = False
         available_price_count = None
     else:
         price_cache = load_quant_data_price_cache(
             quant_data_bin=args.quant_data_bin,
-            candidates=universe,
-            start_date=required_start,
-            end_date=end_date,
+            candidates=context.universe,
+            start_date=context.required_start,
+            end_date=context.end_date,
         )
         candidates = [
-            candidate for candidate in universe if candidate.symbol in price_cache
+            candidate for candidate in context.universe if candidate.symbol in price_cache
         ]
         coverage_checked = True
         available_price_count = len(price_cache)
 
     cases = generate_eval_cases(
         candidates=candidates,
-        basket_sizes=basket_sizes,
-        windows_years=windows_years,
+        basket_sizes=context.basket_sizes,
+        windows_years=context.windows_years,
         samples_per_size=args.samples_per_size,
-        end_date=end_date,
-        conflict_groups=conflict_groups,
+        end_date=context.end_date,
+        conflict_groups=context.conflict_groups,
         seed=args.seed,
         limit=args.limit,
     )
@@ -138,18 +117,18 @@ def main() -> int:
     plan = {
         "dataSource": "quant-data-cli",
         "quantDataBin": args.quant_data_bin,
-        "universeCount": len(universe),
+        "universeCount": len(context.universe),
         "coverageChecked": coverage_checked,
         "availablePriceCount": available_price_count,
         "candidateCount": len(candidates),
         "caseCount": len(cases),
-        "basketSizes": basket_sizes,
-        "windowsYears": windows_years,
+        "basketSizes": context.basket_sizes,
+        "windowsYears": context.windows_years,
         "samplesPerSize": args.samples_per_size,
         "seed": args.seed,
-        "endDate": end_date,
-        "requiredStartDate": required_start,
-        "strategyConfig": strategy_config,
+        "endDate": context.end_date,
+        "requiredStartDate": context.required_start,
+        "strategyConfig": context.strategy_config,
         "dryRun": args.dry_run,
         "tsRunner": str(TS_RUNNER_PATH),
     }
@@ -169,16 +148,16 @@ def main() -> int:
 
     runner_output = run_ts_runner(
         {
-            "baseCurrency": defaults["baseCurrency"],
+            "baseCurrency": context.defaults["baseCurrency"],
             "assets": [
                 asset_candidate_to_payload(candidate) for candidate in candidates
             ],
-            "strategyConfig": strategy_config,
+            "strategyConfig": context.strategy_config,
             "cases": cases,
             "pricesBySymbol": price_cache,
         }
     )
-    rows = score_rows(runner_output["rows"], defaults["scoring"])
+    rows = score_rows(runner_output["rows"], context.defaults["scoring"])
     summary = summarize_scores(rows)
     write_json(run_dir / "baseline-results.json", rows)
     write_json(run_dir / "score-summary.json", summary)
