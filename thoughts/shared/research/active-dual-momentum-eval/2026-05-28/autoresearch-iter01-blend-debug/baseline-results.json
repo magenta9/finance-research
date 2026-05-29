@@ -1,0 +1,38 @@
+[
+  {
+    "caseId": "adm-1y-000-d68b29417d32",
+    "windowYears": 1,
+    "basketSize": 5,
+    "sampleIndex": 0,
+    "startDate": "2025-05-27",
+    "endDate": "2026-05-27",
+    "assetIds": [
+      "159201",
+      "159798",
+      "512000",
+      "513100",
+      "515180"
+    ],
+    "symbols": [
+      "159201",
+      "159798",
+      "512000",
+      "513100",
+      "515180"
+    ],
+    "calmarRatio": 1.786676295900359,
+    "error": null,
+    "metrics": {
+      "expectedReturn": 0.07765155768494178,
+      "maxDrawdown": 0.043461458498732064,
+      "sharpeRatio": 1.0759073667280135,
+      "volatility": 0.07217308858205065,
+      "calmarRatio": 1.786676295900359,
+      "winRate": 0.38016528925619836
+    },
+    "status": "ok",
+    "warnings": [],
+    "winRate": 0.38016528925619836,
+    "score": 92.1506
+  }
+]

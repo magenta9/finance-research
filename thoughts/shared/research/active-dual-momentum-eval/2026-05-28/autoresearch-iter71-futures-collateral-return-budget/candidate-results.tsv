@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	futures-collateral-return	75.074	51.6794	78.5122	93.2624	68.0556	budget-pass	Accrue base-currency collateral return on futures notional exposure.	"{""futuresCollateralReturnMode"": ""riskFreeRate""}"

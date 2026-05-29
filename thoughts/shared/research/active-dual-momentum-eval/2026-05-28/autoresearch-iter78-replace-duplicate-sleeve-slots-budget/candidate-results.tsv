@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	replace-duplicate-sleeve-slots	80.3057	57.2828	85.4033	95.032	73.3988	discard	Replace same-asset same-direction duplicate sleeve slots with the next eligible candidate before falling back to cash deduplication.	"{""replaceDuplicateSleeveSlots"": true}"

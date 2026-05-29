@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "correlation-diversified-replacement",
+    "thesis": "Skip highly correlated same-direction sleeve candidates and try lower-ranked replacements before cashing duplicate risk.",
+    "profile": {
+      "correlationDiversifiedReplacement": true
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 76.3431,
+      "p10Score": 52.774,
+      "p50Score": 76.9631,
+      "p90Score": 96.588,
+      "combinedScore": 69.2724
+    }
+  }
+]

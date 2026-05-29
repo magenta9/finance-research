@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "ablate-cross-sign-offset-cash",
+    "thesis": "Ablate cross-sign gross offset cashing while keeping the rest of the default stack.",
+    "profile": {
+      "crossSignOffsetCash": false
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 75.5619,
+      "p10Score": 54.4444,
+      "p50Score": 73.3686,
+      "p90Score": 97.1187,
+      "combinedScore": 69.2266
+    }
+  }
+]

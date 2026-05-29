@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "downside-vol-credibility-shrink",
+    "thesis": "Shrink sparse downside-vol estimates toward the cross-sectional median downside volatility.",
+    "profile": {
+      "downsideVolCredibilityShrink": true
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 74.2147,
+      "p10Score": 49.8005,
+      "p50Score": 78.0644,
+      "p90Score": 93.2564,
+      "combinedScore": 66.8904
+    }
+  }
+]

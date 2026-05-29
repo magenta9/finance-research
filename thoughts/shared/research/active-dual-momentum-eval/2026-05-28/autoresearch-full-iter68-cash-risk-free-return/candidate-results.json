@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "cash-risk-free-return",
+    "thesis": "Accrue base-currency risk-free return on existing ADM cash weight.",
+    "profile": {
+      "cashReturnMode": "riskFreeRate"
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 600,
+      "successCount": 600,
+      "failureCount": 0,
+      "meanScore": 76.8205,
+      "p10Score": 56.0719,
+      "p50Score": 80.4666,
+      "p90Score": 94.5625,
+      "combinedScore": 70.5959
+    }
+  }
+]

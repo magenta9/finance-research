@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "portfolio-downside-breadth-target",
+    "thesis": "Add a uniform haircut when portfolio downside losses are concentrated in a small number of positions.",
+    "profile": {
+      "portfolioDownsideBreadthTarget": true
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 72.2378,
+      "p10Score": 43.5691,
+      "p50Score": 76.6818,
+      "p90Score": 93.2472,
+      "combinedScore": 63.6372
+    }
+  }
+]

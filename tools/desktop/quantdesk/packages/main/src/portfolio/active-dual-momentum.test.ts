@@ -62,6 +62,7 @@ describe('runActiveDualMomentumBacktest', () => {
             annualizedVolatility: [0.16, 0.12, 0.28, 0.31],
             baseCurrency: 'USD',
             calculationDateRange: { startDate: prepared.alignedDates[0], endDate: prepared.alignedDates.at(-1) ?? prepared.alignedDates[0] },
+            config: { researchProfile: { crossSignOffsetCash: false } } as Parameters<typeof runActiveDualMomentumBacktest>[0]['config'],
             covariance: buildCovariance(assets.length),
             prepared,
         });
@@ -83,6 +84,12 @@ describe('runActiveDualMomentumBacktest', () => {
         expect(latestHoldings).toEqual(expect.arrayContaining([
             expect.objectContaining({ direction: 'short', symbol: 'FU9999' }),
             expect.objectContaining({ direction: 'long', symbol: 'RB9999' }),
+        ]));
+        const latestRebalance = result.diagnostics.activeDualMomentum?.rebalanceRecords.at(-1);
+        expect(latestRebalance?.cashBreakdown?.resolvedTotal).toBeCloseTo(latestRebalance?.cashWeight ?? 0, 6);
+        expect(latestRebalance?.processorTrace).toEqual(expect.arrayContaining([
+            expect.objectContaining({ id: 'correlated-same-direction-dedup' }),
+            expect.objectContaining({ id: 'rebalance-smoothing' }),
         ]));
         expect(result.allocations.every((allocation) => allocation.weight >= 0 && allocation.direction)).toBe(true);
     });

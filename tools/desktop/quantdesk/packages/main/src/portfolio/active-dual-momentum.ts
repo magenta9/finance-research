@@ -9,17 +9,22 @@ import type {
 } from '@quantdesk/shared';
 
 import { isMaterialAllocationTradeChange } from './allocation-trade-orchestrator';
+import { annualizationFactor, riskFreeRates } from './analytics-constants';
 import type { PreparedAllocationData } from './preprocessor';
 import { buildScenarioAnalysis } from './scenarios';
 import { correlationMatrix } from './statistics';
 import {
     activeDualMomentumTradingDaysPerWeek,
-    mergeActiveDualMomentumSleeves,
+    mergeActiveDualMomentumSleevesWithCash,
     normalizeActiveDualMomentumConfig,
     selectActiveDualMomentumSleeve,
     signedActiveDualMomentumWeight,
     type ActiveDualMomentumPosition,
 } from './active-dual-momentum-rules';
+import {
+    resolveActiveDualMomentumPositionPipeline,
+} from './active-dual-momentum-position-pipeline';
+import { resolveActiveDualMomentumCashBufferMultiplier } from './active-dual-momentum-risk-buffer';
 import {
     buildPortfolioPathFromDailyReturns,
     computePortfolioCalmarRatio,
@@ -217,6 +222,7 @@ export const runActiveDualMomentumBacktest = ({
     }
 
     let currentPositions: ActiveDualMomentumPosition[] = [];
+    let currentCashWeight = 1;
     let latestPositions: ActiveDualMomentumPosition[] = [];
     let totalTurnover = 0;
     let totalCost = 0;
@@ -254,7 +260,35 @@ export const runActiveDualMomentumBacktest = ({
                 rebalanceIndex: dayIndex,
                 sleeve: 'long',
             });
-            const nextPositions = mergeActiveDualMomentumSleeves(shortSleeve, longSleeve);
+            const mergedSleeves = mergeActiveDualMomentumSleevesWithCash(shortSleeve, longSleeve, {
+                deduplicateSameDirection: config.researchProfile?.deduplicateSameAssetSleeveBudget !== false,
+            });
+            const grossPositions = mergedSleeves.positions;
+            const cashBufferMultiplier = resolveActiveDualMomentumCashBufferMultiplier({
+                baseMultiplier: config.researchProfile?.cashBufferMultiplier ?? 0.75,
+                config,
+                grossPositions,
+                maxLookbackDays,
+                prepared,
+                rebalanceIndex: dayIndex,
+            });
+            const cashBufferWeight = grossPositions.reduce((sum, position) => sum + position.weight * (1 - cashBufferMultiplier), 0);
+            const baseTargetPositions = grossPositions.map((position) => ({ ...position, weight: position.weight * cashBufferMultiplier }));
+            const pipeline = resolveActiveDualMomentumPositionPipeline({
+                assetCount: prepared.series.length,
+                baseTargetPositions,
+                cashInputs: {
+                    sameAssetSleeveDedup: mergedSleeves.cashWeight,
+                    sleeveFilter: shortSleeve.cashWeight + longSleeve.cashWeight,
+                    standingBuffer: cashBufferWeight,
+                },
+                config,
+                maxLookbackDays,
+                prepared,
+                previousPositions: currentPositions,
+                rebalanceIndex: dayIndex,
+            });
+            const nextPositions = pipeline.targetPositions;
             const turnover = turnoverBetween(currentPositions, nextPositions, prepared.series.length);
             const cost = turnover * (config.transactionCostBps + config.slippageBps) / 10_000;
 
@@ -272,10 +306,11 @@ export const runActiveDualMomentumBacktest = ({
                 }));
             }
 
-            const cashWeight = shortSleeve.cashWeight + longSleeve.cashWeight;
+            currentCashWeight = pipeline.resolvedCashWeight;
             if (isCalculationRebalance) {
                 rebalanceRecords.push({
-                    cashWeight,
+                    cashBreakdown: pipeline.cashBreakdown,
+                    cashWeight: pipeline.resolvedCashWeight,
                     date: prepared.alignedDates[dayIndex],
                     holdings: nextPositions.map((position) => {
                         const entry = prepared.series[position.assetIndex];
@@ -289,6 +324,7 @@ export const runActiveDualMomentumBacktest = ({
                             weight: position.weight,
                         };
                     }),
+                    processorTrace: pipeline.processorTrace,
                     selectedButFiltered: [...shortSleeve.filtered, ...longSleeve.filtered],
                 });
             }
@@ -297,7 +333,10 @@ export const runActiveDualMomentumBacktest = ({
             latestPositions = nextPositions;
         }
 
-        const netReturn = grossReturn - rebalanceCost;
+        const cashReturn = config.researchProfile?.cashReturnMode !== 'zero'
+            ? currentCashWeight * (riskFreeRates[baseCurrency] / annualizationFactor)
+            : 0;
+        const netReturn = grossReturn + cashReturn - rebalanceCost;
         dailyReturns.push(netReturn);
         nominalExposures.push(currentPositions.reduce((sum, position) => sum + position.weight, 0));
         netExposures.push(currentPositions.reduce((sum, position) => sum + signedActiveDualMomentumWeight(position), 0));

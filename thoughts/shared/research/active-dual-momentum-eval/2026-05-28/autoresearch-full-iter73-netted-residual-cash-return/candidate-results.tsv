@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	netted-residual-cash-return	76.8599	56.0802	80.4665	94.5625	70.626	budget-pass	Accrue cash return on residual fully-funded capital after netted positions.	"{""nettedResidualCashReturn"": true}"

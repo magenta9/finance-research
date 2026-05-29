@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "futures-collateral-return",
+    "thesis": "Accrue base-currency collateral return on futures notional exposure.",
+    "profile": {
+      "futuresCollateralReturnMode": "riskFreeRate"
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 75.074,
+      "p10Score": 51.6794,
+      "p50Score": 78.5122,
+      "p90Score": 93.2624,
+      "combinedScore": 68.0556
+    }
+  }
+]

@@ -143,6 +143,34 @@ export interface ErcDiagnostics {
   convergenceWarning: boolean;
 }
 
+export interface ActiveDualMomentumCashBreakdown {
+  explicit: {
+    correlatedSameDirectionDedup: number;
+    crossSignOffset: number;
+    riskExitCooldown: number;
+    riskTrimCooldown: number;
+    sameAssetSleeveDedup: number;
+    sleeveFilter: number;
+    standingBuffer: number;
+    total: number;
+  };
+  residual: number;
+  resolvedTotal: number;
+}
+
+export interface ActiveDualMomentumProcessorTrace {
+  cashWeight: number;
+  changedPositionCount: number;
+  id:
+  | 'correlated-same-direction-dedup'
+  | 'cross-sign-offset-cash'
+  | 'risk-exit-redeployment-cooldown'
+  | 'risk-trim-redeployment-cooldown'
+  | 'rebalance-smoothing';
+  inputGrossWeight: number;
+  outputGrossWeight: number;
+}
+
 export interface AssetDateCoverage {
   assetId: string;
   symbol: string;
@@ -162,6 +190,7 @@ export interface ActiveDualMomentumDiagnostics {
   maxNominalExposure: number;
   rebalanceRecords: Array<{
     cashWeight: number;
+    cashBreakdown?: ActiveDualMomentumCashBreakdown;
     date: string;
     holdings: Array<{
       assetId: string;
@@ -178,6 +207,7 @@ export interface ActiveDualMomentumDiagnostics {
       reason: 'NEGATIVE_MOMENTUM';
       symbol: string;
     }>;
+    processorTrace?: ActiveDualMomentumProcessorTrace[];
   }>;
   status: 'ok' | 'degraded' | 'unavailable';
   totalCost?: number;

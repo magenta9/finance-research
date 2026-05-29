@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	ablate-standing-cash-buffer	72.4996	50.2368	69.8682	96.1474	65.8208	discard	Ablate the standing 25 percent cash buffer while keeping the rest of the default stack.	"{""cashBufferMultiplier"": 1.0}"

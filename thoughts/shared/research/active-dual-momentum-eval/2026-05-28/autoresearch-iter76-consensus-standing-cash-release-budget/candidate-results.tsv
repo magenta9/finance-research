@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	consensus-standing-cash-release	68.6486	42.4591	70.6316	91.6727	60.7918	discard	Release standing cash buffer only for long positions selected by both ADM sleeves while preserving portfolio risk overlay.	"{""consensusStandingCashRelease"": true}"

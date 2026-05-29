@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "ablate-netted-residual-cash-return",
+    "thesis": "Ablate residual fully funded cash return while keeping explicit cash return enabled.",
+    "profile": {
+      "nettedResidualCashReturn": false
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 76.386,
+      "p10Score": 55.4206,
+      "p50Score": 73.8864,
+      "p90Score": 97.1192,
+      "combinedScore": 70.0964
+    }
+  }
+]

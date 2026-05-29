@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	ablate-netted-residual-cash-return	76.386	55.4206	73.8864	97.1192	70.0964	discard	Ablate residual fully funded cash return while keeping explicit cash return enabled.	"{""nettedResidualCashReturn"": false}"

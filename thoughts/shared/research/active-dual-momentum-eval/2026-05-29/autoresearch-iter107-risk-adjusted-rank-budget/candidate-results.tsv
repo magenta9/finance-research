@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	risk-adjusted-rank	74.649	50.7886	72.3997	96.7905	67.4909	discard	Rank candidates by momentum per realized volatility.	"{""rankMode"": ""riskAdjusted""}"

@@ -1,0 +1,384 @@
+[
+  {
+    "iteration": 11,
+    "name": "risk-adjusted-rank",
+    "thesis": "Rank candidates by momentum per realized volatility.",
+    "profile": {
+      "rankMode": "riskAdjusted"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 69.2433,
+      "p10Score": 39.3391,
+      "p50Score": 69.4352,
+      "p90Score": 93.2565,
+      "combinedScore": 60.272
+    }
+  },
+  {
+    "iteration": 12,
+    "name": "downside-risk-rank",
+    "thesis": "Rank candidates by momentum per downside volatility.",
+    "profile": {
+      "rankMode": "downsideRiskAdjusted"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 70.6348,
+      "p10Score": 41.8233,
+      "p50Score": 71.3773,
+      "p90Score": 93.2878,
+      "combinedScore": 61.9913
+    }
+  },
+  {
+    "iteration": 13,
+    "name": "drawdown-penalty-rank",
+    "thesis": "Penalize candidates with deeper lookback drawdowns.",
+    "profile": {
+      "rankMode": "drawdownPenalty"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 67.1525,
+      "p10Score": 42.2834,
+      "p50Score": 64.3535,
+      "p90Score": 92.7102,
+      "combinedScore": 59.6918
+    }
+  },
+  {
+    "iteration": 14,
+    "name": "momentum-slope-rank",
+    "thesis": "Reward candidates whose recent momentum confirms lookback momentum.",
+    "profile": {
+      "rankMode": "momentumSlope"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 67.6481,
+      "p10Score": 40.6431,
+      "p50Score": 65.6437,
+      "p90Score": 92.4489,
+      "combinedScore": 59.5466
+    }
+  },
+  {
+    "iteration": 15,
+    "name": "positive-futures-bias-rank",
+    "thesis": "Keep futures two-sided but slightly prefer positive trends.",
+    "profile": {
+      "rankMode": "positiveFuturesBias"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 66.6206,
+      "p10Score": 40.8903,
+      "p50Score": 65.0527,
+      "p90Score": 92.7349,
+      "combinedScore": 58.9015
+    }
+  },
+  {
+    "iteration": 16,
+    "name": "inverse-downside-vol-weight",
+    "thesis": "Weight sleeve slots by inverse downside volatility.",
+    "profile": {
+      "riskMode": "inverseDownsideVolatility"
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 71.455,
+      "p10Score": 43.6283,
+      "p50Score": 74.5564,
+      "p90Score": 93.2472,
+      "combinedScore": 63.107
+    }
+  },
+  {
+    "iteration": 17,
+    "name": "sqrt-inverse-vol-weight",
+    "thesis": "Soften inverse-vol concentration with square-root weighting.",
+    "profile": {
+      "riskMode": "sqrtInverseVolatility"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 68.2269,
+      "p10Score": 39.616,
+      "p50Score": 69.9298,
+      "p90Score": 93.1508,
+      "combinedScore": 59.6436
+    }
+  },
+  {
+    "iteration": 18,
+    "name": "equal-risk-control",
+    "thesis": "Test whether current inverse-vol weighting is overfitting tail cases.",
+    "profile": {
+      "riskMode": "equalWeight"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 65.0983,
+      "p10Score": 36.2182,
+      "p50Score": 64.6741,
+      "p90Score": 91.4904,
+      "combinedScore": 56.4343
+    }
+  },
+  {
+    "iteration": 19,
+    "name": "futures-short-confirm",
+    "thesis": "Route negative futures signals to cash unless recent momentum also confirms.",
+    "profile": {
+      "confirmFuturesShort": true
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 70.9698,
+      "p10Score": 42.1674,
+      "p50Score": 72.0583,
+      "p90Score": 93.2865,
+      "combinedScore": 62.3291
+    }
+  },
+  {
+    "iteration": 20,
+    "name": "futures-short-half-weight",
+    "thesis": "Cut confirmed futures short exposure in half and hold the remainder as cash.",
+    "profile": {
+      "futuresShortWeightMultiplier": 0.5
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 71.0043,
+      "p10Score": 44.2368,
+      "p50Score": 73.9115,
+      "p90Score": 93.2871,
+      "combinedScore": 62.974
+    }
+  },
+  {
+    "iteration": 21,
+    "name": "etf-high-water-filter",
+    "thesis": "Require ETF longs to be near their lookback high before taking risk.",
+    "profile": {
+      "etfHighWaterFilter": true
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 71.0081,
+      "p10Score": 43.8197,
+      "p50Score": 74.151,
+      "p90Score": 93.4143,
+      "combinedScore": 62.8516
+    }
+  },
+  {
+    "iteration": 22,
+    "name": "recent-shock-cash",
+    "thesis": "Move shocked candidates to cash when recent move dwarfs realized volatility.",
+    "profile": {
+      "shockToCash": true
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 70.9458,
+      "p10Score": 39.5009,
+      "p50Score": 76.831,
+      "p90Score": 94.4553,
+      "combinedScore": 61.5123
+    }
+  },
+  {
+    "iteration": 23,
+    "name": "close-score-cash",
+    "thesis": "Hold cash when the selected names are too tightly clustered by score.",
+    "profile": {
+      "closeScoreCashFactor": 0.65,
+      "closeScoreThreshold": 0.03
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 70.6348,
+      "p10Score": 41.8233,
+      "p50Score": 71.3773,
+      "p90Score": 93.2878,
+      "combinedScore": 61.9913
+    }
+  },
+  {
+    "iteration": 24,
+    "name": "decay-penalty",
+    "thesis": "Reduce weight when recent momentum conflicts with lookback momentum.",
+    "profile": {
+      "decayPenaltyFactor": 0.7
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 70.6568,
+      "p10Score": 44.4599,
+      "p50Score": 71.8448,
+      "p90Score": 93.2874,
+      "combinedScore": 62.7977
+    }
+  },
+  {
+    "iteration": 25,
+    "name": "max-position-cap",
+    "thesis": "Cap a single selected position and keep the excess in cash.",
+    "profile": {
+      "maxPositionWeight": 0.18
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 70.4288,
+      "p10Score": 42.9536,
+      "p50Score": 70.8442,
+      "p90Score": 93.2892,
+      "combinedScore": 62.1862
+    }
+  },
+  {
+    "iteration": 26,
+    "name": "two-step-rebalance",
+    "thesis": "Move only halfway to the new target each rebalance.",
+    "profile": {
+      "rebalanceStep": 0.5
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 70.9583,
+      "p10Score": 41.7872,
+      "p50Score": 72.974,
+      "p90Score": 93.8147,
+      "combinedScore": 62.207
+    }
+  },
+  {
+    "iteration": 27,
+    "name": "small-change-hold-band",
+    "thesis": "Ignore small target-weight changes to reduce ranking noise.",
+    "profile": {
+      "rebalanceWeightHoldBand": 0.03
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 70.9422,
+      "p10Score": 42.23,
+      "p50Score": 73.8225,
+      "p90Score": 93.6407,
+      "combinedScore": 62.3285
+    }
+  },
+  {
+    "iteration": 28,
+    "name": "larger-cash-buffer",
+    "thesis": "Increase the standing cash buffer for extra tail protection.",
+    "profile": {
+      "cashBufferMultiplier": 0.75
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 70.6348,
+      "p10Score": 41.8233,
+      "p50Score": 71.3773,
+      "p90Score": 93.2878,
+      "combinedScore": 61.9913
+    }
+  },
+  {
+    "iteration": 29,
+    "name": "smaller-cash-buffer",
+    "thesis": "Release a little cash to see whether the best mechanism is too defensive.",
+    "profile": {
+      "cashBufferMultiplier": 0.85
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 68.6304,
+      "p10Score": 38.7276,
+      "p50Score": 68.8357,
+      "p90Score": 92.3957,
+      "combinedScore": 59.6596
+    }
+  },
+  {
+    "iteration": 30,
+    "name": "risk-adjusted-rank-plus-inverse-downside-vol-weight",
+    "thesis": "Combine: Rank candidates by momentum per realized volatility. Weight sleeve slots by inverse downside volatility.",
+    "profile": {
+      "rankMode": "riskAdjusted",
+      "riskMode": "inverseDownsideVolatility"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 69.6946,
+      "p10Score": 41.6064,
+      "p50Score": 71.3545,
+      "p90Score": 93.1212,
+      "combinedScore": 61.2681
+    }
+  }
+]

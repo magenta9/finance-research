@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "cross-sign-offset-cash",
+    "thesis": "Compress offsetting long and short gross exposure into cash while keeping the portfolio net direction.",
+    "profile": {
+      "crossSignOffsetCash": true
+    },
+    "decision": "budget-pass",
+    "summary": {
+      "caseCount": 600,
+      "successCount": 600,
+      "failureCount": 0,
+      "meanScore": 74.933,
+      "p10Score": 55.8955,
+      "p50Score": 73.2058,
+      "p90Score": 96.5617,
+      "combinedScore": 69.2218
+    }
+  }
+]

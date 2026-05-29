@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	drawdown-penalty-rank	74.1498	51.4548	74.4231	96.6899	67.3413	discard	Penalize candidates with deeper lookback drawdowns.	"{""rankMode"": ""drawdownPenalty""}"

@@ -1,0 +1,25 @@
+{
+  "dataSource": "quant-data-cli",
+  "candidateCount": 49,
+  "caseCount": 60,
+  "basketSizes": [
+    5,
+    10,
+    20
+  ],
+  "windowsYears": [
+    1,
+    2,
+    3,
+    5
+  ],
+  "samplesPerSize": 5,
+  "seed": 20260528,
+  "endDate": "2026-05-27",
+  "requiredStartDate": "2020-11-06",
+  "referenceBudget": {
+    "meanScore": 76.4591,
+    "p10Score": 55.4206,
+    "combinedScore": 70.1475
+  }
+}

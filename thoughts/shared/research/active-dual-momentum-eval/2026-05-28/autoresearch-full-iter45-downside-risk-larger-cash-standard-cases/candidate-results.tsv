@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	downside-risk-rank-plus-larger-cash-buffer	72.7632	48.8738	75.1751	94.2882	65.5964	budget-pass	Combine: Rank candidates by momentum per downside volatility. Increase the standing cash buffer for extra tail protection.	"{""cashBufferMultiplier"": 0.75, ""rankMode"": ""downsideRiskAdjusted""}"

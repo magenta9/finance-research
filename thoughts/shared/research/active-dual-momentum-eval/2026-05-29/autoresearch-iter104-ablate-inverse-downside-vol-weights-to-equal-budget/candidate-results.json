@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "ablate-inverse-downside-vol-weights-to-equal",
+    "thesis": "Ablate inverse downside-volatility sleeve weighting to equal weights while keeping the rest of the default stack.",
+    "profile": {
+      "riskMode": "equalWeight"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 70.1188,
+      "p10Score": 42.8297,
+      "p50Score": 68.3296,
+      "p90Score": 93.8128,
+      "combinedScore": 61.9321
+    }
+  }
+]

@@ -1,0 +1,38 @@
+{
+    "basketSizes": [
+        5,
+        10,
+        20
+    ],
+    "windowsYears": [
+        1,
+        2,
+        3,
+        5
+    ],
+    "samplesPerSize": 50,
+    "seed": 20260528,
+    "baseCurrency": "CNY",
+    "strategy": "active_dual_momentum_gtaa",
+    "strategyConfig": {
+        "absoluteMomentumFilter": true,
+        "longLookbackWeeks": 25,
+        "shortLookbackWeeks": 10,
+        "sleeveWeights": {
+            "long": 0.5,
+            "short": 0.5
+        },
+        "topK": 4,
+        "transactionCostBps": 0,
+        "slippageBps": 0
+    },
+    "scoring": {
+        "sharpeWeight": 0.5,
+        "maxDrawdownWeight": 0.3,
+        "volatilityWeight": 0.2,
+        "sharpeFloor": -0.5,
+        "sharpeCeiling": 2.0,
+        "maxDrawdownCeiling": 0.35,
+        "volatilityCeiling": 0.35
+    }
+}
