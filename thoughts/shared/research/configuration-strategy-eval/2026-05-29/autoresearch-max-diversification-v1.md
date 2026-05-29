@@ -7,9 +7,9 @@
 - Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.5}`
-- Current best scores: mean `69.4570`, P10 `61.7275`, P50 `70.8639`, P90 `75.3468`, final `69.7005`
-- Consecutive non-improving iterations: `0` after iteration 37
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.6}`
+- Current best scores: mean `69.5517`, P10 `61.7919`, P50 `71.0419`, P90 `75.3468`, final `69.8056`
+- Consecutive non-improving iterations: `0` after iteration 38
 
 ## Iterations
 
@@ -52,6 +52,7 @@
 | 35 | Single asset cap | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.4}` | 69.1172 | 61.1911 | 70.3853 | 75.1192 | 69.2702 | Kept: improved current best | pending |
 | 36 | Single asset cap | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.45}` | 69.3286 | 61.5134 | 70.6473 | 75.1392 | 69.4868 | Kept: improved current best | pending |
 | 37 | Single asset cap | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.5}` | 69.4570 | 61.7275 | 70.8639 | 75.3468 | 69.7005 | Kept: improved current best | pending |
+| 38 | Single asset cap | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.6}` | 69.5517 | 61.7919 | 71.0419 | 75.3468 | 69.8056 | Kept: improved current best | pending |
 
 ## Continuation Rule
 
