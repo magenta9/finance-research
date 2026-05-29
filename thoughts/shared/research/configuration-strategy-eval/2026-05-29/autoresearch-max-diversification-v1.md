@@ -7,9 +7,9 @@
 - Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.6}`
-- Current best scores: mean `69.5517`, P10 `61.7919`, P50 `71.0419`, P90 `75.3468`, final `69.8056`
-- Consecutive non-improving iterations: `0` after iteration 38
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.07, "diagonalLoad": 0.1125, "maxSingleWeight": 0.6}`
+- Current best scores: mean `69.5521`, P10 `61.9336`, P50 `71.0895`, P90 `75.4256`, final `69.8845`
+- Consecutive non-improving iterations: `0` after iteration 43
 
 ## Iterations
 
@@ -53,6 +53,11 @@
 | 36 | Single asset cap | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.45}` | 69.3286 | 61.5134 | 70.6473 | 75.1392 | 69.4868 | Kept: improved current best | pending |
 | 37 | Single asset cap | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.5}` | 69.4570 | 61.7275 | 70.8639 | 75.3468 | 69.7005 | Kept: improved current best | pending |
 | 38 | Single asset cap | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.6}` | 69.5517 | 61.7919 | 71.0419 | 75.3468 | 69.8056 | Kept: improved current best | pending |
+| 39 | Single asset cap | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.8}` | 69.5565 | 61.7919 | 71.0419 | 75.3468 | 69.8056 | Discarded: final tied current best, not higher | - |
+| 40 | Single asset cap | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.7}` | 69.5565 | 61.7919 | 71.0419 | 75.3468 | 69.8056 | Discarded: final tied current best, not higher | - |
+| 41 | Single asset cap | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1125, "maxSingleWeight": 0.55}` | 69.5208 | 61.7919 | 71.0419 | 75.3468 | 69.8056 | Discarded: final tied current best, not higher | - |
+| 42 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.05, "diagonalLoad": 0.1125, "maxSingleWeight": 0.6}` | 69.5079 | 61.6064 | 70.9029 | 75.1824 | 69.6487 | Discarded: final below current best | - |
+| 43 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.07, "diagonalLoad": 0.1125, "maxSingleWeight": 0.6}` | 69.5521 | 61.9336 | 71.0895 | 75.4256 | 69.8845 | Kept: improved current best | pending |
 
 ## Continuation Rule
 
