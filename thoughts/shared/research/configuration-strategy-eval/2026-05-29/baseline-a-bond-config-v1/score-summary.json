@@ -1,0 +1,79 @@
+{
+  "overall": {
+    "caseCount": 1620,
+    "successCount": 1620,
+    "failureCount": 0,
+    "meanScore": 58.8085,
+    "p10Score": 47.5477,
+    "p50Score": 59.3514,
+    "p90Score": 70.7788,
+    "finalScore": 59.2573
+  },
+  "byStrategy": {
+    "erc": {
+      "caseCount": 540,
+      "successCount": 540,
+      "failureCount": 0,
+      "meanScore": 59.0136,
+      "p10Score": 51.2972,
+      "p50Score": 59.9184,
+      "p90Score": 64.866,
+      "finalScore": 59.0
+    },
+    "inverse_volatility": {
+      "caseCount": 540,
+      "successCount": 540,
+      "failureCount": 0,
+      "meanScore": 50.7491,
+      "p10Score": 44.0208,
+      "p50Score": 50.7614,
+      "p90Score": 57.684,
+      "finalScore": 50.8069
+    },
+    "max_diversification": {
+      "caseCount": 540,
+      "successCount": 540,
+      "failureCount": 0,
+      "meanScore": 66.6628,
+      "p10Score": 58.4854,
+      "p50Score": 67.9602,
+      "p90Score": 72.568,
+      "finalScore": 66.7434
+    }
+  },
+  "leaderboard": [
+    {
+      "strategyId": "max_diversification",
+      "caseCount": 540,
+      "successCount": 540,
+      "failureCount": 0,
+      "meanScore": 66.6628,
+      "p10Score": 58.4854,
+      "p50Score": 67.9602,
+      "p90Score": 72.568,
+      "finalScore": 66.7434
+    },
+    {
+      "strategyId": "erc",
+      "caseCount": 540,
+      "successCount": 540,
+      "failureCount": 0,
+      "meanScore": 59.0136,
+      "p10Score": 51.2972,
+      "p50Score": 59.9184,
+      "p90Score": 64.866,
+      "finalScore": 59.0
+    },
+    {
+      "strategyId": "inverse_volatility",
+      "caseCount": 540,
+      "successCount": 540,
+      "failureCount": 0,
+      "meanScore": 50.7491,
+      "p10Score": 44.0208,
+      "p50Score": 50.7614,
+      "p90Score": 57.684,
+      "finalScore": 50.8069
+    }
+  ]
+}
