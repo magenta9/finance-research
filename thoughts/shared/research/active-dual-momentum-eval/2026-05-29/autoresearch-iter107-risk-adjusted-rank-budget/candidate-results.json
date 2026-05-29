@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "risk-adjusted-rank",
+    "thesis": "Rank candidates by momentum per realized volatility.",
+    "profile": {
+      "rankMode": "riskAdjusted"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 74.649,
+      "p10Score": 50.7886,
+      "p50Score": 72.3997,
+      "p90Score": 96.7905,
+      "combinedScore": 67.4909
+    }
+  }
+]

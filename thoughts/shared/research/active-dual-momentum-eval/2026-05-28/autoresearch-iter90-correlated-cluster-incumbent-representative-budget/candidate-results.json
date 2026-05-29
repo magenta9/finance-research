@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "correlated-cluster-incumbent-representative",
+    "thesis": "Keep the previous same-direction representative inside highly correlated clusters when it remains eligible.",
+    "profile": {
+      "correlatedSameDirectionIncumbentRepresentative": true
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 71.9775,
+      "p10Score": 51.0758,
+      "p50Score": 69.7243,
+      "p90Score": 94.8012,
+      "combinedScore": 65.707
+    }
+  }
+]

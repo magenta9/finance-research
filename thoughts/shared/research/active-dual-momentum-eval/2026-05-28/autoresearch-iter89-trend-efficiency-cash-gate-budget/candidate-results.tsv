@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	trend-efficiency-cash-gate	73.7038	48.6656	75.2641	94.9959	66.1923	discard	Cash selected candidates whose lookback return path is inefficient relative to the selected sleeve cohort.	"{""trendEfficiencyCashGate"": true}"

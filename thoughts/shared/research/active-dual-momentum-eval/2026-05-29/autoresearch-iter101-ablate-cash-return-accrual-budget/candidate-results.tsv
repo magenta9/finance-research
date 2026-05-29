@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	ablate-cash-return-accrual	71.9347	48.7886	70.5706	92.7226	64.9909	discard	Ablate all cash return accrual while keeping the rest of the default stack.	"{""cashReturnMode"": ""zero""}"

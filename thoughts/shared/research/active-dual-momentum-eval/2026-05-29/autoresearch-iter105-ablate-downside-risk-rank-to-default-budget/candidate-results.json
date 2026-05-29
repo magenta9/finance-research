@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "ablate-downside-risk-rank-to-default",
+    "thesis": "Ablate downside-risk adjusted candidate ranking to raw momentum ranking while keeping the rest of the default stack.",
+    "profile": {
+      "rankMode": "default"
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 74.4555,
+      "p10Score": 52.4598,
+      "p50Score": 73.5136,
+      "p90Score": 96.9452,
+      "combinedScore": 67.8568
+    }
+  }
+]

@@ -1,0 +1,2 @@
+iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
+11	small-change-hold-band	76.3988	53.2939	74.606	97.376	69.4673	discard	Ignore small target-weight changes to reduce ranking noise.	"{""rebalanceWeightHoldBand"": 0.03}"

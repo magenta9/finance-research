@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "ablate-risk-exit-redeployment-cooldown",
+    "thesis": "Ablate risk-exit redeployment cooldown while keeping the rest of the default stack.",
+    "profile": {
+      "riskExitRedeploymentCooldown": false
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 75.9003,
+      "p10Score": 53.3844,
+      "p50Score": 76.0452,
+      "p90Score": 96.9511,
+      "combinedScore": 69.1455
+    }
+  }
+]

@@ -61,3 +61,25 @@ iteration	change	meanScore	p10Score	combinedScore	guard	decision	commit
 87	searched direction: correlated cluster risk-adjusted representative	72.8972	51.0020	66.3286	below current budget baseline	discard	not committed
 88	searched direction: risk-trim redeployment cooldown	76.4591	55.4206	70.1475	budget eval passed	keep candidate	pending
 88f	risk-trim redeployment cooldown full eval	78.3425	59.0348	72.5502	full eval passed	keep	pending
+89	searched direction: trend-efficiency cash gate	73.7038	48.6656	66.1923	below current budget baseline	discard	not committed
+90	searched direction: correlated cluster incumbent representative	71.9775	51.0758	65.7070	below current budget baseline	discard	not committed
+91	searched direction: risk-trim reentry cooldown	76.8025	55.3883	70.3782	budget eval passed	keep candidate	pending
+91f	risk-trim reentry cooldown full eval	74.9219	53.9241	68.6226	full eval below current baseline	discard	not committed
+92	searched direction: downside-vol headroom cash release	74.6685	53.6808	68.3722	below current budget baseline	discard	not committed
+93	searched direction: risk cooldown before cross-sign offset	76.3337	55.8221	70.1802	budget eval passed	keep candidate	pending
+93f	risk cooldown before cross-sign offset full eval	75.6902	56.6885	69.9897	full eval below current baseline	discard	not committed
+94	searched direction: ablate risk-trim redeployment cooldown	76.3154	55.0343	69.9311	below current budget baseline	discard	not committed
+95	searched direction: ablate correlated cluster representative	75.4260	55.0409	69.3105	below current budget baseline	discard	not committed
+96	searched direction: ablate correlated same-direction budget dedup	72.8619	55.4491	67.6381	below current budget baseline	discard	not committed
+97	searched direction: ablate cross-sign offset cash	75.5619	54.4444	69.2266	below current budget baseline	discard	not committed
+98	searched direction: ablate risk-exit redeployment cooldown	75.9003	53.3844	69.1455	below current budget baseline	discard	not committed
+99	searched direction: ablate deduplicate same-asset sleeve budget	66.6527	47.9151	61.0314	below current budget baseline	discard	not committed
+100	searched direction: ablate netted residual cash return	76.3860	55.4206	70.0964	below current budget baseline	discard	not committed
+101	searched direction: ablate cash return accrual	71.9347	48.7886	64.9909	below current budget baseline	discard	not committed
+102	searched direction: ablate portfolio downside-vol target	76.3397	55.5929	70.1157	below current budget baseline	discard	not committed
+103	searched direction: ablate standing cash buffer	72.4996	50.2368	65.8208	below current budget baseline	discard	not committed
+104	searched direction: ablate inverse downside-vol weights to equal	70.1188	42.8297	61.9321	below current budget baseline	discard	not committed
+105	searched direction: ablate downside-risk rank to default	74.4555	52.4598	67.8568	below current budget baseline	discard	not committed
+106	searched direction: drawdown-penalty rank	74.1498	51.4548	67.3413	below current budget baseline	discard	not committed
+107	searched direction: risk-adjusted rank	74.6490	50.7886	67.4909	below current budget baseline	discard	not committed
+108	searched direction: small-change hold band	76.3988	53.2939	69.4673	below current budget baseline; stop after 20 consecutive non-improvements	discard	not committed

@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "risk-trim-reentry-cooldown",
+    "thesis": "After a same-direction partial trim, route the next rebalance add-back budget to cash.",
+    "profile": {
+      "riskTrimReentryCooldown": true
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 600,
+      "successCount": 600,
+      "failureCount": 0,
+      "meanScore": 74.9219,
+      "p10Score": 53.9241,
+      "p50Score": 74.0195,
+      "p90Score": 96.9342,
+      "combinedScore": 68.6226
+    }
+  }
+]

@@ -702,7 +702,330 @@ Full confirmation：
 
 结论：第 88 轮 full confirmation 的 mean、p10、combined 均高于第 86 轮当前默认机制 full baseline（78.2198 / 58.7312 / 72.3732），提升为当前默认机制并 commit。连续未改进计数重置为 0。
 
-## 33. 最终结论
+## 33. 第 89 轮顺序迭代
+
+第 89 轮搜索方向：趋势路径效率现金闸门。
+
+搜索依据：当前默认机制已大量现金化重复、冲突和低效率预算，但候选选择阶段仍可能把单次跳变后横盘的伪趋势纳入组合。第 89 轮测试在 sleeve 入选后，用 lookback 区间的路径效率区分平滑趋势和折返噪声；若入选候选的路径效率低于本 sleeve 入选候选中位数，且不是第一名，则将该仓位转为现金。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 89 | 趋势路径效率现金闸门 | 73.7038 | 48.6656 | 66.1923 | discard |
+
+结论：第 89 轮显著低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明在当前默认机制上继续按路径效率现金化候选会过度防守，尤其伤害 p10Score。不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：1。
+
+## 34. 第 90 轮顺序迭代
+
+第 90 轮搜索方向：高相关簇代表资产的 incumbent stickiness。
+
+搜索依据：第 86 轮证明高相关同向簇只保留一个代表资产有效，但代表资产如果在簇内频繁切换，可能更多反映横截面噪声而不是风险因子变化。第 90 轮测试在上一期同方向持仓仍属于当前高相关簇时，优先保留 incumbent 作为代表，否则沿用当前最大权重代表逻辑。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 90 | 高相关簇 incumbent 代表 | 71.9775 | 51.0758 | 65.7070 | discard |
+
+结论：第 90 轮低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明在当前默认机制下保留上一期簇代表会拖慢有效切换，不如继续使用当前最大权重代表。不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：2。
+
+## 35. 第 91 轮顺序迭代
+
+第 91 轮搜索方向：部分减仓后的再加仓冷却。
+
+搜索依据：第 88 轮证明同方向部分减仓释放的预算不宜立即再部署。第 91 轮进一步测试：上一轮刚被同向部分减仓的老仓位，如果下一轮目标权重又要加回，则先保留上一轮实际权重，把 top-up 部分转现金，避免一降一加的横截面噪声。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 91 | 部分减仓后回补冷却 | 76.8025 | 55.3883 | 70.3782 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 91 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 74.9219 |
+| p10Score | 53.9241 |
+| p50Score | 74.0195 |
+| p90Score | 96.9342 |
+| combinedScore | 68.6226 |
+
+结论：第 91 轮 budget 小幅通过，但 full confirmation 明显低于当前 full baseline（mean 78.3425 / p10 59.0348 / combined 72.5502）。不提升默认机制，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：3。
+
+## 36. 第 92 轮顺序迭代
+
+第 92 轮搜索方向：下行波动余量释放固定现金。
+
+搜索依据：当前默认机制擅长把重复、冲突和降风险预算转为现金，但固定 25% cash buffer 可能在组合下行波动较低时过度防守。第 92 轮测试在组合下行波动低于已有 target 时释放一部分固定现金，高波动时仍保持原有防守。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 92 | 下行波动余量释放现金 | 74.6685 | 53.6808 | 68.3722 | discard |
+
+结论：第 92 轮低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明当前 25% cash buffer 仍是有效防守结构；用低下行波动作为释放信号会增加暴露并伤害尾部稳定。不进入 full confirmation，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：4。
+
+## 37. 第 93 轮顺序迭代
+
+第 93 轮搜索方向：risk-exit / risk-trim 冷却先于跨多空抵消。
+
+搜索依据：当前默认顺序先做跨多空 gross 抵消，再做退出与减仓预算冷却。第 93 轮测试调仓顺序是否影响预算归因：先将退出和减仓释放的预算冷却为现金，再压缩剩余的跨多空抵消 gross exposure。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 93 | 冷却先于多空抵消 | 76.3337 | 55.8221 | 70.1802 | 进入 full confirmation |
+
+Full confirmation：
+
+| 指标 | 第 93 轮机制 |
+|---|---:|
+| caseCount | 600 |
+| successCount | 600 |
+| failureCount | 0 |
+| meanScore | 75.6902 |
+| p10Score | 56.6885 |
+| p50Score | 74.7826 |
+| p90Score | 96.1847 |
+| combinedScore | 69.9897 |
+
+结论：第 93 轮 budget 小幅通过，但 full confirmation 低于当前 full baseline（mean 78.3425 / p10 59.0348 / combined 72.5502）。当前默认“先多空抵消、后风险冷却”的顺序更稳。不提升默认机制，不 commit。实验代码已回滚，仅保留 Eval 证据。连续未改进计数：5。
+
+## 38. 第 94 轮顺序迭代
+
+第 94 轮搜索方向：关闭第 88 轮部分减仓预算冷却的消融验证。
+
+搜索依据：第 88 轮是最近一次成功提升，但 full 增益较小；第 89-93 轮新增机制连续失败后，有必要验证第 88 轮机制在当前完整栈中是否仍有独立贡献。第 94 轮只关闭 `riskTrimRedeploymentCooldown`，其余默认机制保持不变。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 94 | 关闭部分减仓预算冷却 | 76.3154 | 55.0343 | 69.9311 | discard |
+
+结论：第 94 轮低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明第 88 轮的部分减仓预算冷却在当前机制栈中仍有独立贡献，应继续保留。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：6。
+
+## 39. 第 95 轮顺序迭代
+
+第 95 轮搜索方向：关闭高相关同向簇代表资产保留的消融验证。
+
+搜索依据：第 86 轮的代表资产机制和第 81 轮的相关预算去重语义接近；在第 88 轮 partial trim cooldown 加入后，需要验证代表资产层是否仍有独立贡献。第 95 轮只关闭 `correlatedSameDirectionClusterRepresentative`，保留相关预算去重和其余默认机制。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 95 | 关闭高相关簇代表资产 | 75.4260 | 55.0409 | 69.3105 | discard |
+
+结论：第 95 轮低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明第 86 轮代表资产保留仍有独立贡献，关闭后会留下更多高相关碎片仓位并拖累 combinedScore。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：7。
+
+## 40. 第 96 轮顺序迭代
+
+第 96 轮搜索方向：关闭高相关同向预算去重的消融验证。
+
+搜索依据：第 95 轮证明簇代表资产保留仍有价值后，第 96 轮验证更底层的相关预算去重是否仍不可替代。该实验只关闭 `correlatedSameDirectionBudgetDedup`，保留其余默认机制。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 96 | 关闭高相关同向预算去重 | 72.8619 | 55.4491 | 67.6381 | discard |
+
+结论：第 96 轮 meanScore 和 combinedScore 显著低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明相关预算去重是当前机制栈的必要底座，不能只靠簇代表资产或后续冷却替代。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：8。
+
+## 41. 第 97 轮顺序迭代
+
+第 97 轮搜索方向：关闭跨多空抵消预算现金化的消融验证。
+
+搜索依据：第 93 轮验证了风险冷却与跨多空抵消的顺序，但没有验证 `crossSignOffsetCash` 本身在当前完整栈中是否仍有独立贡献。第 97 轮只关闭该机制，其余默认机制保持不变。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 97 | 关闭跨多空抵消现金化 | 75.5619 | 54.4444 | 69.2266 | discard |
+
+结论：第 97 轮低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明跨多空抵消预算现金化仍能降低低效率 gross exposure。关闭后 p10 和 combined 均回落。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：9。
+
+## 42. 第 98 轮顺序迭代
+
+第 98 轮搜索方向：关闭风险退出预算冷却的消融验证。
+
+搜索依据：第 94 轮证明部分减仓预算冷却仍有贡献后，第 98 轮验证第 79 轮的完全退出或翻向预算冷却是否仍是当前完整栈的必要组件。该实验只关闭 `riskExitRedeploymentCooldown`。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 98 | 关闭风险退出预算冷却 | 75.9003 | 53.3844 | 69.1455 | discard |
+
+结论：第 98 轮低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），尤其 p10Score 明显回落，说明退出或翻向释放出的预算继续需要先冷却为现金。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：10。
+
+## 43. 第 99 轮顺序迭代
+
+第 99 轮搜索方向：关闭同资产双 sleeve 预算去重的消融验证。
+
+搜索依据：第 94-98 轮已确认后段现金化/冷却机制仍有贡献。第 99 轮验证更早的同资产双 sleeve 预算去重是否仍是必要底座。该实验只关闭 `deduplicateSameAssetSleeveBudget`。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 99 | 关闭同资产双 sleeve 去重 | 66.6527 | 47.9151 | 61.0314 | discard |
+
+结论：第 99 轮显著低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明 10 周与 25 周同时选中同一资产时，重复预算必须转现金，后段相关去重和冷却机制无法完全补救该底层重复暴露。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：11。
+
+## 44. 第 100 轮顺序迭代
+
+第 100 轮搜索方向：关闭 netted residual cash return 的现金口径审计。
+
+搜索依据：第 94-99 轮证明核心结构不能轻易拆除后，第 100 轮检查当前 best 是否依赖 residual cash 的 fully funded 计息口径。该实验只关闭 `nettedResidualCashReturn`，保留显式 cash return。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 100 | 关闭 residual cash 计息 | 76.3860 | 55.4206 | 70.0964 | discard |
+
+结论：第 100 轮非常接近但仍低于当前 budget baseline（combined 70.0964 < 70.1475），说明 residual cash 计息贡献很小但为正；当前第 88 轮 best 不是主要依赖该现金口径获得提升。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：12。
+
+## 45. 第 101 轮顺序迭代
+
+第 101 轮搜索方向：关闭全部现金收益入账的口径消融。
+
+搜索依据：第 100 轮只关闭 residual cash 计息后结果几乎贴近基线，第 101 轮进一步验证显式现金无风险收益是否是当前完整机制栈的重要收益假设。该实验设置 `cashReturnMode = zero`，其余默认机制保持不变。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 101 | 关闭现金收益入账 | 71.9347 | 48.7886 | 64.9909 | discard |
+
+结论：第 101 轮显著低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明当前大量现金化机制必须把现金视为有收益资产，现金收益入账是当前策略口径的必要组成。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：13。
+
+## 46. 第 102 轮顺序迭代
+
+第 102 轮搜索方向：关闭组合下行波动目标 overlay 的消融验证。
+
+搜索依据：第 63 轮引入的组合下行波动目标 overlay 是早期有效机制，但在后续多层去重、现金化和冷却加入后，可能存在边际冗余。第 102 轮只关闭 `portfolioDownsideVolTarget`，其余默认机制保持不变。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 102 | 关闭组合下行波动目标 | 76.3397 | 55.5929 | 70.1157 | discard |
+
+结论：第 102 轮 p10Score 略高，但 meanScore 和 combinedScore 低于当前 budget baseline（combined 70.1157 < 70.1475），说明组合下行波动目标 overlay 的边际贡献很小但仍为正。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：14。
+
+## 47. 第 103 轮顺序迭代
+
+第 103 轮搜索方向：关闭固定 25% standing cash buffer 的消融验证。
+
+搜索依据：第 100-102 轮确认现金收益、residual cash 和组合下行波动 overlay 均有正贡献后，第 103 轮验证固定现金底仓是否仍不可替代。该实验设置 `cashBufferMultiplier = 1.0`，即取消默认 25% 固定现金缓冲。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 103 | 关闭固定现金缓冲 | 72.4996 | 50.2368 | 65.8208 | discard |
+
+结论：第 103 轮显著低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明固定 25% standing cash buffer 仍是当前机制栈的核心防守件，动态去重、冷却和组合风险 overlay 无法替代其底仓作用。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：15。
+
+## 48. 第 104 轮顺序迭代
+
+第 104 轮搜索方向：将 inverse downside-vol sleeve 权重消融为 equal weight。
+
+搜索依据：第 62 轮引入下行波动反比权重后提升明显，但在当前完整机制栈中还需要验证其独立贡献。第 104 轮只设置 `riskMode = equalWeight`，其余默认机制保持不变。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 104 | 等权替代下行波动反比权重 | 70.1188 | 42.8297 | 61.9321 | discard |
+
+结论：第 104 轮显著低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），尤其 p10Score 大幅回落，说明 inverse downside-volatility weighting 仍是当前机制栈的重要风险分配组件。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：16。
+
+## 49. 第 105 轮顺序迭代
+
+第 105 轮搜索方向：将 downside-risk adjusted rank 消融为原始动量排序。
+
+搜索依据：第 104 轮证明风险权重层不可替代后，第 105 轮验证候选排序层的下行风险调整是否仍有独立贡献。该实验只设置 `rankMode = default`，其余默认机制保持不变。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 105 | 原始动量排序替代下行风险排序 | 74.4555 | 52.4598 | 67.8568 | discard |
+
+结论：第 105 轮低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明排序层的 downside-risk adjustment 与权重层的 inverse downside-volatility 不是冗余关系，二者共同改善候选质量与尾部稳定。不进入 full confirmation，不 commit。实验候选已移除，仅保留 Eval 证据。连续未改进计数：17。
+
+## 50. 第 106 轮顺序迭代
+
+第 106 轮搜索方向：用 drawdown penalty rank 替代 downside-risk adjusted rank。
+
+搜索依据：第 105 轮 raw momentum rank 失败后，第 106 轮测试另一种趋势质量排序：保留动量信号，但用 lookback 最大回撤惩罚候选，而不是用 downside volatility 做分母。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 106 | 回撤惩罚排序 | 74.1498 | 51.4548 | 67.3413 | discard |
+
+结论：第 106 轮低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明在当前机制栈中，downside volatility 比最大回撤更适合作为候选排序的风险质量度量。不进入 full confirmation，不 commit。连续未改进计数：18。
+
+## 51. 第 107 轮顺序迭代
+
+第 107 轮搜索方向：用 realized-vol risk-adjusted rank 替代 downside-risk adjusted rank。
+
+搜索依据：第 105 轮 raw momentum rank 和第 106 轮 drawdown penalty rank 均失败后，第 107 轮保留“动量除以风险”的结构，但把 downside volatility 换成 total realized volatility。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 107 | realized-vol risk-adjusted rank | 74.6490 | 50.7886 | 67.4909 | discard |
+
+结论：第 107 轮低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），说明排序层用 total realized volatility 会过度惩罚上行波动并弱化尾部稳定，仍不如 downside volatility 排序。不进入 full confirmation，不 commit。连续未改进计数：19。
+
+## 52. 第 108 轮顺序迭代
+
+第 108 轮搜索方向：小幅目标权重变化保持带。
+
+搜索依据：第 105-107 轮连续证明排序口径替换不是有效方向，最后一轮转向执行噪声抑制：当目标权重变化小于固定候选带宽时，保持旧仓位，避免微小权重抖动触发换仓、减仓和冷却链条。
+
+Budget Eval：
+
+| 迭代 | 机制 | meanScore | p10Score | combinedScore | 决策 |
+|---|---|---:|---:|---:|---|
+| 108 | 小幅变化保持带 | 76.3988 | 53.2939 | 69.4673 | discard |
+
+结论：第 108 轮低于当前 budget baseline（mean 76.4591 / p10 55.4206 / combined 70.1475），尤其 p10Score 明显回落，说明在当前第 88 轮机制栈下，额外忽略小幅调仓会延迟有效风险调整。不进入 full confirmation，不 commit。连续未改进计数：20，达到停止条件。
+
+## 53. 停止条件与当前基线
+
+从第 89 轮到第 108 轮，连续 20 次顺序迭代均未发现高于第 88 轮 baseline 的机制。按用户设定的停止条件，当前 autoresearch 循环停止。
+
+当前保留基线仍为第 88 轮：
+
+| Eval | meanScore | p10Score | p50Score | p90Score | combinedScore |
+|---|---:|---:|---:|---:|---:|
+| Budget | 76.4591 | 55.4206 | 74.0059 | 97.1192 | 70.1475 |
+| Full | 78.3425 | 59.0348 | 77.6323 | 97.3012 | 72.5502 |
+
+第 89-108 轮的主要结论：
+
+- 继续新增现金闸门、簇代表切换、回补冷却、现金释放或调仓顺序改造，均没有超过第 88 轮。
+- 逐项消融表明第 88 轮当前机制栈中的关键组件大多仍有独立贡献，尤其同资产 sleeve 去重、相关预算去重、固定现金缓冲、现金收益入账、下行风险排序和下行波动反比权重。
+- 少数边际较小但仍为正的组件包括 residual cash return 和组合下行波动目标 overlay；二者 budget 结果接近基线但没有超过基线。
+
+## 54. 最终结论
 
 当前推荐保留的新机制为：
 
@@ -760,7 +1083,7 @@ Sharpe ceiling 2 新评分口径下，第 88 轮相对重算 full baseline：
 - 25% 现金缓冲进一步降低跨品种随机篮子中的尾部暴露，同时没有牺牲 meanScore。
 - 单独的小幅变化保持带在非标准抽样中表现很好，但标准 full confirmation 不如第 45 轮稳健，因此没有进入最终默认机制。
 
-## 34. 证据路径
+## 55. 证据路径
 
 - 标准 50 轮 budget sweep：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter11-60-mechanism-sweep-standard-cases/`
 - 第 45 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter45-downside-risk-larger-cash-standard-cases/`
@@ -819,9 +1142,31 @@ Sharpe ceiling 2 新评分口径下，第 88 轮相对重算 full baseline：
 - 第 88 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter88-risk-trim-redeployment-cooldown/`
 - 第 88 轮默认机制 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-baseline-final-default-iter88-risk-trim-redeployment-cooldown/`
 - 第 88 轮默认机制 full Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-final-default-iter88-risk-trim-redeployment-cooldown-rerun/`
+- 第 89 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter89-trend-efficiency-cash-gate-budget/`
+- 第 90 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter90-correlated-cluster-incumbent-representative-budget/`
+- 第 91 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter91-risk-trim-reentry-cooldown-budget/`
+- 第 91 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter91-risk-trim-reentry-cooldown/`
+- 第 92 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter92-downside-vol-headroom-cash-release-budget/`
+- 第 93 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-iter93-risk-cooldown-before-cross-sign-offset-budget/`
+- 第 93 轮 full confirmation：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-full-iter93-risk-cooldown-before-cross-sign-offset/`
+- 第 94 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter94-ablate-risk-trim-redeployment-cooldown-budget/`
+- 第 95 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter95-ablate-correlated-cluster-representative-budget/`
+- 第 96 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter96-ablate-correlated-same-direction-budget-dedup-budget/`
+- 第 97 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter97-ablate-cross-sign-offset-cash-budget/`
+- 第 98 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter98-ablate-risk-exit-redeployment-cooldown-budget/`
+- 第 99 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter99-ablate-deduplicate-same-asset-sleeve-budget-budget/`
+- 第 100 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter100-ablate-netted-residual-cash-return-budget/`
+- 第 101 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter101-ablate-cash-return-accrual-budget/`
+- 第 102 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter102-ablate-portfolio-downside-vol-target-budget/`
+- 第 103 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter103-ablate-standing-cash-buffer-budget/`
+- 第 104 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter104-ablate-inverse-downside-vol-weights-to-equal-budget/`
+- 第 105 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter105-ablate-downside-risk-rank-to-default-budget/`
+- 第 106 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter106-drawdown-penalty-rank-budget/`
+- 第 107 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter107-risk-adjusted-rank-budget/`
+- 第 108 轮 budget Eval：`thoughts/shared/research/active-dual-momentum-eval/2026-05-29/autoresearch-iter108-small-change-hold-band-budget/`
 - 迭代日志：`thoughts/shared/research/active-dual-momentum-eval/2026-05-28/autoresearch-mechanism-results.tsv`
 
-## 35. 后续建议
+## 56. 后续建议
 
 下一轮机制研究可以优先围绕第 63 轮继续做三类验证：
 

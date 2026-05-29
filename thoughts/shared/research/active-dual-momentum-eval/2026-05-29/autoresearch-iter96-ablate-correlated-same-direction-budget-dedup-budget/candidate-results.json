@@ -1,0 +1,21 @@
+[
+  {
+    "iteration": 11,
+    "name": "ablate-correlated-same-direction-budget-dedup",
+    "thesis": "Ablate correlated same-direction budget dedup while keeping the rest of the default stack.",
+    "profile": {
+      "correlatedSameDirectionBudgetDedup": false
+    },
+    "decision": "discard",
+    "summary": {
+      "caseCount": 60,
+      "successCount": 60,
+      "failureCount": 0,
+      "meanScore": 72.8619,
+      "p10Score": 55.4491,
+      "p50Score": 69.009,
+      "p90Score": 95.7295,
+      "combinedScore": 67.6381
+    }
+  }
+]
