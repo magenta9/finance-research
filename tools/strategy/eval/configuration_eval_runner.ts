@@ -44,6 +44,8 @@ type EvalStrategyId = AllocationType | 'max_diversification_research_v1';
 
 interface MaxDiversificationResearchConfig {
     absoluteMomentumLookbackDays?: number;
+    absoluteMomentumLookbackDaysList?: number[];
+    absoluteMomentumMinPositiveCount?: number;
     absoluteMomentumThreshold?: number;
     cashReserve?: number;
     covarianceShrinkage?: number;
@@ -187,24 +189,38 @@ const resolveAbsoluteMomentumEligibleIndices = (
     prepared: PreparedAllocationData,
     config: MaxDiversificationResearchConfig,
 ) => {
-    if (typeof config.absoluteMomentumLookbackDays !== 'number') {
+    const lookbacks = Array.isArray(config.absoluteMomentumLookbackDaysList)
+        && config.absoluteMomentumLookbackDaysList.length > 0
+        ? config.absoluteMomentumLookbackDaysList.map((value) => Math.max(1, Math.floor(value)))
+        : typeof config.absoluteMomentumLookbackDays === 'number'
+            ? [Math.max(1, Math.floor(config.absoluteMomentumLookbackDays))]
+            : [];
+
+    if (lookbacks.length === 0) {
         return prepared.series.map((_, index) => index);
     }
 
-    const lookbackDays = Math.max(1, Math.floor(config.absoluteMomentumLookbackDays));
     const threshold = typeof config.absoluteMomentumThreshold === 'number'
         ? config.absoluteMomentumThreshold
         : 0;
+    const minPositiveCount = typeof config.absoluteMomentumMinPositiveCount === 'number'
+        ? Math.max(1, Math.floor(config.absoluteMomentumMinPositiveCount))
+        : Math.ceil(lookbacks.length / 2);
     const momentumScores = prepared.series.map((entry, index) => {
         const current = entry.prices.at(-1) ?? 0;
-        const referenceIndex = Math.max(0, entry.prices.length - 1 - lookbackDays);
-        const reference = entry.prices[referenceIndex] ?? 0;
-        const momentum = current > 0 && reference > 0 ? current / reference - 1 : -Infinity;
+        const momentums = lookbacks.map((lookbackDays) => {
+            const referenceIndex = Math.max(0, entry.prices.length - 1 - lookbackDays);
+            const reference = entry.prices[referenceIndex] ?? 0;
 
-        return { index, momentum };
+            return current > 0 && reference > 0 ? current / reference - 1 : -Infinity;
+        });
+        const positiveCount = momentums.filter((momentum) => momentum > threshold).length;
+        const momentum = momentums.reduce((sum, value) => sum + value, 0) / momentums.length;
+
+        return { index, momentum, positiveCount };
     });
     const eligible = momentumScores
-        .filter((entry) => entry.momentum > threshold)
+        .filter((entry) => entry.positiveCount >= minPositiveCount)
         .map((entry) => entry.index);
 
     if (eligible.length > 0) {

@@ -4,7 +4,12 @@
         "cashReserve": 0.25,
         "maxSingleWeight": 0.6,
         "minCorrelation": 0.08,
-        "absoluteMomentumLookbackDays": 252,
+        "absoluteMomentumLookbackDaysList": [
+            50,
+            125,
+            252
+        ],
+        "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": 0,
         "momentumBreadthCashScale": 0.25,
         "volatilityPower": 0
