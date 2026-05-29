@@ -7,9 +7,9 @@
 - Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.25}`
-- Current best scores: mean `79.1731`, P10 `67.0189`, P50 `81.0170`, P90 `87.1932`, final `79.0615`
-- Consecutive non-improving iterations: `0` after iteration 61
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.5}`
+- Current best scores: mean `81.4737`, P10 `70.4716`, P50 `82.9263`, P90 `88.9165`, final `81.3102`
+- Consecutive non-improving iterations: `0` after iteration 63
 
 ## Current Research Process Rules
 
@@ -82,7 +82,9 @@
 | 58 | Inverse volatility blend | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0, "inverseVolatilityBlend": 0.3}` | 70.5616 | 62.3374 | 72.1339 | 76.1783 | 70.6959 | Discarded: final below current best; candidate code reverted | - |
 | 59 | Relative momentum Top 50% | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0, "relativeMomentumTopFraction": 0.5}` | 63.7949 | 44.5390 | 66.3921 | 76.2428 | 63.3915 | Discarded: final below current best and P10 below 80% floor; candidate code reverted | - |
 | 60 | Momentum breadth dynamic cash | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDays": 252, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.25}` | 75.4616 | 66.4891 | 76.3108 | 82.1280 | 75.3097 | Kept: final improved and all scores above 80% floor | `dc53f10` |
-| 61 | Multi-horizon absolute momentum | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.25}` | 79.1731 | 67.0189 | 81.0170 | 87.1932 | 79.0615 | Kept: final improved and all scores above 80% floor | pending |
+| 61 | Multi-horizon absolute momentum | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.25}` | 79.1731 | 67.0189 | 81.0170 | 87.1932 | 79.0615 | Kept: final improved and all scores above 80% floor | `9d7c390` |
+| 62 | EWMA covariance | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.25, "ewmaCovariance": true}` | 77.8063 | 65.8664 | 80.3961 | 85.5925 | 78.0628 | Discarded: final below current best; candidate code reverted | - |
+| 63 | Momentum breadth dynamic cash | `{"volatilityPower": 0, "minCorrelation": 0.08, "diagonalLoad": 0.15, "maxSingleWeight": 0.6, "cashReserve": 0.25, "absoluteMomentumLookbackDaysList": [50, 125, 252], "absoluteMomentumMinPositiveCount": 2, "absoluteMomentumThreshold": 0, "momentumBreadthCashScale": 0.5}` | 81.4737 | 70.4716 | 82.9263 | 88.9165 | 81.3102 | Kept: final improved and all scores above 80% floor | pending |
 
 ## Continuation Rule
 
