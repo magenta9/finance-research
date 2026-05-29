@@ -23,8 +23,8 @@ import {
 } from './active-dual-momentum-rules';
 import {
     resolveActiveDualMomentumPositionPipeline,
-    resolveCashBufferMultiplier,
 } from './active-dual-momentum-position-pipeline';
+import { resolveActiveDualMomentumCashBufferMultiplier } from './active-dual-momentum-risk-buffer';
 import {
     buildPortfolioPathFromDailyReturns,
     computePortfolioCalmarRatio,
@@ -264,7 +264,7 @@ export const runActiveDualMomentumBacktest = ({
                 deduplicateSameDirection: config.researchProfile?.deduplicateSameAssetSleeveBudget !== false,
             });
             const grossPositions = mergedSleeves.positions;
-            const cashBufferMultiplier = resolveCashBufferMultiplier({
+            const cashBufferMultiplier = resolveActiveDualMomentumCashBufferMultiplier({
                 baseMultiplier: config.researchProfile?.cashBufferMultiplier ?? 0.75,
                 config,
                 grossPositions,
