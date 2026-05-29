@@ -7,9 +7,9 @@
 - Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.05}`
-- Current best scores: mean `68.6771`, P10 `60.2793`, P50 `70.1126`, P90 `74.5988`, final `68.7758`
-- Consecutive non-improving iterations: `0` after iteration 12
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.06}`
+- Current best scores: mean `68.6888`, P10 `60.3968`, P50 `70.1233`, P90 `74.6352`, final `68.8196`
+- Consecutive non-improving iterations: `0` after iteration 16
 
 ## Iterations
 
@@ -27,6 +27,10 @@
 | 10 | Volatility vector power | `{"volatilityPower": 0.05}` | 68.4595 | 60.1177 | 69.8704 | 74.5076 | 68.5915 | Discarded: final below current best | - |
 | 11 | Covariance shrinkage | `{"volatilityPower": 0, "covarianceShrinkage": 0.1}` | 68.3812 | 60.0585 | 69.7636 | 74.5593 | 68.5362 | Discarded: final below current best | - |
 | 12 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.05}` | 68.6771 | 60.2793 | 70.1126 | 74.5988 | 68.7758 | Kept: improved current best | pending |
+| 13 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.1}` | 68.4368 | 60.1505 | 69.6856 | 74.5899 | 68.5279 | Discarded: final below current best | - |
+| 14 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.025}` | 68.4455 | 60.0178 | 69.9263 | 74.2907 | 68.5403 | Discarded: final below current best | - |
+| 15 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.04}` | 68.6238 | 60.2752 | 69.9756 | 74.4838 | 68.6775 | Discarded: final below current best | - |
+| 16 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.06}` | 68.6888 | 60.3968 | 70.1233 | 74.6352 | 68.8196 | Kept: improved current best | pending |
 
 ## Continuation Rule
 
