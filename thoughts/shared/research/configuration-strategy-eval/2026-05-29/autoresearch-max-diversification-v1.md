@@ -7,9 +7,9 @@
 - Baseline scores: mean `66.6628`, P10 `58.4854`, P50 `67.9602`, P90 `72.5680`, final `66.7434`
 - Keep rule: every summary score must be at least 80% of the original baseline and finalScore must improve the current best baseline.
 - Current best retained strategy: `max_diversification_research_v1`
-- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1}`
-- Current best scores: mean `68.7894`, P10 `60.4932`, P50 `70.2969`, P90 `74.7834`, final `68.9676`
-- Consecutive non-improving iterations: `0` after iteration 26
+- Current best config: `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.15}`
+- Current best scores: mean `68.7782`, P10 `60.5370`, P50 `70.2629`, P90 `74.8146`, final `68.9694`
+- Consecutive non-improving iterations: `0` after iteration 28
 
 ## Iterations
 
@@ -41,6 +41,8 @@
 | 24 | Minimum correlation floor | `{"volatilityPower": 0, "minCorrelation": 0.06025}` | 68.6886 | 60.3997 | 70.1292 | 74.6352 | 68.8233 | Discarded: final below current best | - |
 | 25 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.05}` | 68.7631 | 60.3410 | 70.2330 | 74.7119 | 68.8797 | Kept: improved current best | pending |
 | 26 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.1}` | 68.7894 | 60.4932 | 70.2969 | 74.7834 | 68.9676 | Kept: improved current best | pending |
+| 27 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.2}` | 68.7370 | 60.5583 | 70.2179 | 74.8604 | 68.9636 | Discarded: final below current best | - |
+| 28 | Diagonal loading | `{"volatilityPower": 0, "minCorrelation": 0.0605, "diagonalLoad": 0.15}` | 68.7782 | 60.5370 | 70.2629 | 74.8146 | 68.9694 | Kept: improved current best | pending |
 
 ## Continuation Rule
 
