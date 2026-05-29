@@ -98,7 +98,9 @@ def main() -> int:
             end_date=context.end_date,
         )
         candidates = [
-            candidate for candidate in context.universe if candidate.symbol in price_cache
+            candidate
+            for candidate in context.universe
+            if candidate.symbol in price_cache
         ]
         coverage_checked = True
         available_price_count = len(price_cache)

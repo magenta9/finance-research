@@ -162,11 +162,11 @@ export interface ActiveDualMomentumProcessorTrace {
   cashWeight: number;
   changedPositionCount: number;
   id:
-    | 'correlated-same-direction-dedup'
-    | 'cross-sign-offset-cash'
-    | 'risk-exit-redeployment-cooldown'
-    | 'risk-trim-redeployment-cooldown'
-    | 'rebalance-smoothing';
+  | 'correlated-same-direction-dedup'
+  | 'cross-sign-offset-cash'
+  | 'risk-exit-redeployment-cooldown'
+  | 'risk-trim-redeployment-cooldown'
+  | 'rebalance-smoothing';
   inputGrossWeight: number;
   outputGrossWeight: number;
 }

@@ -39,7 +39,9 @@ def join_ints(values: list[int]) -> str:
     return ",".join(str(value) for value in values)
 
 
-def resolve_eval_config_context(*, sizes: str, windows: str, end_date: str) -> EvalConfigContext:
+def resolve_eval_config_context(
+    *, sizes: str, windows: str, end_date: str
+) -> EvalConfigContext:
     defaults = load_json(DEFAULTS_PATH)
     conflict_groups = load_json(CONFLICT_GROUPS_PATH)
     basket_sizes = parse_int_list(sizes)

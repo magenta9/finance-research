@@ -15,7 +15,13 @@ from eval_lib import (
     write_json,
 )
 from eval_context import resolve_eval_config_context
-from run_eval import asset_candidate_to_payload, generate_eval_cases, load_quant_data_price_cache, run_ts_runner, score_rows
+from run_eval import (
+    asset_candidate_to_payload,
+    generate_eval_cases,
+    load_quant_data_price_cache,
+    run_ts_runner,
+    score_rows,
+)
 
 
 CURRENT_REFERENCE_BUDGET = {
