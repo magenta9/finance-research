@@ -503,7 +503,9 @@ def main() -> int:
     basket_sizes = parse_int_list(args.sizes)
     windows_years = parse_int_list(args.windows)
     cadences = parse_csv_list(args.cadences)
-    strategy_config = load_strategy_config(args.strategy_config, args.strategy_config_json)
+    strategy_config = load_strategy_config(
+        args.strategy_config, args.strategy_config_json
+    )
     assets = load_universe(Path(args.universe), markets)
     required_start = start_date_for_window(args.end_date, max(windows_years))
 
