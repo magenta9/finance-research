@@ -505,7 +505,7 @@ const prepareEvalCase = ({
     };
 };
 
-const runCaseStrategy = ({
+const runCaseStrategy = async ({
     baseCurrency,
     constraints,
     evalCase,
@@ -586,7 +586,7 @@ const runCaseStrategy = ({
         volatility: preparedCase.volatility,
         weights: riskyWeights,
     });
-    const result = assembleAllocationResult({
+    const result = await assembleAllocationResult({
         annualizedAssetVolatility: assemblyInput.volatility,
         annualizedMeanReturns: assemblyInput.meanReturns,
         baseCurrency,
@@ -632,7 +632,9 @@ const main = async () => {
 
     const payload = JSON.parse(Buffer.concat(chunks).toString('utf8')) as RunnerPayload;
     const assetBySymbol = new Map(payload.assets.map((asset) => [asset.symbol, toStoredAsset(asset)]));
-    const rows = payload.cases.flatMap((evalCase) => {
+    const rows: Array<Record<string, unknown>> = [];
+
+    for (const evalCase of payload.cases) {
         try {
             const preparedCase = prepareEvalCase({
                 assetBySymbol,
@@ -642,18 +644,20 @@ const main = async () => {
                 symbols: evalCase.symbols,
             });
 
-            return payload.strategies.map((strategy) => {
+            for (const strategy of payload.strategies) {
                 try {
-                    return runCaseStrategy({
-                        baseCurrency: payload.baseCurrency,
-                        constraints: payload.constraints,
-                        evalCase,
-                        preparedCase,
-                        strategy,
-                        strategyConfigs: payload.strategyConfigs,
-                    });
+                    rows.push(
+                        await runCaseStrategy({
+                            baseCurrency: payload.baseCurrency,
+                            constraints: payload.constraints,
+                            evalCase,
+                            preparedCase,
+                            strategy,
+                            strategyConfigs: payload.strategyConfigs,
+                        }),
+                    );
                 } catch (error) {
-                    return {
+                    rows.push({
                         basketSize: evalCase.basketSize,
                         caseId: evalCase.caseId,
                         endDate: evalCase.endDate,
@@ -665,25 +669,27 @@ const main = async () => {
                         strategyId: strategy,
                         symbols: evalCase.symbols,
                         windowYears: evalCase.windowYears,
-                    };
+                    });
                 }
-            });
+            }
         } catch (error) {
-            return payload.strategies.map((strategy) => ({
-                basketSize: evalCase.basketSize,
-                caseId: evalCase.caseId,
-                endDate: evalCase.endDate,
-                error: error instanceof Error ? error.message : String(error),
-                rebalanceCadence: evalCase.rebalanceCadence,
-                sampleIndex: evalCase.sampleIndex,
-                startDate: evalCase.startDate,
-                status: 'error',
-                strategyId: strategy,
-                symbols: evalCase.symbols,
-                windowYears: evalCase.windowYears,
-            }));
+            for (const strategy of payload.strategies) {
+                rows.push({
+                    basketSize: evalCase.basketSize,
+                    caseId: evalCase.caseId,
+                    endDate: evalCase.endDate,
+                    error: error instanceof Error ? error.message : String(error),
+                    rebalanceCadence: evalCase.rebalanceCadence,
+                    sampleIndex: evalCase.sampleIndex,
+                    startDate: evalCase.startDate,
+                    status: 'error',
+                    strategyId: strategy,
+                    symbols: evalCase.symbols,
+                    windowYears: evalCase.windowYears,
+                });
+            }
         }
-    });
+    }
 
     process.stdout.write(`${JSON.stringify({ rows }, null, 2)}\n`);
 };
