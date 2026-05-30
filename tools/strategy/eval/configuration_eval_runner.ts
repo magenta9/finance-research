@@ -10,6 +10,7 @@ import { assembleAllocationResult } from '../../desktop/quantdesk/packages/main/
 import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/optimizer';
 import { applyMomentumReturnTiltAroundWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-return-tilt';
 import { withResearchClassWeightCaps } from '../../desktop/quantdesk/packages/main/src/portfolio/max-diversification-research';
+import { applyPortfolioVolatilityCap } from '../../desktop/quantdesk/packages/main/src/portfolio/portfolio-volatility-cap';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
     annualizedReturns,
@@ -60,6 +61,8 @@ interface MaxDiversificationResearchConfig {
     maxSingleWeight?: number;
     maxTrackingErrorVolatility?: number;
     momentumReturnTiltStrength?: number;
+    portfolioVolatilityCapAnnualized?: number;
+    portfolioVolatilityCapMinRiskyScale?: number;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -564,12 +567,12 @@ const runCaseStrategy = async ({
             trackingErrorVolatilityLimit: researchConfig.maxTrackingErrorVolatility,
         })
         : optimization.weights;
-    const riskyWeights = mapSubsetWeights(
+    let riskyWeights = mapSubsetWeights(
         optimizedWeights,
         eligibleIndices,
         preparedCase.prepared.series.length,
     );
-    const cashReserve = typeof researchConfig.momentumBreadthCashScale === 'number'
+    let cashReserve = typeof researchConfig.momentumBreadthCashScale === 'number'
         ? applyMomentumBreadthCashScale({
             assetCount: preparedCase.prepared.series.length,
             baseCashReserve: fullOptimizationInput.cashReserve,
@@ -577,6 +580,17 @@ const runCaseStrategy = async ({
             scale: researchConfig.momentumBreadthCashScale,
         })
         : fullOptimizationInput.cashReserve;
+
+    if (typeof researchConfig.portfolioVolatilityCapAnnualized === 'number') {
+        const capped = applyPortfolioVolatilityCap({
+            capAnnualized: researchConfig.portfolioVolatilityCapAnnualized,
+            covariance: fullOptimizationInput.covariance,
+            minRiskyScale: researchConfig.portfolioVolatilityCapMinRiskyScale ?? 0.45,
+            weights: riskyWeights,
+        });
+        riskyWeights = capped.weights;
+        cashReserve = Math.min(0.95, cashReserve + capped.cashReserve);
+    }
     const assemblyInput = appendCashReserve({
         baseCurrency,
         cashReserve,
