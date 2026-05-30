@@ -57,6 +57,7 @@ export interface MaxDiversificationStrategyConfig {
   mdErcBlendWeight?: number;
   faaMomentumTopN?: number;
   mdHrpBlendWeight?: number;
+  momentumPriorBlendWeight?: number;
   minCorrelation?: number;
   momentumBreadthCashScale?: number;
   volatilityPower?: number;

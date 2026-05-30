@@ -14,6 +14,7 @@ import { applyEqualWeightShrinkage } from '../../desktop/quantdesk/packages/main
 import { selectFaaMomentumTopIndices } from '../../desktop/quantdesk/packages/main/src/portfolio/faa-momentum-top-selection';
 import { blendMdErcWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/md-erc-blend';
 import { blendMdHrpWeights, computeHrpWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/hrp-weights';
+import { blendMomentumPriorWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-prior-blend';
 import { applyPortfolioVolatilityCap } from '../../desktop/quantdesk/packages/main/src/portfolio/portfolio-volatility-cap';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
@@ -73,6 +74,7 @@ interface MaxDiversificationResearchConfig {
     mdErcBlendWeight?: number;
     faaMomentumTopN?: number;
     mdHrpBlendWeight?: number;
+    momentumPriorBlendWeight?: number;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -609,6 +611,14 @@ const runCaseStrategy = async ({
             blendWeight: researchConfig.mdHrpBlendWeight,
             hrpWeights,
             mdWeights: subsetOptimizedWeights,
+        });
+    }
+
+    if (typeof researchConfig.momentumPriorBlendWeight === 'number') {
+        subsetOptimizedWeights = blendMomentumPriorWeights({
+            blendWeight: researchConfig.momentumPriorBlendWeight,
+            mdWeights: subsetOptimizedWeights,
+            momentumScores: subsetArray(momentumScores, eligibleIndices),
         });
     }
 
