@@ -7,7 +7,6 @@
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": -0.01,
-        "maxSingleWeight": 0.6,
-        "momentumBreadthCashScale": 0.5
+        "maxSingleWeight": 0.6
     }
 }
