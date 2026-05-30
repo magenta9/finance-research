@@ -62,6 +62,11 @@ export interface MaxDiversificationStrategyConfig {
   mdInverseVolBlendWeight?: number;
   correlationRegimeCashScale?: number;
   useErcWhenEligibleAtLeast?: number;
+  downsideBetaFilter?: boolean;
+  herfindahlWeightCap?: boolean;
+  diversificationRatioNudgeBlendWeight?: number;
+  covarianceShrinkageBoost?: boolean;
+  optimizationMinCorrelationBoost?: boolean;
   minCorrelation?: number;
   momentumBreadthCashScale?: number;
   volatilityPower?: number;

@@ -17,6 +17,9 @@ import { blendMdHrpWeights, computeHrpWeights } from '../../desktop/quantdesk/pa
 import { blendMomentumPriorWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-prior-blend';
 import { applyCorrelationClusterWeightCap } from '../../desktop/quantdesk/packages/main/src/portfolio/correlation-cluster-weight-cap';
 import { applyCorrelationRegimeCashScale } from '../../desktop/quantdesk/packages/main/src/portfolio/correlation-regime-cash';
+import { filterIndicesByDownsideBeta } from '../../desktop/quantdesk/packages/main/src/portfolio/downside-beta-filter';
+import { applyHerfindahlWeightCap } from '../../desktop/quantdesk/packages/main/src/portfolio/herfindahl-weight-cap';
+import { nudgeWeightsTowardDiversificationRatio } from '../../desktop/quantdesk/packages/main/src/portfolio/diversification-ratio-nudge';
 import { applyPortfolioVolatilityCap } from '../../desktop/quantdesk/packages/main/src/portfolio/portfolio-volatility-cap';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
@@ -81,6 +84,11 @@ interface MaxDiversificationResearchConfig {
     mdInverseVolBlendWeight?: number;
     correlationRegimeCashScale?: number;
     useErcWhenEligibleAtLeast?: number;
+    downsideBetaFilter?: boolean;
+    herfindahlWeightCap?: boolean;
+    diversificationRatioNudgeBlendWeight?: number;
+    covarianceShrinkageBoost?: boolean;
+    optimizationMinCorrelationBoost?: boolean;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -393,12 +401,20 @@ const resolveOptimizationInput = ({
         covariance = applyCovarianceShrinkage(covariance, config.covarianceShrinkage);
     }
 
+    if (config.covarianceShrinkageBoost === true) {
+        covariance = applyCovarianceShrinkage(covariance, 0.1);
+    }
+
     if (typeof config.diagonalLoad === 'number') {
         covariance = applyDiagonalLoad(covariance, config.diagonalLoad);
     }
 
     if (typeof config.minCorrelation === 'number') {
         covariance = applyMinCorrelation(covariance, config.minCorrelation);
+    }
+
+    if (config.optimizationMinCorrelationBoost === true) {
+        covariance = applyMinCorrelation(covariance, 0.12);
     }
 
     if (typeof config.volatilityPower === 'number') {
@@ -568,6 +584,16 @@ const runCaseStrategy = async ({
         });
     }
 
+    if (
+        strategy === 'max_diversification_research_v1'
+        && researchConfig.downsideBetaFilter === true
+    ) {
+        eligibleIndices = filterIndicesByDownsideBeta({
+            covariance: subsetMatrix(preparedCase.covariance, eligibleIndices),
+            indices: eligibleIndices.map((_value, index) => index),
+        }).map((subsetIndex) => eligibleIndices[subsetIndex] ?? subsetIndex);
+    }
+
     const fullOptimizationInput = resolveOptimizationInput({
         baseConstraints: constraints,
         baseCovariance: preparedCase.covariance,
@@ -654,6 +680,15 @@ const runCaseStrategy = async ({
         });
     }
 
+    if (typeof researchConfig.diversificationRatioNudgeBlendWeight === 'number') {
+        subsetOptimizedWeights = nudgeWeightsTowardDiversificationRatio({
+            blendWeight: researchConfig.diversificationRatioNudgeBlendWeight,
+            covariance: optimizationInput.covariance,
+            volatilities: optimizationInput.volatilities,
+            weights: subsetOptimizedWeights,
+        });
+    }
+
     const optimizedWeights = typeof researchConfig.momentumReturnTiltStrength === 'number'
         && typeof researchConfig.maxTrackingErrorVolatility === 'number'
         ? applyMomentumReturnTiltAroundWeights({
@@ -675,6 +710,10 @@ const runCaseStrategy = async ({
             intensity: researchConfig.equalWeightShrinkageIntensity,
             weights: riskyWeights,
         });
+    }
+
+    if (researchConfig.herfindahlWeightCap === true) {
+        riskyWeights = applyHerfindahlWeightCap({ weights: riskyWeights });
     }
 
     let cashReserve = typeof researchConfig.momentumBreadthCashScale === 'number'
