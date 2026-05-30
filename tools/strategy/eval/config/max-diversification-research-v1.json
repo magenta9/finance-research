@@ -1,20 +1,12 @@
 {
     "max_diversification_research_v1": {
-        "maxSingleWeight": 0.45,
-        "minCorrelation": 0.05,
-        "volatilityPower": 0.25,
-        "marchenkoPasturDenoise": true,
-        "momentumReturnTiltStrength": 0.2,
-        "maxTrackingErrorVolatility": 0.03,
-        "equityClassWeightCap": 0.28,
+        "maxSingleWeight": 0.4,
         "absoluteMomentumLookbackDaysList": [
             50,
-            150,
-            300
+            125,
+            252
         ],
         "absoluteMomentumMinPositiveCount": 2,
-        "absoluteMomentumThreshold": 0,
-        "cashReserve": 0.2,
-        "momentumBreadthCashScale": 2.0
+        "absoluteMomentumThreshold": 0
     }
 }

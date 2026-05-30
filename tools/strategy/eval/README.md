@@ -11,7 +11,7 @@ The first runnable scope is Configuration Strategy Eval:
 - rebalance cadences: weekly, monthly, quarterly
 - samples: 20 unique baskets per size/window/cadence cell
 - price data: `quant-data get-price-series`
-- single-case score coefficients: expected return 0.30, Sharpe 0.40, max drawdown 0.15, volatility 0.15
+- single-case score coefficients: expected return 0.40, Sharpe 0.40, max drawdown 0.10, volatility 0.10
 - expected return score bounds: 0% to 50% annualized expected return
 - final score: `0.5 * p50Score + 0.25 * p10Score + 0.25 * p90Score`
 
