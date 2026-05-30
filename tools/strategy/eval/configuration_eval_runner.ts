@@ -9,7 +9,10 @@ import type { PreparedAllocationData } from '../../desktop/quantdesk/packages/ma
 import { assembleAllocationResult } from '../../desktop/quantdesk/packages/main/src/portfolio/allocation-result-assembler';
 import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/optimizer';
 import { applyMomentumReturnTiltAroundWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-return-tilt';
-import { withResearchClassWeightCaps } from '../../desktop/quantdesk/packages/main/src/portfolio/max-diversification-research';
+import {
+    resolveMaxDiversificationCashReserve,
+    withResearchClassWeightCaps,
+} from '../../desktop/quantdesk/packages/main/src/portfolio/max-diversification-research';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
     annualizedReturns,
@@ -60,6 +63,9 @@ interface MaxDiversificationResearchConfig {
     maxSingleWeight?: number;
     maxTrackingErrorVolatility?: number;
     momentumReturnTiltStrength?: number;
+    correlationRegimeBaseline?: number;
+    correlationRegimeCashScale?: number;
+    correlationRegimeMaxAddon?: number;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -569,14 +575,12 @@ const runCaseStrategy = async ({
         eligibleIndices,
         preparedCase.prepared.series.length,
     );
-    const cashReserve = typeof researchConfig.momentumBreadthCashScale === 'number'
-        ? applyMomentumBreadthCashScale({
-            assetCount: preparedCase.prepared.series.length,
-            baseCashReserve: fullOptimizationInput.cashReserve,
-            eligibleCount: eligibleIndices.length,
-            scale: researchConfig.momentumBreadthCashScale,
-        })
-        : fullOptimizationInput.cashReserve;
+    const cashReserve = resolveMaxDiversificationCashReserve({
+        assetCount: preparedCase.prepared.series.length,
+        config: researchConfig,
+        eligibleCount: eligibleIndices.length,
+        eligibleCovariance: subsetMatrix(preparedCase.covariance, eligibleIndices),
+    });
     const assemblyInput = appendCashReserve({
         baseCurrency,
         cashReserve,

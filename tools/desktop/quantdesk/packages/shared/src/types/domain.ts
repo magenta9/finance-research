@@ -50,6 +50,9 @@ export interface MaxDiversificationStrategyConfig {
   maxSingleWeight?: number;
   maxTrackingErrorVolatility?: number;
   momentumReturnTiltStrength?: number;
+  correlationRegimeBaseline?: number;
+  correlationRegimeCashScale?: number;
+  correlationRegimeMaxAddon?: number;
   minCorrelation?: number;
   momentumBreadthCashScale?: number;
   volatilityPower?: number;
