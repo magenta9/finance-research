@@ -1,9 +1,9 @@
 {
     "max_diversification_research_v1": {
         "absoluteMomentumLookbackDaysList": [
-            63,
-            126,
-            252
+            40,
+            120,
+            240
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": -0.01,
