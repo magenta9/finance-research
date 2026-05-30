@@ -8,6 +8,7 @@ import type { StoredAsset } from '../../desktop/quantdesk/packages/shared/src/ty
 import type { PreparedAllocationData } from '../../desktop/quantdesk/packages/main/src/portfolio/preprocessor';
 import { assembleAllocationResult } from '../../desktop/quantdesk/packages/main/src/portfolio/allocation-result-assembler';
 import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/optimizer';
+import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
     annualizedReturns,
     annualizedVolatility,
@@ -50,6 +51,7 @@ interface MaxDiversificationResearchConfig {
     cashReserve?: number;
     covarianceShrinkage?: number;
     diagonalLoad?: number;
+    marchenkoPasturDenoise?: boolean;
     maxSingleWeight?: number;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
@@ -436,16 +438,24 @@ const prepareEvalData = ({
 
 const prepareEvalCase = ({
     assetBySymbol,
+    marchenkoPasturDenoise,
     pricesBySymbol,
     symbols,
 }: {
     assetBySymbol: Map<string, StoredAsset>;
+    marchenkoPasturDenoise?: boolean;
     pricesBySymbol: Record<string, PriceCacheEntry>;
     symbols: string[];
 }) => {
     const prepared = prepareEvalData({ assetBySymbol, pricesBySymbol, symbols });
     const logReturns = computeLogReturns(prepared.series.map((entry) => entry.prices));
-    const covariance = shrinkCovarianceMatrix(covarianceMatrix(logReturns));
+    const observationCount = logReturns[0]?.length ?? 0;
+    let covariance = shrinkCovarianceMatrix(covarianceMatrix(logReturns));
+
+    if (marchenkoPasturDenoise) {
+        covariance = denoiseCovarianceMarchenkoPastur(covariance, observationCount);
+    }
+
     const meanReturns = annualizedReturns(logReturns);
     const volatility = annualizedVolatility(covariance);
 
@@ -584,6 +594,8 @@ const main = async () => {
         try {
             const preparedCase = prepareEvalCase({
                 assetBySymbol,
+                marchenkoPasturDenoise: payload.strategyConfigs?.max_diversification_research_v1
+                    ?.marchenkoPasturDenoise,
                 pricesBySymbol: payload.pricesBySymbol,
                 symbols: evalCase.symbols,
             });

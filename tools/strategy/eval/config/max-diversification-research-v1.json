@@ -3,6 +3,7 @@
         "maxSingleWeight": 0.45,
         "minCorrelation": 0.05,
         "volatilityPower": 0.25,
+        "marchenkoPasturDenoise": true,
         "absoluteMomentumLookbackDaysList": [
             50,
             150,

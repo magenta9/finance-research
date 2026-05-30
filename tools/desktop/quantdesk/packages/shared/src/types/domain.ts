@@ -43,6 +43,7 @@ export interface MaxDiversificationStrategyConfig {
   absoluteMomentumThreshold?: number;
   cashReserve?: number;
   diagonalLoad?: number;
+  marchenkoPasturDenoise?: boolean;
   maxSingleWeight?: number;
   minCorrelation?: number;
   momentumBreadthCashScale?: number;
