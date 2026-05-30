@@ -141,6 +141,31 @@ def final_score(summary: dict[str, Any]) -> float | None:
     return round(0.25 * float(p10) + 0.5 * float(p50) + 0.25 * float(p90), 4)
 
 
+def summarize_failures(failed: list[dict[str, Any]]) -> dict[str, Any]:
+    error_counts: dict[str, int] = {}
+    for row in failed:
+        message = str(row.get("error") or "unknown error")
+        error_counts[message] = error_counts.get(message, 0) + 1
+    samples = [
+        {
+            "basketSize": row.get("basketSize"),
+            "caseId": row.get("caseId"),
+            "error": row.get("error"),
+            "rebalanceCadence": row.get("rebalanceCadence"),
+            "sampleIndex": row.get("sampleIndex"),
+            "symbols": row.get("symbols"),
+            "windowYears": row.get("windowYears"),
+        }
+        for row in failed[:8]
+    ]
+    return {
+        "errorCounts": dict(
+            sorted(error_counts.items(), key=lambda item: item[1], reverse=True)
+        ),
+        "samples": samples,
+    }
+
+
 def summarize_scores(rows: list[dict[str, Any]]) -> dict[str, Any]:
     successful = [
         row
@@ -153,12 +178,28 @@ def summarize_scores(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "caseCount": len(rows),
         "successCount": len(successful),
         "failureCount": len(failed),
+        "allCasesSucceeded": len(failed) == 0 and len(rows) > 0,
         "meanScore": round(sum(scores) / len(scores), 4) if scores else None,
         "p10Score": percentile(scores, 0.1),
         "p50Score": percentile(scores, 0.5),
         "p90Score": percentile(scores, 0.9),
     }
-    return {**summary, "finalScore": final_score(summary)}
+    if not summary["allCasesSucceeded"]:
+        return {
+            **summary,
+            "failureDiagnostics": summarize_failures(failed),
+            "finalScore": None,
+            "meanScore": None,
+            "p10Score": None,
+            "p50Score": None,
+            "p90Score": None,
+            "scoreComparable": False,
+        }
+    return {
+        **summary,
+        "finalScore": final_score(summary),
+        "scoreComparable": True,
+    }
 
 
 def create_run_dir(output_root: Path, run_id: str | None = None) -> Path:
@@ -529,10 +570,29 @@ def write_report(path: Path, summary: dict[str, Any], plan: dict[str, Any]) -> N
         lines.append(
             f"| {row['strategyId']} | {row['finalScore']} | {row['p10Score']} | {row['p50Score']} | {row['p90Score']} | {row['meanScore']} | {row['successCount']} | {row['failureCount']} |"
         )
+    overall = summary.get("overall") or {}
+    if overall.get("failureCount", 0) > 0:
+        lines.extend(["", "## Failures", ""])
+        lines.append(
+            f"- Not score-comparable: {overall['successCount']}/{overall['caseCount']} cases succeeded."
+        )
+        diagnostics = overall.get("failureDiagnostics") or {}
+        for message, count in (diagnostics.get("errorCounts") or {}).items():
+            lines.append(f"- `{count}` × {message}")
+        lines.append("")
+        lines.append("Sample failed cases:")
+        for sample in diagnostics.get("samples") or []:
+            symbols = ",".join(sample.get("symbols") or [])
+            lines.append(
+                f"- `{sample.get('caseId')}` ({sample.get('rebalanceCadence')}, "
+                f"{sample.get('windowYears')}y, n={sample.get('basketSize')}): "
+                f"{sample.get('error')} | symbols={symbols}"
+            )
     lines.extend(
         [
             "",
             "Final score formula: `0.5 * p50Score + 0.25 * p10Score + 0.25 * p90Score`.",
+            "Scores are emitted only when every case succeeds (`scoreComparable: true`).",
             f"Single-case score formula: {describe_single_case_score(plan['scoring'])}",
         ]
     )
