@@ -13,7 +13,7 @@ import {
     annualizedVolatility,
     computeLogReturns,
     covarianceMatrix,
-    shrinkCovarianceMatrix,
+    shrinkCovariance,
 } from '../../desktop/quantdesk/packages/main/src/portfolio/statistics';
 
 interface EvalAssetInput {
@@ -49,6 +49,7 @@ interface MaxDiversificationResearchConfig {
     absoluteMomentumThreshold?: number;
     cashReserve?: number;
     covarianceShrinkage?: number;
+    covarianceShrinkTarget?: 'constant_correlation' | 'diagonal';
     diagonalLoad?: number;
     maxSingleWeight?: number;
     minCorrelation?: number;
@@ -436,16 +437,21 @@ const prepareEvalData = ({
 
 const prepareEvalCase = ({
     assetBySymbol,
+    covarianceShrinkTarget,
     pricesBySymbol,
     symbols,
 }: {
     assetBySymbol: Map<string, StoredAsset>;
+    covarianceShrinkTarget?: 'constant_correlation' | 'diagonal';
     pricesBySymbol: Record<string, PriceCacheEntry>;
     symbols: string[];
 }) => {
     const prepared = prepareEvalData({ assetBySymbol, pricesBySymbol, symbols });
     const logReturns = computeLogReturns(prepared.series.map((entry) => entry.prices));
-    const covariance = shrinkCovarianceMatrix(covarianceMatrix(logReturns));
+    const covariance = shrinkCovariance(
+        covarianceMatrix(logReturns),
+        covarianceShrinkTarget ?? 'diagonal',
+    );
     const meanReturns = annualizedReturns(logReturns);
     const volatility = annualizedVolatility(covariance);
 
@@ -584,6 +590,8 @@ const main = async () => {
         try {
             const preparedCase = prepareEvalCase({
                 assetBySymbol,
+                covarianceShrinkTarget: payload.strategyConfigs?.max_diversification_research_v1
+                    ?.covarianceShrinkTarget,
                 pricesBySymbol: payload.pricesBySymbol,
                 symbols: evalCase.symbols,
             });

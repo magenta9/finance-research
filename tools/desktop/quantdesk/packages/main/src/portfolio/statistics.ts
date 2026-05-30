@@ -57,6 +57,51 @@ export const shrinkCovarianceMatrix = (sample: number[][]) => {
     );
 };
 
+export const shrinkCovarianceConstantCorrelation = (sample: number[][]) => {
+    const size = sample.length;
+    const standardDeviations = sample.map((row, index) => Math.sqrt(Math.max(row[index] ?? 0, 0)));
+    let correlationTotal = 0;
+    let pairCount = 0;
+
+    for (let rowIndex = 0; rowIndex < size; rowIndex += 1) {
+        for (let columnIndex = rowIndex + 1; columnIndex < size; columnIndex += 1) {
+            const denominator = standardDeviations[rowIndex] * standardDeviations[columnIndex];
+
+            if (denominator <= 0) {
+                continue;
+            }
+
+            correlationTotal += (sample[rowIndex][columnIndex] ?? 0) / denominator;
+            pairCount += 1;
+        }
+    }
+
+    const averageCorrelation = pairCount > 0 ? correlationTotal / pairCount : 0;
+    const target = sample.map((row, rowIndex) => row.map((value, columnIndex) => {
+        if (rowIndex === columnIndex) {
+            return value;
+        }
+
+        return averageCorrelation * standardDeviations[rowIndex] * standardDeviations[columnIndex];
+    }));
+    const shrinkage = Math.min(0.45, Math.max(0.08, size / 50));
+
+    return sample.map((row, rowIndex) =>
+        row.map((value, columnIndex) => (
+            value * (1 - shrinkage) + (target[rowIndex][columnIndex] ?? 0) * shrinkage
+        )),
+    );
+};
+
+export type CovarianceShrinkTarget = 'diagonal' | 'constant_correlation';
+
+export const shrinkCovariance = (
+    sample: number[][],
+    target: CovarianceShrinkTarget = 'diagonal',
+) => (target === 'constant_correlation'
+    ? shrinkCovarianceConstantCorrelation(sample)
+    : shrinkCovarianceMatrix(sample));
+
 export const correlationMatrix = (covariance: number[][]) =>
     covariance.map((row, rowIndex) =>
         row.map((value, columnIndex) => {

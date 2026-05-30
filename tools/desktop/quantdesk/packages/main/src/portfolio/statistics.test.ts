@@ -7,6 +7,7 @@ import {
     computeLogReturns,
     correlationMatrix,
     covarianceMatrix,
+    shrinkCovarianceConstantCorrelation,
     shrinkCovarianceMatrix,
 } from './statistics';
 
@@ -32,6 +33,26 @@ describe('portfolio statistics', () => {
         expect(meanReturns[0]).toBeGreaterThan(meanReturns[1]);
         expect(volatility[0]).toBeGreaterThan(0);
         expect(volatility[1]).toBeGreaterThan(0);
+    });
+
+    test('shrinks toward a constant-correlation target matrix', () => {
+        const sample = [
+            [0.0400, 0.0300, 0.0100],
+            [0.0300, 0.0350, 0.0120],
+            [0.0100, 0.0120, 0.0300],
+        ];
+        const shrunk = shrinkCovarianceConstantCorrelation(sample);
+        const sampleCorrelationSpread = Math.abs(
+            (sample[0][1] / Math.sqrt(sample[0][0] * sample[1][1]))
+            - (sample[0][2] / Math.sqrt(sample[0][0] * sample[2][2])),
+        );
+        const shrunkCorrelationSpread = Math.abs(
+            (shrunk[0][1] / Math.sqrt(shrunk[0][0] * shrunk[1][1]))
+            - (shrunk[0][2] / Math.sqrt(shrunk[0][0] * shrunk[2][2])),
+        );
+
+        expect(shrunkCorrelationSpread).toBeLessThan(sampleCorrelationSpread);
+        expect(shrunk[0][0]).toBeCloseTo(sample[0][0], 6);
     });
 
     test('shrinks a near-singular covariance matrix into a positive definite matrix', () => {
