@@ -5,8 +5,8 @@
         "volatilityPower": 0.25,
         "absoluteMomentumLookbackDaysList": [
             50,
-            125,
-            252
+            150,
+            300
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": 0,
