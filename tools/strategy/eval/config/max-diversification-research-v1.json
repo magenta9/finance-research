@@ -1,6 +1,6 @@
 {
     "max_diversification_research_v1": {
-        "maxSingleWeight": 0.4,
+        "maxSingleWeight": 0.45,
         "minCorrelation": 0.05,
         "volatilityPower": 0.25,
         "absoluteMomentumLookbackDaysList": [
@@ -11,6 +11,6 @@
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": 0,
         "cashReserve": 0.2,
-        "momentumBreadthCashScale": 1.5
+        "momentumBreadthCashScale": 2.0
     }
 }
