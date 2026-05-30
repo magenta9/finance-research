@@ -11,7 +11,9 @@ import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portf
 import { applyMomentumReturnTiltAroundWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-return-tilt';
 import { withResearchClassWeightCaps } from '../../desktop/quantdesk/packages/main/src/portfolio/max-diversification-research';
 import { applyEqualWeightShrinkage } from '../../desktop/quantdesk/packages/main/src/portfolio/equal-weight-shrinkage';
+import { selectFaaMomentumTopIndices } from '../../desktop/quantdesk/packages/main/src/portfolio/faa-momentum-top-selection';
 import { blendMdErcWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/md-erc-blend';
+import { blendMdHrpWeights, computeHrpWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/hrp-weights';
 import { applyPortfolioVolatilityCap } from '../../desktop/quantdesk/packages/main/src/portfolio/portfolio-volatility-cap';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
@@ -69,6 +71,8 @@ interface MaxDiversificationResearchConfig {
     equalWeightShrinkageIntensity?: number;
     semiCovarianceForOptimization?: boolean;
     mdErcBlendWeight?: number;
+    faaMomentumTopN?: number;
+    mdHrpBlendWeight?: number;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -538,9 +542,24 @@ const runCaseStrategy = async ({
     const researchConfig = strategy === 'max_diversification_research_v1'
         ? strategyConfigs?.[strategy] ?? {}
         : {};
-    const eligibleIndices = strategy === 'max_diversification_research_v1'
+    let eligibleIndices = strategy === 'max_diversification_research_v1'
         ? resolveAbsoluteMomentumEligibleIndices(preparedCase.prepared, researchConfig)
         : assetClasses.map((_, index) => index);
+    const momentumScores = strategy === 'max_diversification_research_v1'
+        ? resolveMomentumScores(preparedCase.prepared, researchConfig)
+        : [];
+
+    if (
+        strategy === 'max_diversification_research_v1'
+        && typeof researchConfig.faaMomentumTopN === 'number'
+    ) {
+        eligibleIndices = selectFaaMomentumTopIndices({
+            eligibleIndices,
+            momentumScores,
+            topN: researchConfig.faaMomentumTopN,
+        });
+    }
+
     const fullOptimizationInput = resolveOptimizationInput({
         baseConstraints: constraints,
         baseCovariance: preparedCase.covariance,
@@ -584,7 +603,15 @@ const runCaseStrategy = async ({
         });
     }
 
-    const momentumScores = resolveMomentumScores(preparedCase.prepared, researchConfig);
+    if (typeof researchConfig.mdHrpBlendWeight === 'number') {
+        const hrpWeights = computeHrpWeights(optimizationInput.covariance);
+        subsetOptimizedWeights = blendMdHrpWeights({
+            blendWeight: researchConfig.mdHrpBlendWeight,
+            hrpWeights,
+            mdWeights: subsetOptimizedWeights,
+        });
+    }
+
     const optimizedWeights = typeof researchConfig.momentumReturnTiltStrength === 'number'
         && typeof researchConfig.maxTrackingErrorVolatility === 'number'
         ? applyMomentumReturnTiltAroundWeights({

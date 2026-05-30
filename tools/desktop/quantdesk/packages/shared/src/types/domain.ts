@@ -55,6 +55,8 @@ export interface MaxDiversificationStrategyConfig {
   equalWeightShrinkageIntensity?: number;
   semiCovarianceForOptimization?: boolean;
   mdErcBlendWeight?: number;
+  faaMomentumTopN?: number;
+  mdHrpBlendWeight?: number;
   minCorrelation?: number;
   momentumBreadthCashScale?: number;
   volatilityPower?: number;
