@@ -1,0 +1,74 @@
+{
+  "availablePriceCount": 22,
+  "baseCaseCount": 720,
+  "baseCurrency": "CNY",
+  "basketSizes": [
+    5,
+    10,
+    15,
+    20
+  ],
+  "cadences": [
+    "weekly",
+    "monthly",
+    "quarterly"
+  ],
+  "candidateCount": 22,
+  "caseCount": 720,
+  "constraints": {
+    "allowLeverage": false,
+    "allowShort": false,
+    "maxClassWeight": {},
+    "maxSingleWeight": 0.35
+  },
+  "coverageChecked": true,
+  "dataSource": "quant-data-cli",
+  "dryRun": false,
+  "endDate": "2026-05-27",
+  "markets": [
+    "A",
+    "BOND"
+  ],
+  "quantDataBin": "quant-data",
+  "requiredStartDate": "2021-05-28",
+  "samplesPerCell": 20,
+  "scoring": {
+    "expectedReturnWeight": 0.3,
+    "sharpeWeight": 0.4,
+    "maxDrawdownWeight": 0.15,
+    "volatilityWeight": 0.15,
+    "expectedReturnFloor": 0,
+    "expectedReturnCeiling": 0.5,
+    "sharpeFloor": -0.5,
+    "sharpeCeiling": 2.0,
+    "maxDrawdownCeiling": 0.35,
+    "volatilityCeiling": 0.35
+  },
+  "seed": 20260528,
+  "strategyConfig": {
+    "max_diversification_research_v1": {
+      "maxSingleWeight": 0.4,
+      "minCorrelation": 0.05,
+      "volatilityPower": 0.25,
+      "absoluteMomentumLookbackDaysList": [
+        50,
+        125,
+        252
+      ],
+      "absoluteMomentumMinPositiveCount": 2,
+      "absoluteMomentumThreshold": 0
+    }
+  },
+  "strategyConfigPath": null,
+  "strategies": [
+    "max_diversification_research_v1"
+  ],
+  "tsRunner": "/Users/zhang/code/ai/finance-research/tools/strategy/eval/configuration_eval_runner.ts",
+  "universe": "/Users/zhang/code/ai/finance-research/tools/strategy/eval/config/desktop-current-assets.json",
+  "universeCount": 22,
+  "windowsYears": [
+    2,
+    3,
+    5
+  ]
+}

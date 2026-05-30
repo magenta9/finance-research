@@ -1,17 +1,14 @@
 {
     "max_diversification_research_v1": {
-        "diagonalLoad": 0.15,
-        "cashReserve": 0.25,
-        "maxSingleWeight": 0.6,
-        "minCorrelation": 0.08,
+        "maxSingleWeight": 0.4,
+        "minCorrelation": 0.05,
+        "volatilityPower": 0.25,
         "absoluteMomentumLookbackDaysList": [
             50,
             125,
             252
         ],
         "absoluteMomentumMinPositiveCount": 2,
-        "absoluteMomentumThreshold": 0,
-        "momentumBreadthCashScale": 1.25,
-        "volatilityPower": 0
+        "absoluteMomentumThreshold": 0
     }
 }
