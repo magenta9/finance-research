@@ -11,6 +11,7 @@ import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portf
 import { applyMomentumReturnTiltAroundWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-return-tilt';
 import { withResearchClassWeightCaps } from '../../desktop/quantdesk/packages/main/src/portfolio/max-diversification-research';
 import { applyEqualWeightShrinkage } from '../../desktop/quantdesk/packages/main/src/portfolio/equal-weight-shrinkage';
+import { blendMdErcWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/md-erc-blend';
 import { applyPortfolioVolatilityCap } from '../../desktop/quantdesk/packages/main/src/portfolio/portfolio-volatility-cap';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
@@ -67,6 +68,7 @@ interface MaxDiversificationResearchConfig {
     portfolioVolatilityCapMinRiskyScale?: number;
     equalWeightShrinkageIntensity?: number;
     semiCovarianceForOptimization?: boolean;
+    mdErcBlendWeight?: number;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -565,17 +567,34 @@ const runCaseStrategy = async ({
         mode: optimizationInput.mode,
         volatilities: optimizationInput.volatilities,
     });
+    let subsetOptimizedWeights = optimization.weights;
+
+    if (typeof researchConfig.mdErcBlendWeight === 'number') {
+        const ercOptimization = optimizeWeights({
+            assetClasses: optimizationAssetClasses,
+            constraints: optimizationConstraints,
+            covariance: optimizationInput.covariance,
+            mode: 'erc',
+            volatilities: optimizationInput.volatilities,
+        });
+        subsetOptimizedWeights = blendMdErcWeights({
+            blendWeight: researchConfig.mdErcBlendWeight,
+            ercWeights: ercOptimization.weights,
+            mdWeights: optimization.weights,
+        });
+    }
+
     const momentumScores = resolveMomentumScores(preparedCase.prepared, researchConfig);
     const optimizedWeights = typeof researchConfig.momentumReturnTiltStrength === 'number'
         && typeof researchConfig.maxTrackingErrorVolatility === 'number'
         ? applyMomentumReturnTiltAroundWeights({
             covariance: optimizationInput.covariance,
             momentumScores: subsetArray(momentumScores, eligibleIndices),
-            referenceWeights: optimization.weights,
+            referenceWeights: subsetOptimizedWeights,
             tiltStrength: researchConfig.momentumReturnTiltStrength,
             trackingErrorVolatilityLimit: researchConfig.maxTrackingErrorVolatility,
         })
-        : optimization.weights;
+        : subsetOptimizedWeights;
     let riskyWeights = mapSubsetWeights(
         optimizedWeights,
         eligibleIndices,

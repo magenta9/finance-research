@@ -54,6 +54,7 @@ export interface MaxDiversificationStrategyConfig {
   portfolioVolatilityCapMinRiskyScale?: number;
   equalWeightShrinkageIntensity?: number;
   semiCovarianceForOptimization?: boolean;
+  mdErcBlendWeight?: number;
   minCorrelation?: number;
   momentumBreadthCashScale?: number;
   volatilityPower?: number;
