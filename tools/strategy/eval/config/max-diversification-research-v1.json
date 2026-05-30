@@ -10,7 +10,7 @@
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": 0,
-        "cashReserve": 0.25,
+        "cashReserve": 0.2,
         "momentumBreadthCashScale": 1.25
     }
 }
