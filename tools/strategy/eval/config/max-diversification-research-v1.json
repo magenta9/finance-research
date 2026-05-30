@@ -11,6 +11,6 @@
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": 0,
         "cashReserve": 0.2,
-        "momentumBreadthCashScale": 1.25
+        "momentumBreadthCashScale": 1.5
     }
 }
