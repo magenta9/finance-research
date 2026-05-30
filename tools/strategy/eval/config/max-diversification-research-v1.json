@@ -7,6 +7,7 @@
             252
         ],
         "absoluteMomentumMinPositiveCount": 2,
-        "absoluteMomentumThreshold": 0
+        "absoluteMomentumThreshold": 0,
+        "equityClassWeightCap": 0.28
     }
 }
