@@ -5,10 +5,7 @@ import type { AllocationConstraints, StoredAsset } from '@quantdesk/shared';
 import type { AllocationAnalysisInput } from './allocation-analysis-input';
 import {
     appendMaxDiversificationCashReserve,
-    applyCorrelationRegimeCashAddon,
-    averagePairwiseCorrelation,
     resolveAbsoluteMomentumEligibleIndices,
-    resolveMaxDiversificationCashReserve,
     resolveMaxDiversificationOptimizationInput,
 } from './max-diversification-research';
 import { buildAsset, buildDateRange } from './portfolio-test-support';
@@ -113,10 +110,6 @@ describe('max diversification research v3', () => {
         const input = resolveMaxDiversificationOptimizationInput({
             allocationAssetIndexes: [0, 1, 2, 3],
             analysisInput: buildAnalysisInput(4),
-            config: {
-                cashReserve: 0.25,
-                momentumBreadthCashScale: 1.25,
-            },
             constraints,
             prepared,
         });
@@ -127,39 +120,6 @@ describe('max diversification research v3', () => {
         expect(input.annualizedAssetVolatility).toEqual([1, 1]);
         expect(input.covariance).toHaveLength(2);
         expect(input.assemblyCovariance).toHaveLength(4);
-    });
-
-    test('adds correlation-regime cash when average pairwise correlation exceeds baseline', () => {
-        const covariance = [
-            [0.04, 0.03, 0.028],
-            [0.03, 0.04, 0.029],
-            [0.028, 0.029, 0.04],
-        ];
-        const averageCorrelation = averagePairwiseCorrelation(covariance);
-
-        expect(averageCorrelation).toBeGreaterThan(0.6);
-
-        const addon = applyCorrelationRegimeCashAddon({
-            baseline: 0.25,
-            covariance,
-            scale: 1,
-        });
-
-        expect(addon).toBeGreaterThan(0);
-
-        const cash = resolveMaxDiversificationCashReserve({
-            assetCount: 4,
-            config: {
-                cashReserve: 0,
-                correlationRegimeBaseline: 0.25,
-                correlationRegimeCashScale: 1,
-                momentumBreadthCashScale: 0,
-            },
-            eligibleCount: 3,
-            eligibleCovariance: covariance,
-        });
-
-        expect(cash).toBeCloseTo(addon, 5);
     });
 
     test('appends a synthetic cash reserve asset for result assembly', () => {

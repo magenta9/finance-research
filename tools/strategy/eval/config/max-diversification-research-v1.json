@@ -7,8 +7,6 @@
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": -0.01,
-        "maxSingleWeight": 0.6,
-        "correlationRegimeCashScale": 1.0,
-        "correlationRegimeBaseline": 0.25
+        "maxSingleWeight": 0.6
     }
 }

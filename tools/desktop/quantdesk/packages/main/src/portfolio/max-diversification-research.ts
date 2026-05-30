@@ -154,87 +154,6 @@ export const applyMomentumBreadthCashScale = ({
     return boundedCashReserve(baseCashReserve + (1 - breadth) * Math.max(0, scale));
 };
 
-export const averagePairwiseCorrelation = (covariance: number[][]) => {
-    const size = covariance.length;
-
-    if (size < 2) {
-        return 0;
-    }
-
-    let sum = 0;
-    let count = 0;
-
-    for (let rowIndex = 0; rowIndex < size; rowIndex += 1) {
-        for (let columnIndex = rowIndex + 1; columnIndex < size; columnIndex += 1) {
-            const varianceRow = covariance[rowIndex]?.[rowIndex] ?? 0;
-            const varianceColumn = covariance[columnIndex]?.[columnIndex] ?? 0;
-            const denominator = Math.sqrt(Math.max(varianceRow, 0) * Math.max(varianceColumn, 0));
-
-            if (denominator <= 0) {
-                continue;
-            }
-
-            sum += (covariance[rowIndex]?.[columnIndex] ?? 0) / denominator;
-            count += 1;
-        }
-    }
-
-    return count > 0 ? sum / count : 0;
-};
-
-export const applyCorrelationRegimeCashAddon = ({
-    baseline,
-    covariance,
-    maxAddon = 0.5,
-    scale,
-}: {
-    baseline: number;
-    covariance: number[][];
-    maxAddon?: number;
-    scale: number;
-}) => {
-    const averageCorrelation = averagePairwiseCorrelation(covariance);
-    const excessCorrelation = Math.max(0, averageCorrelation - baseline);
-
-    return Math.min(maxAddon, Math.max(0, scale) * excessCorrelation);
-};
-
-export const resolveMaxDiversificationCashReserve = ({
-    assetCount,
-    config,
-    eligibleCount,
-    eligibleCovariance,
-}: {
-    assetCount: number;
-    config?: MaxDiversificationStrategyConfig;
-    eligibleCount: number;
-    eligibleCovariance: number[][];
-}) => {
-    let cash = boundedCashReserve(config?.cashReserve ?? 0);
-
-    if (typeof config?.momentumBreadthCashScale === 'number') {
-        cash = applyMomentumBreadthCashScale({
-            assetCount,
-            baseCashReserve: cash,
-            eligibleCount,
-            scale: config.momentumBreadthCashScale,
-        });
-    }
-
-    if (typeof config?.correlationRegimeCashScale === 'number') {
-        cash = boundedCashReserve(
-            cash + applyCorrelationRegimeCashAddon({
-                baseline: config.correlationRegimeBaseline ?? 0.25,
-                covariance: eligibleCovariance,
-                maxAddon: config.correlationRegimeMaxAddon ?? 0.5,
-                scale: config.correlationRegimeCashScale,
-            }),
-        );
-    }
-
-    return cash;
-};
-
 const ensureFeasibleConstraints = (constraints: AllocationConstraints, assetCount: number) => {
     if (constraints.allowLeverage || assetCount <= 0 || constraints.maxSingleWeight * assetCount >= 1) {
         return constraints;
@@ -374,11 +293,11 @@ export const resolveMaxDiversificationOptimizationInput = ({
         }, config),
         eligibleAssetIndexes.length,
     );
-    const cashReserve = resolveMaxDiversificationCashReserve({
+    const cashReserve = applyMomentumBreadthCashScale({
         assetCount: allocationAssetIndexes.length,
-        config,
+        baseCashReserve: boundedCashReserve(resolvedConfig.cashReserve),
         eligibleCount: eligibleAssetIndexes.length,
-        eligibleCovariance: subsetMatrix(assemblyCovariance, eligibleAssetIndexes),
+        scale: resolvedConfig.momentumBreadthCashScale,
     });
 
     return {
