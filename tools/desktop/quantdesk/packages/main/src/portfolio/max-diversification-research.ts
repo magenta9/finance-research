@@ -170,6 +170,23 @@ const transformCovariance = (
     config: MaxDiversificationResearchConfigResolved,
 ) => applyMinCorrelation(applyDiagonalLoad(cloneMatrix(covariance), config.diagonalLoad), config.minCorrelation);
 
+export const withEquityClassWeightCap = (
+    constraints: AllocationConstraints,
+    equityClassWeightCap?: number,
+): AllocationConstraints => {
+    if (typeof equityClassWeightCap !== 'number') {
+        return constraints;
+    }
+
+    return {
+        ...constraints,
+        maxClassWeight: {
+            ...constraints.maxClassWeight,
+            equity: Math.min(1, Math.max(0, equityClassWeightCap)),
+        },
+    };
+};
+
 export const resolveAverageMomentumScores = (
     prepared: PreparedAllocationData,
     config?: MaxDiversificationStrategyConfig,
@@ -255,10 +272,13 @@ export const resolveMaxDiversificationOptimizationInput = ({
         subsetArray(analysisInput.annualizedAssetVolatility, eligibleAssetIndexes),
         resolvedConfig.volatilityPower,
     );
-    const optimizationConstraints = ensureFeasibleConstraints({
-        ...constraints,
-        maxSingleWeight: resolvedConfig.maxSingleWeight,
-    }, eligibleAssetIndexes.length);
+    const optimizationConstraints = ensureFeasibleConstraints(
+        withEquityClassWeightCap({
+            ...constraints,
+            maxSingleWeight: resolvedConfig.maxSingleWeight,
+        }, config?.equityClassWeightCap),
+        eligibleAssetIndexes.length,
+    );
     const cashReserve = applyMomentumBreadthCashScale({
         assetCount: allocationAssetIndexes.length,
         baseCashReserve: boundedCashReserve(resolvedConfig.cashReserve),

@@ -9,6 +9,7 @@ import type { PreparedAllocationData } from '../../desktop/quantdesk/packages/ma
 import { assembleAllocationResult } from '../../desktop/quantdesk/packages/main/src/portfolio/allocation-result-assembler';
 import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/optimizer';
 import { applyMomentumReturnTiltAroundWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-return-tilt';
+import { withEquityClassWeightCap } from '../../desktop/quantdesk/packages/main/src/portfolio/max-diversification-research';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
     annualizedReturns,
@@ -52,6 +53,7 @@ interface MaxDiversificationResearchConfig {
     cashReserve?: number;
     covarianceShrinkage?: number;
     diagonalLoad?: number;
+    equityClassWeightCap?: number;
     marchenkoPasturDenoise?: boolean;
     maxSingleWeight?: number;
     maxTrackingErrorVolatility?: number;
@@ -382,6 +384,10 @@ const resolveOptimizationInput = ({
 
     if (typeof config.maxSingleWeight === 'number') {
         constraints = { ...constraints, maxSingleWeight: config.maxSingleWeight };
+    }
+
+    if (typeof config.equityClassWeightCap === 'number') {
+        constraints = withEquityClassWeightCap(constraints, config.equityClassWeightCap);
     }
 
     return {
