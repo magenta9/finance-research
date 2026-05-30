@@ -1,13 +1,10 @@
 {
     "max_diversification_research_v1": {
-        "absoluteMomentumLookbackDaysList": [
-            63,
-            126,
-            252
-        ],
+        "absoluteMomentumLookbackDaysList": [63, 126, 252],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": -0.01,
         "maxSingleWeight": 0.6,
-        "semiCovarianceForOptimization": true
+        "semiCovarianceForOptimization": true,
+        "equalWeightShrinkageIntensity": 0.1
     }
 }
