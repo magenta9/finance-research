@@ -170,6 +170,27 @@ const transformCovariance = (
     config: MaxDiversificationResearchConfigResolved,
 ) => applyMinCorrelation(applyDiagonalLoad(cloneMatrix(covariance), config.diagonalLoad), config.minCorrelation);
 
+export const resolveAverageMomentumScores = (
+    prepared: PreparedAllocationData,
+    config?: MaxDiversificationStrategyConfig,
+) => {
+    const resolvedConfig = resolveMaxDiversificationResearchConfig(config);
+    const lookbacks = resolvedConfig.absoluteMomentumLookbackDaysList
+        .map((value) => Math.max(1, Math.floor(value)));
+
+    return prepared.series.map((entry) => {
+        const current = entry.prices.at(-1) ?? 0;
+        const momentums = lookbacks.map((lookbackDays) => {
+            const referenceIndex = Math.max(0, entry.prices.length - 1 - lookbackDays);
+            const reference = entry.prices[referenceIndex] ?? 0;
+
+            return current > 0 && reference > 0 ? current / reference - 1 : 0;
+        });
+
+        return momentums.reduce((sum, value) => sum + value, 0) / momentums.length;
+    });
+};
+
 export const resolveAbsoluteMomentumEligibleIndices = (
     prepared: PreparedAllocationData,
     config: MaxDiversificationStrategyConfig,

@@ -45,6 +45,8 @@ export interface MaxDiversificationStrategyConfig {
   diagonalLoad?: number;
   marchenkoPasturDenoise?: boolean;
   maxSingleWeight?: number;
+  maxTrackingErrorVolatility?: number;
+  momentumReturnTiltStrength?: number;
   minCorrelation?: number;
   momentumBreadthCashScale?: number;
   volatilityPower?: number;

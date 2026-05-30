@@ -8,6 +8,7 @@ import type { StoredAsset } from '../../desktop/quantdesk/packages/shared/src/ty
 import type { PreparedAllocationData } from '../../desktop/quantdesk/packages/main/src/portfolio/preprocessor';
 import { assembleAllocationResult } from '../../desktop/quantdesk/packages/main/src/portfolio/allocation-result-assembler';
 import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/optimizer';
+import { applyMomentumReturnTiltAroundWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-return-tilt';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
     annualizedReturns,
@@ -53,6 +54,8 @@ interface MaxDiversificationResearchConfig {
     diagonalLoad?: number;
     marchenkoPasturDenoise?: boolean;
     maxSingleWeight?: number;
+    maxTrackingErrorVolatility?: number;
+    momentumReturnTiltStrength?: number;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -232,6 +235,28 @@ const resolveAbsoluteMomentumEligibleIndices = (
     return [momentumScores.reduce((best, entry) => (
         entry.momentum > best.momentum ? entry : best
     ), momentumScores[0]).index];
+};
+
+const resolveMomentumScores = (
+    prepared: PreparedAllocationData,
+    config: MaxDiversificationResearchConfig,
+) => {
+    const lookbacks = Array.isArray(config.absoluteMomentumLookbackDaysList)
+        && config.absoluteMomentumLookbackDaysList.length > 0
+        ? config.absoluteMomentumLookbackDaysList.map((value) => Math.max(1, Math.floor(value)))
+        : [252];
+
+    return prepared.series.map((entry) => {
+        const current = entry.prices.at(-1) ?? 0;
+        const momentums = lookbacks.map((lookbackDays) => {
+            const referenceIndex = Math.max(0, entry.prices.length - 1 - lookbackDays);
+            const reference = entry.prices[referenceIndex] ?? 0;
+
+            return current > 0 && reference > 0 ? current / reference - 1 : 0;
+        });
+
+        return momentums.reduce((sum, value) => sum + value, 0) / momentums.length;
+    });
 };
 
 const appendCashReserve = ({
@@ -522,8 +547,19 @@ const runCaseStrategy = ({
         mode: optimizationInput.mode,
         volatilities: optimizationInput.volatilities,
     });
+    const momentumScores = resolveMomentumScores(preparedCase.prepared, researchConfig);
+    const optimizedWeights = typeof researchConfig.momentumReturnTiltStrength === 'number'
+        && typeof researchConfig.maxTrackingErrorVolatility === 'number'
+        ? applyMomentumReturnTiltAroundWeights({
+            covariance: optimizationInput.covariance,
+            momentumScores: subsetArray(momentumScores, eligibleIndices),
+            referenceWeights: optimization.weights,
+            tiltStrength: researchConfig.momentumReturnTiltStrength,
+            trackingErrorVolatilityLimit: researchConfig.maxTrackingErrorVolatility,
+        })
+        : optimization.weights;
     const riskyWeights = mapSubsetWeights(
-        optimization.weights,
+        optimizedWeights,
         eligibleIndices,
         preparedCase.prepared.series.length,
     );

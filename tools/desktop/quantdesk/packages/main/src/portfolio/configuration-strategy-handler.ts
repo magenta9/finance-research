@@ -6,9 +6,11 @@ import {
     validateAllocationAssetSelection,
     validateAllocationConstraints,
 } from './allocation-validator';
+import { applyMomentumReturnTiltAroundWeights } from './momentum-return-tilt';
 import {
     appendMaxDiversificationCashReserve,
     mapSubsetWeights,
+    resolveAverageMomentumScores,
     resolveMaxDiversificationOptimizationInput,
 } from './max-diversification-research';
 import { resolvePreparedAssetIndexes } from './prepared-allocation-context';
@@ -111,8 +113,20 @@ export const createConfigurationStrategyHandler = (
                 };
             }
 
+            const researchConfig = strategyMix?.maxDiversification;
+            const momentumScores = resolveAverageMomentumScores(prepared, researchConfig);
+            const optimizedWeights = typeof researchConfig?.momentumReturnTiltStrength === 'number'
+                && typeof researchConfig?.maxTrackingErrorVolatility === 'number'
+                ? applyMomentumReturnTiltAroundWeights({
+                    covariance: researchInput.covariance,
+                    momentumScores: researchInput.assetIndexes.map((index) => momentumScores[index] ?? 0),
+                    referenceWeights: optimization.weights,
+                    tiltStrength: researchConfig.momentumReturnTiltStrength,
+                    trackingErrorVolatilityLimit: researchConfig.maxTrackingErrorVolatility,
+                })
+                : optimization.weights;
             const riskyWeights = mapSubsetWeights(
-                optimization.weights,
+                optimizedWeights,
                 researchInput.assetIndexes,
                 prepared.series.length,
             );

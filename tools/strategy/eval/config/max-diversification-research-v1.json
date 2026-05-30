@@ -4,6 +4,8 @@
         "minCorrelation": 0.05,
         "volatilityPower": 0.25,
         "marchenkoPasturDenoise": true,
+        "momentumReturnTiltStrength": 0.2,
+        "maxTrackingErrorVolatility": 0.03,
         "absoluteMomentumLookbackDaysList": [
             50,
             150,
