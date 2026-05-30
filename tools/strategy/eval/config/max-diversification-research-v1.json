@@ -8,6 +8,7 @@
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": -0.01,
         "maxSingleWeight": 0.6,
-        "semiCovarianceForOptimization": true
+        "semiCovarianceForOptimization": true,
+        "mdHrpBlendWeight": 0.3
     }
 }
