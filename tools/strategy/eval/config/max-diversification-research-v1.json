@@ -7,8 +7,6 @@
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": 0,
-        "maxSingleWeight": 0.55,
-        "diagonalLoad": 0.15,
-        "cashReserve": 0.25
+        "maxSingleWeight": 0.55
     }
 }
