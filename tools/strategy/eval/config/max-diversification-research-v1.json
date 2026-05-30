@@ -6,7 +6,7 @@
         "marchenkoPasturDenoise": true,
         "momentumReturnTiltStrength": 0.2,
         "maxTrackingErrorVolatility": 0.03,
-        "equityClassWeightCap": 0.5,
+        "equityClassWeightCap": 0.45,
         "absoluteMomentumLookbackDaysList": [
             50,
             150,
