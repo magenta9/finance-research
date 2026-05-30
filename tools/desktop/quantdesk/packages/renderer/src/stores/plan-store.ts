@@ -57,6 +57,7 @@ const modeLabelMap: Record<AllocationType, string> = {
 
 const strategyLabelMap: Record<AllocationStrategy, string> = {
     ...modeLabelMap,
+    max_diversification_research_v1: '最大分散化 MDP v3',
     ewmac_trend_following: 'EWMAC 趋势跟随',
     active_dual_momentum_gtaa: 'Active Dual Momentum',
 };

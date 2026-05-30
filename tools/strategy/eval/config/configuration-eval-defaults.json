@@ -1,6 +1,7 @@
 {
     "baseCurrency": "CNY",
     "basketSizes": [
+        5,
         10,
         15,
         20
@@ -30,10 +31,10 @@
         "maxSingleWeight": 0.35
     },
     "scoring": {
-        "expectedReturnWeight": 0.2,
+        "expectedReturnWeight": 0.3,
         "sharpeWeight": 0.4,
-        "maxDrawdownWeight": 0.24,
-        "volatilityWeight": 0.16,
+        "maxDrawdownWeight": 0.15,
+        "volatilityWeight": 0.15,
         "expectedReturnFloor": 0,
         "expectedReturnCeiling": 0.5,
         "sharpeFloor": -0.5,

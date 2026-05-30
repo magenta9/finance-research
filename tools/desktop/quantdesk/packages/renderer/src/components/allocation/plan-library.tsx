@@ -14,6 +14,7 @@ const modeLabelMap = {
 
 const strategyLabelMap = {
     ...modeLabelMap,
+    max_diversification_research_v1: '最大分散化 MDP v3',
     active_dual_momentum_gtaa: 'Active Dual Momentum',
     ewmac_trend_following: 'EWMAC 趋势跟随',
 } as const;

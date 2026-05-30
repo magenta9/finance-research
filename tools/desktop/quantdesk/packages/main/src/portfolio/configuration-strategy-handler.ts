@@ -1,4 +1,4 @@
-import type { AllocationType } from '@quantdesk/shared';
+import type { AllocationStrategy, AllocationType } from '@quantdesk/shared';
 
 import { assembleAllocationResult } from './allocation-result-assembler';
 import {
@@ -6,6 +6,11 @@ import {
     validateAllocationAssetSelection,
     validateAllocationConstraints,
 } from './allocation-validator';
+import {
+    appendMaxDiversificationCashReserve,
+    mapSubsetWeights,
+    resolveMaxDiversificationOptimizationInput,
+} from './max-diversification-research';
 import { resolvePreparedAssetIndexes } from './prepared-allocation-context';
 import type { AllocationStrategyHandler } from './strategy-registry';
 import { buildStrategyErrorResult } from './strategy-error-result';
@@ -20,7 +25,13 @@ const expandConfigurationWeights = (weights: number[], assetIndexes: number[], a
     return expandedWeights;
 };
 
-export const createConfigurationStrategyHandler = (strategy: AllocationType): AllocationStrategyHandler => ({
+export const createConfigurationStrategyHandler = (
+    mode: AllocationType,
+    options: {
+        researchBaseline?: boolean;
+        strategy?: AllocationStrategy;
+    } = {},
+): AllocationStrategyHandler => ({
     run: async ({
         analysisInput,
         baseCurrency,
@@ -29,7 +40,9 @@ export const createConfigurationStrategyHandler = (strategy: AllocationType): Al
         optimize,
         prepared,
         rebalanceCadence,
+        strategyMix,
     }) => {
+        const strategy = options.strategy ?? mode;
         const mergedConstraints = mergeAllocationConstraints(constraints);
         const constraintError = validateAllocationConstraints(mergedConstraints);
 
@@ -39,7 +52,7 @@ export const createConfigurationStrategyHandler = (strategy: AllocationType): Al
                 result: buildStrategyErrorResult({
                     baseCurrency,
                     error: constraintError,
-                    mode: strategy,
+                    mode,
                     prepared,
                     rebalanceCadence,
                     strategy,
@@ -57,7 +70,7 @@ export const createConfigurationStrategyHandler = (strategy: AllocationType): Al
                 result: buildStrategyErrorResult({
                     baseCurrency,
                     error: allocationAssetError,
-                    mode: strategy,
+                    mode,
                     prepared,
                     rebalanceCadence,
                     strategy,
@@ -66,12 +79,82 @@ export const createConfigurationStrategyHandler = (strategy: AllocationType): Al
             };
         }
 
+        if (options.researchBaseline) {
+            const researchInput = resolveMaxDiversificationOptimizationInput({
+                allocationAssetIndexes,
+                analysisInput,
+                config: strategyMix?.maxDiversification,
+                constraints: mergedConstraints,
+                prepared,
+            });
+            const optimization = await optimize({
+                annualizedAssetVolatility: researchInput.annualizedAssetVolatility,
+                assetIndexes: researchInput.assetIndexes,
+                constraints: researchInput.constraints,
+                covariance: researchInput.covariance,
+                mode,
+                prepared,
+            });
+
+            if (!optimization.ok) {
+                return {
+                    optimizerPath: optimization.optimizerPath,
+                    result: buildStrategyErrorResult({
+                        baseCurrency,
+                        error: optimization.error,
+                        mode,
+                        prepared,
+                        rebalanceCadence,
+                        strategy,
+                    }),
+                    stage: 'optimization_failed',
+                };
+            }
+
+            const riskyWeights = mapSubsetWeights(
+                optimization.weights,
+                researchInput.assetIndexes,
+                prepared.series.length,
+            );
+            const assemblyInput = appendMaxDiversificationCashReserve({
+                baseCurrency,
+                cashReserve: researchInput.cashReserve,
+                covariance: researchInput.assemblyCovariance,
+                meanReturns: analysisInput.annualizedMeanReturns,
+                prepared,
+                volatility: researchInput.assemblyVolatility,
+                weights: riskyWeights,
+            });
+
+            return {
+                optimizerPath: optimization.optimizer,
+                result: assembleAllocationResult({
+                    allocationAssetIds: undefined,
+                    annualizedAssetVolatility: assemblyInput.volatility,
+                    annualizedMeanReturns: assemblyInput.meanReturns,
+                    baseCurrency,
+                    calculationDateRange,
+                    covariance: assemblyInput.covariance,
+                    diversificationRatio: optimization.diversificationRatio,
+                    mode,
+                    optimizer: optimization.optimizer,
+                    optimizerDiagnostics: optimization.diagnostics,
+                    prepared: assemblyInput.prepared,
+                    rebalanceCadence,
+                    strategy,
+                    trendFollowing: null,
+                    weights: assemblyInput.weights,
+                }),
+                stage: 'completed',
+            };
+        }
+
         const optimization = await optimize({
             annualizedAssetVolatility: analysisInput.annualizedAssetVolatility,
             assetIndexes: allocationAssetIndexes,
             constraints: mergedConstraints,
             covariance: analysisInput.shrunkCovariance,
-            mode: strategy,
+            mode,
             prepared,
         });
 
@@ -81,7 +164,7 @@ export const createConfigurationStrategyHandler = (strategy: AllocationType): Al
                 result: buildStrategyErrorResult({
                     baseCurrency,
                     error: optimization.error,
-                    mode: strategy,
+                    mode,
                     prepared,
                     rebalanceCadence,
                     strategy,
@@ -100,7 +183,7 @@ export const createConfigurationStrategyHandler = (strategy: AllocationType): Al
                 calculationDateRange,
                 covariance: analysisInput.shrunkCovariance,
                 diversificationRatio: optimization.diversificationRatio,
-                mode: strategy,
+                mode,
                 optimizer: optimization.optimizer,
                 optimizerDiagnostics: optimization.diagnostics,
                 prepared,

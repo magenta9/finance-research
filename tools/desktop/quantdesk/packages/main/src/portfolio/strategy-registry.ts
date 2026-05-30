@@ -164,4 +164,8 @@ export const defaultAllocationStrategyRegistry: AllocationStrategyRegistry = {
     ewmac_trend_following: ewmacTrendFollowingHandler,
     inverse_volatility: createConfigurationStrategyHandler('inverse_volatility'),
     max_diversification: createConfigurationStrategyHandler('max_diversification'),
+    max_diversification_research_v1: createConfigurationStrategyHandler('max_diversification', {
+        researchBaseline: true,
+        strategy: 'max_diversification_research_v1',
+    }),
 };

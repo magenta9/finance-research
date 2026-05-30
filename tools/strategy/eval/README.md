@@ -6,12 +6,12 @@ The first runnable scope is Configuration Strategy Eval:
 
 - universe: current Desktop asset snapshot, filtered to A + BOND markets
 - strategies: ERC, Inverse Volatility, Max Diversification
-- basket sizes: 10, 15, 20 assets
+- basket sizes: 5, 10, 15, 20 assets
 - windows: 2, 3, 5 years
 - rebalance cadences: weekly, monthly, quarterly
 - samples: 20 unique baskets per size/window/cadence cell
 - price data: `quant-data get-price-series`
-- single-case score: expected return 20%, Sharpe 40%, max drawdown 24%, volatility 16%
+- single-case score coefficients: expected return 0.30, Sharpe 0.40, max drawdown 0.15, volatility 0.15
 - expected return score bounds: 0% to 50% annualized expected return
 - final score: `0.5 * p50Score + 0.25 * p10Score + 0.25 * p90Score`
 

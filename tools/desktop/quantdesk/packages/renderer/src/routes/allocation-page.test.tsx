@@ -150,6 +150,7 @@ describe('AllocationPage', () => {
         expect(screen.getByTestId('allocation-asset-toggle-SPY')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-strategy-panel')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-strategy-inverse_volatility')).toBeInTheDocument();
+        expect(screen.getByTestId('allocation-strategy-max_diversification_research_v1')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-strategy-ewmac_trend_following')).toBeInTheDocument();
         expect(screen.getByText('反波动率加权 参数')).toBeInTheDocument();
         expect(screen.getByTestId('allocation-asset-list')).toBeInTheDocument();
@@ -169,6 +170,10 @@ describe('AllocationPage', () => {
 
         await user.click(screen.getByTestId('allocation-strategy-max_diversification'));
         expect(screen.getByText('最大分散化 参数')).toBeInTheDocument();
+
+        await user.click(screen.getByTestId('allocation-strategy-max_diversification_research_v1'));
+        expect(screen.getByTestId('allocation-current-strategy')).toHaveTextContent('max_diversification_research_v1');
+        expect(screen.getByText('最大分散化 MDP v3 参数')).toBeInTheDocument();
 
         await user.click(screen.getByTestId('allocation-strategy-ewmac_trend_following'));
         expect(screen.getByTestId('allocation-current-strategy')).toHaveTextContent('ewmac_trend_following');
