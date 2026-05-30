@@ -5,7 +5,7 @@
             125,
             252
         ],
-        "absoluteMomentumMinPositiveCount": 2,
+        "absoluteMomentumMinPositiveCount": 1,
         "absoluteMomentumThreshold": 0,
         "maxSingleWeight": 0.45
     }
