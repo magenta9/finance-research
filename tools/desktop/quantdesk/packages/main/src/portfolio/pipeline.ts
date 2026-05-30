@@ -130,7 +130,7 @@ export class PortfolioAllocationPipeline {
             });
         }
 
-        const analysisInputResult = buildAllocationAnalysisInput(prepared, strategyMix?.maxDiversification);
+        const analysisInputResult = buildAllocationAnalysisInput(prepared);
 
         if (!analysisInputResult.ok) {
             return this.buildOutcome({

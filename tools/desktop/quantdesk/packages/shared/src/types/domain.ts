@@ -42,7 +42,6 @@ export interface MaxDiversificationStrategyConfig {
   absoluteMomentumMinPositiveCount?: number;
   absoluteMomentumThreshold?: number;
   cashReserve?: number;
-  covarianceShrinkTarget?: 'constant_correlation' | 'diagonal';
   diagonalLoad?: number;
   maxSingleWeight?: number;
   minCorrelation?: number;

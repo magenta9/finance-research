@@ -2,14 +2,12 @@ import type { AllocationResult } from '@quantdesk/shared';
 
 import { getPreparedPriceSeries } from './prepared-allocation-context';
 import type { PreparedAllocationData } from './preprocessor';
-import type { MaxDiversificationStrategyConfig } from '@quantdesk/shared';
-
 import {
     annualizedReturns,
     annualizedVolatility,
     computeLogReturns,
     covarianceMatrix,
-    shrinkCovariance,
+    shrinkCovarianceMatrix,
 } from './statistics';
 
 export interface AllocationAnalysisInput {
@@ -22,10 +20,7 @@ export type AllocationAnalysisInputResult =
     | { analysisInput: AllocationAnalysisInput; ok: true }
     | { error: NonNullable<AllocationResult['error']>; ok: false };
 
-export const buildAllocationAnalysisInput = (
-    prepared: PreparedAllocationData,
-    maxDiversificationConfig?: MaxDiversificationStrategyConfig,
-): AllocationAnalysisInputResult => {
+export const buildAllocationAnalysisInput = (prepared: PreparedAllocationData): AllocationAnalysisInputResult => {
     const priceSeries = getPreparedPriceSeries(prepared);
     const returns = computeLogReturns(priceSeries);
 
@@ -41,10 +36,7 @@ export const buildAllocationAnalysisInput = (
     }
 
     const sampleCovariance = covarianceMatrix(returns);
-    const shrunkCovariance = shrinkCovariance(
-        sampleCovariance,
-        maxDiversificationConfig?.covarianceShrinkTarget ?? 'diagonal',
-    );
+    const shrunkCovariance = shrinkCovarianceMatrix(sampleCovariance);
 
     return {
         analysisInput: {
