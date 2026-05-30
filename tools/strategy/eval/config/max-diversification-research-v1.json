@@ -1,13 +1,7 @@
 {
     "max_diversification_research_v1": {
-        "maxSingleWeight": 0.4,
-        "absoluteMomentumLookbackDaysList": [
-            50,
-            125,
-            252
-        ],
+        "absoluteMomentumLookbackDaysList": [50, 125, 252],
         "absoluteMomentumMinPositiveCount": 2,
-        "absoluteMomentumThreshold": 0,
-        "equityClassWeightCap": 0.28
+        "absoluteMomentumThreshold": 0
     }
 }
