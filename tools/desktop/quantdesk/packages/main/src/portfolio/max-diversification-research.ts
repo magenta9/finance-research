@@ -24,13 +24,7 @@ export const DEFAULT_MAX_DIVERSIFICATION_RESEARCH_CONFIG: Required<MaxDiversific
     volatilityPower: 0,
 };
 
-type MaxDiversificationResearchConfigOptionalMechanisms =
-    | 'correlationAwareCashFloor'
-    | 'correlationAwareCashScale';
-
-export type MaxDiversificationResearchConfigResolved =
-    Required<Omit<MaxDiversificationStrategyConfig, MaxDiversificationResearchConfigOptionalMechanisms>>
-    & Pick<MaxDiversificationStrategyConfig, MaxDiversificationResearchConfigOptionalMechanisms>;
+export type MaxDiversificationResearchConfigResolved = Required<MaxDiversificationStrategyConfig>;
 
 export interface MaxDiversificationResearchInput {
     allocationAssetIndexes: number[];
@@ -105,58 +99,7 @@ export const resolveMaxDiversificationResearchConfig = (
         momentumBreadthCashScale: config?.momentumBreadthCashScale
             ?? defaults.momentumBreadthCashScale,
         volatilityPower: config?.volatilityPower ?? defaults.volatilityPower,
-        correlationAwareCashFloor: config?.correlationAwareCashFloor,
-        correlationAwareCashScale: config?.correlationAwareCashScale,
     };
-};
-
-export const averagePairwiseCorrelation = (
-    covariance: number[][],
-    assetIndexes: number[] = covariance.map((_row, index) => index),
-) => {
-    let total = 0;
-    let pairCount = 0;
-
-    for (let left = 0; left < assetIndexes.length; left += 1) {
-        for (let right = left + 1; right < assetIndexes.length; right += 1) {
-            const rowIndex = assetIndexes[left];
-            const columnIndex = assetIndexes[right];
-            const denominator = Math.sqrt(
-                Math.max(covariance[rowIndex]?.[rowIndex] ?? 0, 0)
-                * Math.max(covariance[columnIndex]?.[columnIndex] ?? 0, 0),
-            );
-
-            if (denominator <= 0) {
-                continue;
-            }
-
-            total += (covariance[rowIndex]?.[columnIndex] ?? 0) / denominator;
-            pairCount += 1;
-        }
-    }
-
-    return pairCount > 0 ? total / pairCount : 0;
-};
-
-export const applyCorrelationAwareCashScale = ({
-    assetIndexes,
-    baseCashReserve,
-    correlationFloor,
-    correlationScale,
-    covariance,
-}: {
-    assetIndexes: number[];
-    baseCashReserve: number;
-    correlationFloor: number;
-    correlationScale: number;
-    covariance: number[][];
-}) => {
-    const boundedFloor = Math.min(0.95, Math.max(-0.95, correlationFloor));
-    const boundedScale = Math.max(0, correlationScale);
-    const averageCorrelation = averagePairwiseCorrelation(covariance, assetIndexes);
-    const correlationExcess = Math.max(0, (averageCorrelation - boundedFloor) / Math.max(1e-8, 1 - boundedFloor));
-
-    return boundedCashReserve(baseCashReserve + correlationExcess * boundedScale);
 };
 
 export const applyDiagonalLoad = (covariance: number[][], load: number) => covariance.map((row, rowIndex) => row.map((value, columnIndex) => {
@@ -295,23 +238,12 @@ export const resolveMaxDiversificationOptimizationInput = ({
         ...constraints,
         maxSingleWeight: resolvedConfig.maxSingleWeight,
     }, eligibleAssetIndexes.length);
-    let cashReserve = applyMomentumBreadthCashScale({
+    const cashReserve = applyMomentumBreadthCashScale({
         assetCount: allocationAssetIndexes.length,
         baseCashReserve: boundedCashReserve(resolvedConfig.cashReserve),
         eligibleCount: eligibleAssetIndexes.length,
         scale: resolvedConfig.momentumBreadthCashScale,
     });
-
-    if (typeof resolvedConfig.correlationAwareCashFloor === 'number'
-        && typeof resolvedConfig.correlationAwareCashScale === 'number') {
-        cashReserve = applyCorrelationAwareCashScale({
-            assetIndexes: allocationAssetIndexes,
-            baseCashReserve: cashReserve,
-            correlationFloor: resolvedConfig.correlationAwareCashFloor,
-            correlationScale: resolvedConfig.correlationAwareCashScale,
-            covariance: assemblyCovariance,
-        });
-    }
 
     return {
         annualizedAssetVolatility: optimizationVolatility,
