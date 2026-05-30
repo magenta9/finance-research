@@ -7,7 +7,6 @@
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": 0,
-        "maxSingleWeight": 0.6,
-        "marchenkoPasturDenoise": true
+        "maxSingleWeight": 0.6
     }
 }
