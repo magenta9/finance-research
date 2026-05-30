@@ -10,6 +10,7 @@ import { assembleAllocationResult } from '../../desktop/quantdesk/packages/main/
 import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/optimizer';
 import { applyMomentumReturnTiltAroundWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-return-tilt';
 import { withResearchClassWeightCaps } from '../../desktop/quantdesk/packages/main/src/portfolio/max-diversification-research';
+import { applyEqualWeightShrinkage } from '../../desktop/quantdesk/packages/main/src/portfolio/equal-weight-shrinkage';
 import { applyPortfolioVolatilityCap } from '../../desktop/quantdesk/packages/main/src/portfolio/portfolio-volatility-cap';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
@@ -63,6 +64,7 @@ interface MaxDiversificationResearchConfig {
     momentumReturnTiltStrength?: number;
     portfolioVolatilityCapAnnualized?: number;
     portfolioVolatilityCapMinRiskyScale?: number;
+    equalWeightShrinkageIntensity?: number;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -572,6 +574,14 @@ const runCaseStrategy = async ({
         eligibleIndices,
         preparedCase.prepared.series.length,
     );
+
+    if (typeof researchConfig.equalWeightShrinkageIntensity === 'number') {
+        riskyWeights = applyEqualWeightShrinkage({
+            intensity: researchConfig.equalWeightShrinkageIntensity,
+            weights: riskyWeights,
+        });
+    }
+
     let cashReserve = typeof researchConfig.momentumBreadthCashScale === 'number'
         ? applyMomentumBreadthCashScale({
             assetCount: preparedCase.prepared.series.length,

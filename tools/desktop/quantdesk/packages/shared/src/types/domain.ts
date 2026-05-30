@@ -52,6 +52,7 @@ export interface MaxDiversificationStrategyConfig {
   momentumReturnTiltStrength?: number;
   portfolioVolatilityCapAnnualized?: number;
   portfolioVolatilityCapMinRiskyScale?: number;
+  equalWeightShrinkageIntensity?: number;
   minCorrelation?: number;
   momentumBreadthCashScale?: number;
   volatilityPower?: number;
