@@ -109,7 +109,7 @@ const ewmacTrendFollowingHandler: AllocationStrategyHandler = {
 
         return {
             optimizerPath: 'js',
-            result: assembleAllocationResult({
+            result: await assembleAllocationResult({
                 annualizedAssetVolatility: analysisInput.annualizedAssetVolatility,
                 annualizedMeanReturns: analysisInput.annualizedMeanReturns,
                 baseCurrency,

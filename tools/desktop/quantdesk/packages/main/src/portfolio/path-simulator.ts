@@ -14,6 +14,7 @@ export interface PathSimulationInput {
     priceSeries: number[][];
     alignedDates: string[];
     rebalanceCadence: RebalanceCadence;
+    resolveTargetWeights?: PathSimulationTargetWeightsResolver;
 }
 
 export interface PathSimulationResult {
@@ -24,6 +25,17 @@ export interface PathSimulationResult {
     trades: AllocationTrade[];
 }
 
+export interface PathSimulationTargetWeightsInput {
+    currentWeights: number[];
+    date: string;
+    dayIndex: number;
+    previousTargetWeights: number[];
+}
+
+export type PathSimulationTargetWeightsResolver = (
+    input: PathSimulationTargetWeightsInput,
+) => number[] | Promise<number[] | null | undefined> | null | undefined;
+
 const resolveAllocationTradeAction = (fromWeight: number, toWeight: number): AllocationTrade['action'] => {
     if (toWeight > fromWeight) {
         return toWeight > 0 ? 'open_long' : 'close_short';
@@ -32,13 +44,14 @@ const resolveAllocationTradeAction = (fromWeight: number, toWeight: number): All
     return toWeight < 0 ? 'open_short' : 'close_long';
 };
 
-export const simulatePortfolioPath = ({
+export const simulatePortfolioPath = async ({
     assetMetadata,
     targetWeights,
     priceSeries,
     alignedDates,
     rebalanceCadence,
-}: PathSimulationInput): PathSimulationResult => {
+    resolveTargetWeights,
+}: PathSimulationInput): Promise<PathSimulationResult> => {
     if (targetWeights.length === 0 || alignedDates.length === 0) {
         return {
             portfolioEquity: [1],
@@ -54,6 +67,7 @@ export const simulatePortfolioPath = ({
         };
     }
 
+    let activeTargetWeights = [...targetWeights];
     let currentWeights = [...targetWeights];
     let currentEquity = 1;
     let rebalanceEventCount = 0;
@@ -99,11 +113,21 @@ export const simulatePortfolioPath = ({
             equity: currentEquity,
         });
         currentWeights = totalValue === 0
-            ? [...targetWeights]
+            ? [...activeTargetWeights]
             : nextValues.map((value) => value / totalValue);
 
         if (isPortfolioCadenceRebalanceDay(alignedDates, dayIndex, rebalanceCadence)) {
-            targetWeights.forEach((targetWeight, assetIndex) => {
+            const resolvedTargetWeights = await resolveTargetWeights?.({
+                currentWeights: [...currentWeights],
+                date: alignedDates[dayIndex] ?? '',
+                dayIndex,
+                previousTargetWeights: [...activeTargetWeights],
+            });
+            const nextTargetWeights = resolvedTargetWeights?.length === activeTargetWeights.length
+                ? [...resolvedTargetWeights]
+                : [...activeTargetWeights];
+
+            nextTargetWeights.forEach((targetWeight, assetIndex) => {
                 const fromWeight = currentWeights[assetIndex] ?? 0;
                 const weightChange = targetWeight - fromWeight;
 
@@ -129,7 +153,8 @@ export const simulatePortfolioPath = ({
                     weightChange,
                 });
             });
-            currentWeights = [...targetWeights];
+            activeTargetWeights = [...nextTargetWeights];
+            currentWeights = [...nextTargetWeights];
             rebalanceEventCount += 1;
         }
     }

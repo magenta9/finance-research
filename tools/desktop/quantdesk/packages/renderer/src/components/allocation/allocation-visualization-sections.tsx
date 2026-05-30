@@ -136,6 +136,7 @@ const AssetChipButton = ({
 
 type AssetDateCoverageRow = NonNullable<AllocationResult['diagnostics']['assetDateCoverage']>[number];
 type ActiveDualMomentumRebalanceRecord = NonNullable<AllocationResult['diagnostics']['activeDualMomentum']>['rebalanceRecords'][number];
+type AllocationTradeRow = NonNullable<AllocationResult['diagnostics']['trades']>[number];
 type WeightRow = AllocationResult['allocations'][number];
 type PortfolioPathRow = NonNullable<AllocationResult['portfolioPath']>[number];
 type ScenarioRow = NonNullable<AllocationResult['scenarioAnalysis']>[number];
@@ -181,6 +182,43 @@ const buildHoldingRowsFromAllocations = (allocations: WeightRow[]): HoldingDispl
             weight: allocation.weight,
         }))
         .sort((left, right) => right.weight - left.weight);
+
+export const buildAllocationHoldingRowsForDate = (
+    trades: AllocationTradeRow[],
+    allocations: WeightRow[],
+    date: string,
+): HoldingDisplayRow[] => {
+    if (trades.length === 0) {
+        return buildHoldingRowsFromAllocations(allocations);
+    }
+
+    const allocationByAssetId = new Map(allocations.map((allocation) => [allocation.assetId, allocation]));
+    const holdingsByAsset = new Map<string, HoldingDisplayRow>();
+
+    trades
+        .filter((trade) => trade.date <= date)
+        .forEach((trade) => {
+            const key = trade.assetId || trade.symbol;
+            const allocation = allocationByAssetId.get(trade.assetId);
+            const nextWeight = trade.toWeight;
+
+            if (Math.abs(nextWeight) < 0.000001) {
+                holdingsByAsset.delete(key);
+                return;
+            }
+
+            holdingsByAsset.set(key, {
+                assetId: trade.assetId,
+                direction: nextWeight < 0 ? 'short' : 'long',
+                symbol: allocation?.symbol ?? trade.symbol,
+                weight: Math.abs(nextWeight),
+            });
+        });
+
+    const holdings = [...holdingsByAsset.values()].sort((left, right) => right.weight - left.weight);
+
+    return holdings.length > 0 ? holdings : buildHoldingRowsFromAllocations(allocations);
+};
 
 const formatHoldingLabel = (holding: HoldingDisplayRow) => [
     holding.symbol,
@@ -230,9 +268,11 @@ export const AllocationVisualizationSections = ({
 }: AllocationVisualizationSectionsProps) => {
     const activeDualMomentumRecords = result.diagnostics.activeDualMomentum?.rebalanceRecords ?? [];
     const latestActiveDualMomentumRecord = activeDualMomentumRecords.at(-1);
+    const allocationTrades = result.diagnostics.trades ?? [];
+    const latestPortfolioPathDate = portfolioPath.at(-1)?.date ?? result.diagnostics.dateRange?.endDate ?? '';
     const latestHoldingRows = latestActiveDualMomentumRecord
         ? buildHoldingRowsFromRebalanceRecord(latestActiveDualMomentumRecord)
-        : buildHoldingRowsFromAllocations(result.allocations);
+        : buildAllocationHoldingRowsForDate(allocationTrades, result.allocations, latestPortfolioPathDate);
     const latestCashWeight = latestActiveDualMomentumRecord?.cashWeight ?? 0;
     const hasCorrelationMatrix = correlationLabels.length > 0
         && result.correlationMatrix.matrix.length === correlationLabels.length
@@ -341,7 +381,10 @@ export const AllocationVisualizationSections = ({
                                             const point = payload[0]?.payload as PortfolioPathRow;
                                             const drawdownPoint = payload.find((entry) => entry.dataKey === 'drawdownEquity')?.payload as PortfolioPathDrawdownPoint | undefined;
                                             const activeDualMomentumRecord = findActiveDualMomentumRecordForDate(activeDualMomentumRecords, point.date);
-                                            const tooltipHoldings = buildHoldingRowsFromRebalanceRecord(activeDualMomentumRecord);
+                                            const tooltipHoldings = activeDualMomentumRecord
+                                                ? buildHoldingRowsFromRebalanceRecord(activeDualMomentumRecord)
+                                                : buildAllocationHoldingRowsForDate(allocationTrades, result.allocations, point.date);
+                                            const tooltipHoldingsDate = activeDualMomentumRecord?.date ?? point.date;
 
                                             return (
                                                 <div className="min-w-[260px] rounded-[18px] border border-[rgba(168,141,109,0.22)] bg-[rgba(255,252,247,0.98)] px-4 py-3 text-sm text-[var(--color-copy)] shadow-[0_18px_42px_rgba(61,43,31,0.1)]">
@@ -368,11 +411,11 @@ export const AllocationVisualizationSections = ({
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        {activeDualMomentumRecord && (
+                                                        {tooltipHoldings.length > 0 && (
                                                             <div className="rounded-[14px] border border-[rgba(156,98,55,0.18)] bg-[rgba(156,98,55,0.07)] px-3 py-2" data-testid="allocation-nav-tooltip-holdings">
                                                                 <div className="flex items-center justify-between gap-4 text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">
                                                                     <span>持仓</span>
-                                                                    <span>{activeDualMomentumRecord.date}</span>
+                                                                    <span>{tooltipHoldingsDate}</span>
                                                                 </div>
                                                                 <div className="mt-2 space-y-1 text-xs text-[var(--color-foreground)]">
                                                                     {tooltipHoldings.slice(0, 5).map((holding) => (
@@ -384,10 +427,10 @@ export const AllocationVisualizationSections = ({
                                                                     {tooltipHoldings.length > 5 && (
                                                                         <p className="text-[var(--color-muted)]">另有 {tooltipHoldings.length - 5} 个持仓</p>
                                                                     )}
-                                                                    {activeDualMomentumRecord.cashWeight > 0 && (
+                                                                    {(activeDualMomentumRecord?.cashWeight ?? 0) > 0 && (
                                                                         <div className="flex items-center justify-between gap-4 text-[var(--color-muted)]">
                                                                             <span>现金</span>
-                                                                            <strong className="font-medium">{formatPercent(activeDualMomentumRecord.cashWeight)}</strong>
+                                                                            <strong className="font-medium">{formatPercent(activeDualMomentumRecord?.cashWeight ?? 0)}</strong>
                                                                         </div>
                                                                     )}
                                                                 </div>

@@ -1,5 +1,6 @@
 import type { AllocationStrategy, AllocationType } from '@quantdesk/shared';
 
+import { buildAllocationAnalysisInput } from './allocation-analysis-input';
 import { assembleAllocationResult } from './allocation-result-assembler';
 import {
     mergeAllocationConstraints,
@@ -13,7 +14,10 @@ import {
     resolveAverageMomentumScores,
     resolveMaxDiversificationOptimizationInput,
 } from './max-diversification-research';
+import type { PathSimulationTargetWeightsResolver } from './path-simulator';
 import { resolvePreparedAssetIndexes } from './prepared-allocation-context';
+import type { PreparedAllocationData } from './preprocessor';
+import type { StrategyExecutionContext } from './strategy-registry';
 import type { AllocationStrategyHandler } from './strategy-registry';
 import { buildStrategyErrorResult } from './strategy-error-result';
 
@@ -25,6 +29,114 @@ const expandConfigurationWeights = (weights: number[], assetIndexes: number[], a
     });
 
     return expandedWeights;
+};
+
+const slicePreparedAllocationData = (prepared: PreparedAllocationData, dayIndex: number): PreparedAllocationData => {
+    const sliceEnd = dayIndex + 1;
+    const alignedDates = prepared.alignedDates.slice(0, sliceEnd);
+
+    return {
+        ...prepared,
+        alignedDates,
+        assetDateCoverage: prepared.assetDateCoverage.map((coverage) => ({
+            ...coverage,
+            actualEndDate: alignedDates.at(-1) ?? coverage.actualEndDate,
+            actualStartDate: alignedDates[0] ?? coverage.actualStartDate,
+            tradingDays: alignedDates.length,
+        })),
+        series: prepared.series.map((entry) => ({
+            ...entry,
+            prices: entry.prices.slice(0, sliceEnd),
+        })),
+    };
+};
+
+const createConfigurationTargetWeightsResolver = ({
+    allocationAssetIndexes,
+    baseCurrency,
+    constraints,
+    mode,
+    optimize,
+    prepared,
+    researchBaseline,
+    strategyMix,
+}: Pick<StrategyExecutionContext, 'baseCurrency' | 'mode' | 'optimize' | 'prepared' | 'strategyMix'> & {
+    allocationAssetIndexes: number[];
+    constraints: ReturnType<typeof mergeAllocationConstraints>;
+    researchBaseline: boolean;
+}): PathSimulationTargetWeightsResolver => async ({ dayIndex, previousTargetWeights }) => {
+    const slicedPrepared = slicePreparedAllocationData(prepared, dayIndex);
+    const analysisInputResult = buildAllocationAnalysisInput(slicedPrepared, strategyMix?.maxDiversification);
+
+    if (!analysisInputResult.ok) {
+        return previousTargetWeights;
+    }
+
+    if (researchBaseline) {
+        const researchInput = resolveMaxDiversificationOptimizationInput({
+            allocationAssetIndexes,
+            analysisInput: analysisInputResult.analysisInput,
+            config: strategyMix?.maxDiversification,
+            constraints,
+            prepared: slicedPrepared,
+        });
+        const optimization = await optimize({
+            annualizedAssetVolatility: researchInput.annualizedAssetVolatility,
+            assetIndexes: researchInput.assetIndexes,
+            constraints: researchInput.constraints,
+            covariance: researchInput.covariance,
+            mode,
+            prepared: slicedPrepared,
+        });
+
+        if (!optimization.ok) {
+            return previousTargetWeights;
+        }
+
+        const researchConfig = strategyMix?.maxDiversification;
+        const momentumScores = resolveAverageMomentumScores(slicedPrepared, researchConfig);
+        const optimizedWeights = typeof researchConfig?.momentumReturnTiltStrength === 'number'
+            && typeof researchConfig?.maxTrackingErrorVolatility === 'number'
+            ? applyMomentumReturnTiltAroundWeights({
+                covariance: researchInput.covariance,
+                momentumScores: researchInput.assetIndexes.map((index) => momentumScores[index] ?? 0),
+                referenceWeights: optimization.weights,
+                tiltStrength: researchConfig.momentumReturnTiltStrength,
+                trackingErrorVolatilityLimit: researchConfig.maxTrackingErrorVolatility,
+            })
+            : optimization.weights;
+        const riskyWeights = mapSubsetWeights(
+            optimizedWeights,
+            researchInput.assetIndexes,
+            slicedPrepared.series.length,
+        );
+        const assemblyInput = appendMaxDiversificationCashReserve({
+            baseCurrency,
+            cashReserve: researchInput.cashReserve,
+            covariance: researchInput.assemblyCovariance,
+            meanReturns: analysisInputResult.analysisInput.annualizedMeanReturns,
+            prepared: slicedPrepared,
+            volatility: researchInput.assemblyVolatility,
+            weights: riskyWeights,
+        });
+
+        return assemblyInput.weights;
+    }
+
+    const optimization = await optimize({
+        annualizedAssetVolatility: analysisInputResult.analysisInput.annualizedAssetVolatility,
+        assetIndexes: allocationAssetIndexes,
+        constraints,
+        covariance: analysisInputResult.analysisInput.shrunkCovariance,
+        mode,
+        prepared: slicedPrepared,
+    });
+
+    if (!optimization.ok) {
+        return previousTargetWeights;
+    }
+
+    return expandConfigurationWeights(optimization.weights, allocationAssetIndexes, slicedPrepared.series.length);
 };
 
 export const createConfigurationStrategyHandler = (
@@ -80,6 +192,19 @@ export const createConfigurationStrategyHandler = (
                 stage: 'constraint_failed',
             };
         }
+
+        const resolveTargetWeights = rebalanceCadence === 'none'
+            ? undefined
+            : createConfigurationTargetWeightsResolver({
+                allocationAssetIndexes,
+                baseCurrency,
+                constraints: mergedConstraints,
+                mode,
+                optimize,
+                prepared,
+                researchBaseline: Boolean(options.researchBaseline),
+                strategyMix,
+            });
 
         if (options.researchBaseline) {
             const researchInput = resolveMaxDiversificationOptimizationInput({
@@ -142,7 +267,7 @@ export const createConfigurationStrategyHandler = (
 
             return {
                 optimizerPath: optimization.optimizer,
-                result: assembleAllocationResult({
+                result: await assembleAllocationResult({
                     allocationAssetIds: undefined,
                     annualizedAssetVolatility: assemblyInput.volatility,
                     annualizedMeanReturns: assemblyInput.meanReturns,
@@ -155,6 +280,7 @@ export const createConfigurationStrategyHandler = (
                     optimizerDiagnostics: optimization.diagnostics,
                     prepared: assemblyInput.prepared,
                     rebalanceCadence,
+                    resolveTargetWeights,
                     strategy,
                     trendFollowing: null,
                     weights: assemblyInput.weights,
@@ -189,7 +315,7 @@ export const createConfigurationStrategyHandler = (
 
         return {
             optimizerPath: optimization.optimizer,
-            result: assembleAllocationResult({
+            result: await assembleAllocationResult({
                 allocationAssetIds: undefined,
                 annualizedAssetVolatility: analysisInput.annualizedAssetVolatility,
                 annualizedMeanReturns: analysisInput.annualizedMeanReturns,
@@ -202,6 +328,7 @@ export const createConfigurationStrategyHandler = (
                 optimizerDiagnostics: optimization.diagnostics,
                 prepared,
                 rebalanceCadence,
+                resolveTargetWeights,
                 strategy,
                 trendFollowing: null,
                 weights: expandConfigurationWeights(optimization.weights, allocationAssetIndexes, prepared.series.length),
