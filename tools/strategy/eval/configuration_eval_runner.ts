@@ -16,6 +16,7 @@ import { blendMdErcWeights } from '../../desktop/quantdesk/packages/main/src/por
 import { blendMdHrpWeights, computeHrpWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/hrp-weights';
 import { blendMomentumPriorWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-prior-blend';
 import { applyCorrelationClusterWeightCap } from '../../desktop/quantdesk/packages/main/src/portfolio/correlation-cluster-weight-cap';
+import { applyCorrelationRegimeCashScale } from '../../desktop/quantdesk/packages/main/src/portfolio/correlation-regime-cash';
 import { applyPortfolioVolatilityCap } from '../../desktop/quantdesk/packages/main/src/portfolio/portfolio-volatility-cap';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
@@ -77,6 +78,9 @@ interface MaxDiversificationResearchConfig {
     mdHrpBlendWeight?: number;
     momentumPriorBlendWeight?: number;
     correlationClusterWeightCap?: boolean;
+    mdInverseVolBlendWeight?: number;
+    correlationRegimeCashScale?: number;
+    useErcWhenEligibleAtLeast?: number;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -583,14 +587,33 @@ const runCaseStrategy = async ({
         optimizationInput.constraints,
         optimizationAssetClasses.length,
     );
+    const optimizationMode = typeof researchConfig.useErcWhenEligibleAtLeast === 'number'
+        && eligibleIndices.length >= researchConfig.useErcWhenEligibleAtLeast
+        ? 'erc'
+        : optimizationInput.mode;
     const optimization = optimizeWeights({
         assetClasses: optimizationAssetClasses,
         constraints: optimizationConstraints,
         covariance: optimizationInput.covariance,
-        mode: optimizationInput.mode,
+        mode: optimizationMode,
         volatilities: optimizationInput.volatilities,
     });
     let subsetOptimizedWeights = optimization.weights;
+
+    if (typeof researchConfig.mdInverseVolBlendWeight === 'number') {
+        const inverseVolOptimization = optimizeWeights({
+            assetClasses: optimizationAssetClasses,
+            constraints: optimizationConstraints,
+            covariance: optimizationInput.covariance,
+            mode: 'inverse_volatility',
+            volatilities: optimizationInput.volatilities,
+        });
+        subsetOptimizedWeights = blendMdErcWeights({
+            blendWeight: researchConfig.mdInverseVolBlendWeight,
+            ercWeights: inverseVolOptimization.weights,
+            mdWeights: subsetOptimizedWeights,
+        });
+    }
 
     if (typeof researchConfig.mdErcBlendWeight === 'number') {
         const ercOptimization = optimizeWeights({
@@ -662,6 +685,14 @@ const runCaseStrategy = async ({
             scale: researchConfig.momentumBreadthCashScale,
         })
         : fullOptimizationInput.cashReserve;
+
+    if (typeof researchConfig.correlationRegimeCashScale === 'number') {
+        cashReserve = applyCorrelationRegimeCashScale({
+            baseCashReserve: cashReserve,
+            covariance: fullOptimizationInput.covariance,
+            scale: researchConfig.correlationRegimeCashScale,
+        });
+    }
 
     if (typeof researchConfig.portfolioVolatilityCapAnnualized === 'number') {
         const capped = applyPortfolioVolatilityCap({
