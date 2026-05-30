@@ -7,8 +7,6 @@
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": -0.01,
-        "maxSingleWeight": 0.6,
-        "momentumReturnTiltStrength": 0.2,
-        "maxTrackingErrorVolatility": 0.08
+        "maxSingleWeight": 0.6
     }
 }
