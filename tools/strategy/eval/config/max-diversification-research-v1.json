@@ -7,6 +7,7 @@
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": 0,
-        "maxSingleWeight": 0.55
+        "maxSingleWeight": 0.55,
+        "minCorrelation": 0.06
     }
 }
