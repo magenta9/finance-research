@@ -15,6 +15,7 @@ import { selectFaaMomentumTopIndices } from '../../desktop/quantdesk/packages/ma
 import { blendMdErcWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/md-erc-blend';
 import { blendMdHrpWeights, computeHrpWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/hrp-weights';
 import { blendMomentumPriorWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-prior-blend';
+import { applyCorrelationClusterWeightCap } from '../../desktop/quantdesk/packages/main/src/portfolio/correlation-cluster-weight-cap';
 import { applyPortfolioVolatilityCap } from '../../desktop/quantdesk/packages/main/src/portfolio/portfolio-volatility-cap';
 import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
@@ -75,6 +76,7 @@ interface MaxDiversificationResearchConfig {
     faaMomentumTopN?: number;
     mdHrpBlendWeight?: number;
     momentumPriorBlendWeight?: number;
+    correlationClusterWeightCap?: boolean;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -619,6 +621,13 @@ const runCaseStrategy = async ({
             blendWeight: researchConfig.momentumPriorBlendWeight,
             mdWeights: subsetOptimizedWeights,
             momentumScores: subsetArray(momentumScores, eligibleIndices),
+        });
+    }
+
+    if (researchConfig.correlationClusterWeightCap === true) {
+        subsetOptimizedWeights = applyCorrelationClusterWeightCap({
+            covariance: optimizationInput.covariance,
+            weights: subsetOptimizedWeights,
         });
     }
 
