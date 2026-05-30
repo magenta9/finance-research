@@ -18,6 +18,7 @@ import {
     annualizedVolatility,
     computeLogReturns,
     covarianceMatrix,
+    semiCovarianceMatrix,
     shrinkCovarianceMatrix,
 } from '../../desktop/quantdesk/packages/main/src/portfolio/statistics';
 
@@ -65,6 +66,7 @@ interface MaxDiversificationResearchConfig {
     portfolioVolatilityCapAnnualized?: number;
     portfolioVolatilityCapMinRiskyScale?: number;
     equalWeightShrinkageIntensity?: number;
+    semiCovarianceForOptimization?: boolean;
     minCorrelation?: number;
     momentumBreadthCashScale?: number;
     volatilityPower?: number;
@@ -476,17 +478,22 @@ const prepareEvalCase = ({
     assetBySymbol,
     marchenkoPasturDenoise,
     pricesBySymbol,
+    semiCovarianceForOptimization,
     symbols,
 }: {
     assetBySymbol: Map<string, StoredAsset>;
     marchenkoPasturDenoise?: boolean;
     pricesBySymbol: Record<string, PriceCacheEntry>;
+    semiCovarianceForOptimization?: boolean;
     symbols: string[];
 }) => {
     const prepared = prepareEvalData({ assetBySymbol, pricesBySymbol, symbols });
     const logReturns = computeLogReturns(prepared.series.map((entry) => entry.prices));
     const observationCount = logReturns[0]?.length ?? 0;
-    let covariance = shrinkCovarianceMatrix(covarianceMatrix(logReturns));
+    const sampleCovariance = semiCovarianceForOptimization
+        ? semiCovarianceMatrix(logReturns)
+        : covarianceMatrix(logReturns);
+    let covariance = shrinkCovarianceMatrix(sampleCovariance);
 
     if (marchenkoPasturDenoise) {
         covariance = denoiseCovarianceMarchenkoPastur(covariance, observationCount);
@@ -665,6 +672,8 @@ const main = async () => {
                 marchenkoPasturDenoise: payload.strategyConfigs?.max_diversification_research_v1
                     ?.marchenkoPasturDenoise,
                 pricesBySymbol: payload.pricesBySymbol,
+                semiCovarianceForOptimization: payload.strategyConfigs?.max_diversification_research_v1
+                    ?.semiCovarianceForOptimization,
                 symbols: evalCase.symbols,
             });
 
