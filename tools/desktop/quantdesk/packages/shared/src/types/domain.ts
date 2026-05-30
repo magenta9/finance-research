@@ -42,6 +42,8 @@ export interface MaxDiversificationStrategyConfig {
   absoluteMomentumMinPositiveCount?: number;
   absoluteMomentumThreshold?: number;
   cashReserve?: number;
+  correlationAwareCashFloor?: number;
+  correlationAwareCashScale?: number;
   diagonalLoad?: number;
   maxSingleWeight?: number;
   minCorrelation?: number;

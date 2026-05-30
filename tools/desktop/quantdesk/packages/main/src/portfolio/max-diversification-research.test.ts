@@ -5,6 +5,7 @@ import type { AllocationConstraints, StoredAsset } from '@quantdesk/shared';
 import type { AllocationAnalysisInput } from './allocation-analysis-input';
 import {
     appendMaxDiversificationCashReserve,
+    applyCorrelationAwareCashScale,
     resolveAbsoluteMomentumEligibleIndices,
     resolveMaxDiversificationOptimizationInput,
 } from './max-diversification-research';
@@ -120,6 +121,63 @@ describe('max diversification research v3', () => {
         expect(input.annualizedAssetVolatility).toEqual([1, 1]);
         expect(input.covariance).toHaveLength(2);
         expect(input.assemblyCovariance).toHaveLength(4);
+    });
+
+    test('raises cash reserve when average pairwise correlation exceeds the floor', () => {
+        const highCorrelation = [
+            [0.04, 0.035, 0.032],
+            [0.035, 0.04, 0.034],
+            [0.032, 0.034, 0.04],
+        ];
+
+        expect(applyCorrelationAwareCashScale({
+            assetIndexes: [0, 1, 2],
+            baseCashReserve: 0.2,
+            correlationFloor: 0.35,
+            correlationScale: 0.75,
+            covariance: highCorrelation,
+        })).toBeGreaterThan(0.2);
+    });
+
+    test('applies correlation-aware cash scaling in the optimization input', () => {
+        const assets = [
+            buildAsset('asset-a', 'AAA', 'equity'),
+            buildAsset('asset-b', 'BBB', 'equity'),
+            buildAsset('asset-c', 'CCC', 'fixed_income'),
+        ];
+        const prepared = buildPrepared(assets, [
+            makeSeries(100, 0.003),
+            makeSeries(100, 0.002),
+            makeSeries(100, 0.001),
+        ]);
+        const highCorrelationCovariance = [
+            [0.04, 0.035, 0.032],
+            [0.035, 0.04, 0.034],
+            [0.032, 0.034, 0.04],
+        ];
+        const analysisInput: AllocationAnalysisInput = {
+            annualizedAssetVolatility: [0.2, 0.2, 0.2],
+            annualizedMeanReturns: [0.08, 0.08, 0.08],
+            shrunkCovariance: highCorrelationCovariance,
+        };
+        const baseline = resolveMaxDiversificationOptimizationInput({
+            allocationAssetIndexes: [0, 1, 2],
+            analysisInput,
+            constraints,
+            prepared,
+        });
+        const withCorrelationAwareCash = resolveMaxDiversificationOptimizationInput({
+            allocationAssetIndexes: [0, 1, 2],
+            analysisInput,
+            config: {
+                correlationAwareCashFloor: 0.35,
+                correlationAwareCashScale: 0.75,
+            },
+            constraints,
+            prepared,
+        });
+
+        expect(withCorrelationAwareCash.cashReserve).toBeGreaterThan(baseline.cashReserve);
     });
 
     test('appends a synthetic cash reserve asset for result assembly', () => {

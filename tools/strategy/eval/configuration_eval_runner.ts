@@ -8,6 +8,7 @@ import type { StoredAsset } from '../../desktop/quantdesk/packages/shared/src/ty
 import type { PreparedAllocationData } from '../../desktop/quantdesk/packages/main/src/portfolio/preprocessor';
 import { assembleAllocationResult } from '../../desktop/quantdesk/packages/main/src/portfolio/allocation-result-assembler';
 import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/optimizer';
+import { applyCorrelationAwareCashScale } from '../../desktop/quantdesk/packages/main/src/portfolio/max-diversification-research';
 import {
     annualizedReturns,
     annualizedVolatility,
@@ -48,6 +49,8 @@ interface MaxDiversificationResearchConfig {
     absoluteMomentumMinPositiveCount?: number;
     absoluteMomentumThreshold?: number;
     cashReserve?: number;
+    correlationAwareCashFloor?: number;
+    correlationAwareCashScale?: number;
     covarianceShrinkage?: number;
     diagonalLoad?: number;
     maxSingleWeight?: number;
@@ -517,7 +520,7 @@ const runCaseStrategy = ({
         eligibleIndices,
         preparedCase.prepared.series.length,
     );
-    const cashReserve = typeof researchConfig.momentumBreadthCashScale === 'number'
+    let cashReserve = typeof researchConfig.momentumBreadthCashScale === 'number'
         ? applyMomentumBreadthCashScale({
             assetCount: preparedCase.prepared.series.length,
             baseCashReserve: fullOptimizationInput.cashReserve,
@@ -525,6 +528,17 @@ const runCaseStrategy = ({
             scale: researchConfig.momentumBreadthCashScale,
         })
         : fullOptimizationInput.cashReserve;
+
+    if (typeof researchConfig.correlationAwareCashFloor === 'number'
+        && typeof researchConfig.correlationAwareCashScale === 'number') {
+        cashReserve = applyCorrelationAwareCashScale({
+            assetIndexes: preparedCase.prepared.series.map((_entry, index) => index),
+            baseCashReserve: cashReserve,
+            correlationFloor: researchConfig.correlationAwareCashFloor,
+            correlationScale: researchConfig.correlationAwareCashScale,
+            covariance: preparedCase.covariance,
+        });
+    }
     const assemblyInput = appendCashReserve({
         baseCurrency,
         cashReserve,
