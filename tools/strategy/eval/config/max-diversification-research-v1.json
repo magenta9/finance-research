@@ -7,7 +7,6 @@
         ],
         "absoluteMomentumMinPositiveCount": 2,
         "absoluteMomentumThreshold": 0,
-        "maxSingleWeight": 0.55,
-        "volatilityPower": 0.25
+        "maxSingleWeight": 0.55
     }
 }
