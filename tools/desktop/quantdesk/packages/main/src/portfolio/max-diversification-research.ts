@@ -170,20 +170,34 @@ const transformCovariance = (
     config: MaxDiversificationResearchConfigResolved,
 ) => applyMinCorrelation(applyDiagonalLoad(cloneMatrix(covariance), config.diagonalLoad), config.minCorrelation);
 
-export const withEquityClassWeightCap = (
+export const withResearchClassWeightCaps = (
     constraints: AllocationConstraints,
-    equityClassWeightCap?: number,
+    config?: MaxDiversificationStrategyConfig,
 ): AllocationConstraints => {
-    if (typeof equityClassWeightCap !== 'number') {
+    const classCaps = { ...constraints.maxClassWeight };
+
+    if (typeof config?.equityClassWeightCap === 'number') {
+        classCaps.equity = Math.min(1, Math.max(0, config.equityClassWeightCap));
+    }
+
+    if (typeof config?.fixedIncomeClassWeightCap === 'number') {
+        classCaps.fixed_income = Math.min(1, Math.max(0, config.fixedIncomeClassWeightCap));
+    }
+
+    if (typeof config?.commodityClassWeightCap === 'number') {
+        classCaps.commodity = Math.min(1, Math.max(0, config.commodityClassWeightCap));
+    }
+
+    if (Object.keys(classCaps).length === Object.keys(constraints.maxClassWeight).length
+        && !config?.equityClassWeightCap
+        && !config?.fixedIncomeClassWeightCap
+        && !config?.commodityClassWeightCap) {
         return constraints;
     }
 
     return {
         ...constraints,
-        maxClassWeight: {
-            ...constraints.maxClassWeight,
-            equity: Math.min(1, Math.max(0, equityClassWeightCap)),
-        },
+        maxClassWeight: classCaps,
     };
 };
 
@@ -273,10 +287,10 @@ export const resolveMaxDiversificationOptimizationInput = ({
         resolvedConfig.volatilityPower,
     );
     const optimizationConstraints = ensureFeasibleConstraints(
-        withEquityClassWeightCap({
+        withResearchClassWeightCaps({
             ...constraints,
             maxSingleWeight: resolvedConfig.maxSingleWeight,
-        }, config?.equityClassWeightCap),
+        }, config),
         eligibleAssetIndexes.length,
     );
     const cashReserve = applyMomentumBreadthCashScale({
