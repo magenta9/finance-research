@@ -1,0 +1,15 @@
+{
+  "extends": "../../desktop/quantdesk/tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "lib": ["ES2022"],
+    "types": ["node", "vitest/globals"],
+    "rootDir": "src",
+    "outDir": "dist",
+    "baseUrl": "../../desktop/quantdesk",
+    "paths": {
+      "ml-matrix": ["node_modules/ml-matrix"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

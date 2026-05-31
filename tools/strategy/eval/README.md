@@ -1,34 +1,55 @@
 # Strategy Eval Framework
 
-This directory contains the generic evaluation harness for QuantDesk allocation strategies.
+Unified offline evaluation for allocation strategies. Strategy execution is injected through `tools/strategy/allocation-engine` `defaultAllocationStrategyRegistry`; the eval harness only orchestrates cases, price loading, scoring, and reporting.
 
-The first runnable scope is Configuration Strategy Eval:
-
-- universe: current Desktop asset snapshot, filtered to A + BOND markets
-- strategies: ERC, Inverse Volatility, Max Diversification
-- basket sizes: 5, 10, 15, 20 assets
-- windows: 2, 3, 5 years
-- rebalance cadences: weekly, monthly, quarterly
-- samples: 20 unique baskets per size/window/cadence cell
-- price data: `quant-data get-price-series`
-- single-case score coefficients: expected return 0.40, Sharpe 0.40, max drawdown 0.10, volatility 0.10
-- expected return score bounds: 0% to 50% annualized expected return
-- final score: `0.5 * p50Score + 0.25 * p10Score + 0.25 * p90Score`
-
-Run a dry-run smoke check from the repository root:
+## Entry point
 
 ```sh
-python3 tools/strategy/eval/run_configuration_eval.py --dry-run --limit 1
+python3 tools/strategy/eval/run_strategy_eval.py --dry-run --limit 1 --strategy erc
 ```
 
-Run a small live smoke check:
+Live smoke:
 
 ```sh
-python3 tools/strategy/eval/run_configuration_eval.py --samples-per-cell 1 --limit 1 --run-id smoke
+python3 tools/strategy/eval/run_strategy_eval.py --samples-per-cell 1 --limit 1 --run-id smoke --strategy erc
 ```
 
-Run the first full baseline:
+ADM preset:
 
 ```sh
-python3 tools/strategy/eval/run_configuration_eval.py --samples-per-cell 20 --run-id baseline-a-bond-config-v1
+python3 tools/strategy/eval/run_strategy_eval.py --config tools/strategy/eval/config/adm-eval-run.json --dry-run --limit 1
+```
+
+## Architecture
+
+- Python: [run_strategy_eval.py](run_strategy_eval.py) builds `EvalRunRequest`, loads `quant-data` prices, scores rows, writes artifacts.
+- TypeScript: [generic_eval_runner.ts](generic_eval_runner.ts) dispatches each case/strategy pair through allocation-engine `AllocationStrategyHandler`.
+- Contracts: [eval_runner_contract.ts](eval_runner_contract.ts), [eval_core/contract.py](../eval_core/contract.py).
+- Shared modules: [eval_core/](../eval_core/).
+
+**扩展新策略或新打分指标**：见 [EXTENDING.md](EXTENDING.md)。
+
+## Output
+
+`<output-root>/<YYYY-MM-DD>/<run-id>/`
+
+- `cases.json`
+- `eval-plan.json`
+- `results.json`
+- `results.tsv`
+- `score-summary.json`
+- `report.md`
+
+## Deprecated entry points
+
+- `run_configuration_eval.py` forwards to `run_strategy_eval.py`.
+- `tools/strategy/active-dual-momentum/eval/run_eval.py` forwards to `run_strategy_eval.py --config config/adm-eval-run.json`.
+- Legacy TS runners `configuration_eval_runner.ts` and `adm_eval_runner.ts` are superseded by `generic_eval_runner.ts`.
+
+## Tests
+
+From `tools/strategy/eval`:
+
+```sh
+make eval.test
 ```

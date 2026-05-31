@@ -1,3 +1,4 @@
+/** @deprecated Use tools/strategy/eval/generic_eval_runner.ts instead. */
 import fs from 'node:fs';
 
 import type { ActiveDualMomentumDiagnostics, AllocationStrategyMix, Currency } from '../../../desktop/quantdesk/packages/shared/src/types/domain';

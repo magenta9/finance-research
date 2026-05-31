@@ -166,7 +166,7 @@ export class PortfolioAllocationPipeline {
                         code: 'UNSUPPORTED_STRATEGY',
                         message: `未注册的配置策略：${strategy}`,
                         suggestions: [
-                            `可用策略：${Object.keys(defaultAllocationStrategyRegistry).sort().join('、')}`,
+                            `可用策略：${Object.keys(this.strategyRegistry).sort().join('、')}`,
                         ],
                     },
                     mode,
