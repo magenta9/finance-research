@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	risk-exit-redeployment-cooldown	84.7084	66.1378	88.8499	96.7642	79.1372	budget-pass	Route exited or flipped risk budget to cash for the current rebalance instead of immediately redeploying it.	"{""riskExitRedeploymentCooldown"": true}"

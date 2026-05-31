@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	decay-penalty	72.3358	46.4217	74.3758	93.2469	64.5616	discard	Reduce weight when recent momentum conflicts with lookback momentum.	"{""decayPenaltyFactor"": 0.7}"

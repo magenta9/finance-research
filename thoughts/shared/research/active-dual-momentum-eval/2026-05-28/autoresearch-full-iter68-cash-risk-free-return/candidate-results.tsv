@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	cash-risk-free-return	76.8205	56.0719	80.4666	94.5625	70.5959	budget-pass	Accrue base-currency risk-free return on existing ADM cash weight.	"{""cashReturnMode"": ""riskFreeRate""}"

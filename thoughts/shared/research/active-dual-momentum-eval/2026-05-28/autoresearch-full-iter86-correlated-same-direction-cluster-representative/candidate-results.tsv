@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	correlated-same-direction-cluster-representative	78.2198	58.7312	77.4412	97.1941	72.3732	budget-pass	Keep only the largest-weight representative inside each highly correlated same-direction cluster and cash out the rest.	"{""correlatedSameDirectionClusterRepresentative"": true}"

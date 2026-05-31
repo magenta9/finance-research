@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	entry-probation-cash	74.0907	50.6755	72.711	96.6903	67.0661	discard	Route newly selected or flipped target positions to cash for one rebalance before allowing entry.	"{""entryProbationCash"": true}"

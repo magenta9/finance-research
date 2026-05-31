@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	correlation-aware-cross-sign-offset	75.342	55.5105	75.9972	96.5197	69.3925	budget-pass	Only cash out opposite-direction gross exposure when the long and short assets are positively correlated.	"{""correlationAwareCrossSignOffset"": true}"

@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	risk-trim-reentry-cooldown	76.8025	55.3883	76.3686	97.0374	70.3782	budget-pass	After a same-direction partial trim, route the next rebalance add-back budget to cash.	"{""riskTrimReentryCooldown"": true}"
