@@ -1,3 +1,4 @@
+/** @deprecated Use generic_eval_runner.ts with QuantDesk defaultAllocationStrategyRegistry. */
 import type {
     AllocationConstraints,
     AllocationType,

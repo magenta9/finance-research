@@ -23,6 +23,7 @@ data.aliases: ## Verify and print quant-data index aliases
 
 strategy.test: ## Run Python strategy tests
 	python3 -m unittest discover -s tools/strategy/futures-trend-observation -p '*_test.py'
+	cd tools/strategy && python3 -m unittest discover -s eval_core -p '*_test.py'
 
 ##@ Jobs
 

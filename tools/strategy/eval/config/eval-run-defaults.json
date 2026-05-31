@@ -1,0 +1,92 @@
+{
+    "baseCurrency": "CNY",
+    "endDate": "2026-05-27",
+    "seed": 20260528,
+    "outputRoot": "thoughts/shared/research/strategy-eval",
+    "universe": "config/desktop-current-assets.json",
+    "markets": [
+        "A",
+        "BOND"
+    ],
+    "caseGenerator": {
+        "mode": "unique_basket",
+        "basketSizes": [
+            5,
+            10,
+            15,
+            20
+        ],
+        "windowsYears": [
+            2,
+            3,
+            5
+        ],
+        "cadences": [
+            "weekly",
+            "monthly",
+            "quarterly"
+        ],
+        "samplesPerCell": 20,
+        "conflictGroupsPath": null
+    },
+    "pricePolicy": {
+        "minBars": 61,
+        "bondMarketFallback": true
+    },
+    "defaultConstraints": {
+        "allowLeverage": false,
+        "allowShort": false,
+        "maxClassWeight": {},
+        "maxSingleWeight": 0.35
+    },
+    "strategyRuns": [
+        {
+            "strategyId": "erc",
+            "strategyMix": {}
+        },
+        {
+            "strategyId": "inverse_volatility",
+            "strategyMix": {}
+        },
+        {
+            "strategyId": "max_diversification",
+            "strategyMix": {}
+        }
+    ],
+    "scoringProfile": {
+        "requireAllCasesSucceeded": true,
+        "finalScore": {
+            "p10Weight": 0.25,
+            "p50Weight": 0.5,
+            "p90Weight": 0.25
+        },
+        "metrics": [
+            {
+                "key": "expectedReturn",
+                "weight": 0.4,
+                "direction": "higher_better",
+                "floor": 0,
+                "ceiling": 0.5
+            },
+            {
+                "key": "sharpeRatio",
+                "weight": 0.4,
+                "direction": "higher_better",
+                "floor": -0.5,
+                "ceiling": 2.0
+            },
+            {
+                "key": "maxDrawdown",
+                "weight": 0.1,
+                "direction": "lower_better",
+                "ceiling": 0.35
+            },
+            {
+                "key": "volatility",
+                "weight": 0.1,
+                "direction": "lower_better",
+                "ceiling": 0.35
+            }
+        ]
+    }
+}
