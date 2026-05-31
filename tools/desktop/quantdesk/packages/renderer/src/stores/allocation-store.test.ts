@@ -226,21 +226,6 @@ describe('useAllocationStore', () => {
         );
     });
 
-    test('sends visible MDP v3 strategy with max diversification mode', async () => {
-        useAllocationStore.setState({ selectedAssetIds: ['spy', 'agg'] });
-        useAllocationStore.getState().setStrategy('max_diversification_research_v1');
-
-        await useAllocationStore.getState().runAllocation();
-
-        expect(mockApi.portfolio.runAllocation).toHaveBeenCalledWith(
-            expect.objectContaining({
-                mode: 'max_diversification',
-                strategy: 'max_diversification_research_v1',
-                strategyMix: undefined,
-            }),
-        );
-    });
-
     test('sends EWMAC as a top-level strategy with a full trend-following sleeve', async () => {
         useAllocationStore.setState({ selectedAssetIds: ['spy', 'agg'] });
         useAllocationStore.getState().setStrategy('ewmac_trend_following');

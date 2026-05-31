@@ -7,13 +7,6 @@ import {
     validateAllocationAssetSelection,
     validateAllocationConstraints,
 } from './allocation-validator';
-import { applyMomentumReturnTiltAroundWeights } from './momentum-return-tilt';
-import {
-    appendMaxDiversificationCashReserve,
-    mapSubsetWeights,
-    resolveAverageMomentumScores,
-    resolveMaxDiversificationOptimizationInput,
-} from './max-diversification-research';
 import type { PathSimulationTargetWeightsResolver } from './path-simulator';
 import { resolvePreparedAssetIndexes } from './prepared-allocation-context';
 import type { PreparedAllocationData } from './preprocessor';
@@ -52,74 +45,19 @@ const slicePreparedAllocationData = (prepared: PreparedAllocationData, dayIndex:
 
 const createConfigurationTargetWeightsResolver = ({
     allocationAssetIndexes,
-    baseCurrency,
     constraints,
     mode,
     optimize,
     prepared,
-    researchBaseline,
-    strategyMix,
-}: Pick<StrategyExecutionContext, 'baseCurrency' | 'mode' | 'optimize' | 'prepared' | 'strategyMix'> & {
+}: Pick<StrategyExecutionContext, 'mode' | 'optimize' | 'prepared'> & {
     allocationAssetIndexes: number[];
     constraints: ReturnType<typeof mergeAllocationConstraints>;
-    researchBaseline: boolean;
 }): PathSimulationTargetWeightsResolver => async ({ dayIndex, previousTargetWeights }) => {
     const slicedPrepared = slicePreparedAllocationData(prepared, dayIndex);
-    const analysisInputResult = buildAllocationAnalysisInput(slicedPrepared, strategyMix?.maxDiversification);
+    const analysisInputResult = buildAllocationAnalysisInput(slicedPrepared);
 
     if (!analysisInputResult.ok) {
         return previousTargetWeights;
-    }
-
-    if (researchBaseline) {
-        const researchInput = resolveMaxDiversificationOptimizationInput({
-            allocationAssetIndexes,
-            analysisInput: analysisInputResult.analysisInput,
-            config: strategyMix?.maxDiversification,
-            constraints,
-            prepared: slicedPrepared,
-        });
-        const optimization = await optimize({
-            annualizedAssetVolatility: researchInput.annualizedAssetVolatility,
-            assetIndexes: researchInput.assetIndexes,
-            constraints: researchInput.constraints,
-            covariance: researchInput.covariance,
-            mode,
-            prepared: slicedPrepared,
-        });
-
-        if (!optimization.ok) {
-            return previousTargetWeights;
-        }
-
-        const researchConfig = strategyMix?.maxDiversification;
-        const momentumScores = resolveAverageMomentumScores(slicedPrepared, researchConfig);
-        const optimizedWeights = typeof researchConfig?.momentumReturnTiltStrength === 'number'
-            && typeof researchConfig?.maxTrackingErrorVolatility === 'number'
-            ? applyMomentumReturnTiltAroundWeights({
-                covariance: researchInput.covariance,
-                momentumScores: researchInput.assetIndexes.map((index) => momentumScores[index] ?? 0),
-                referenceWeights: optimization.weights,
-                tiltStrength: researchConfig.momentumReturnTiltStrength,
-                trackingErrorVolatilityLimit: researchConfig.maxTrackingErrorVolatility,
-            })
-            : optimization.weights;
-        const riskyWeights = mapSubsetWeights(
-            optimizedWeights,
-            researchInput.assetIndexes,
-            slicedPrepared.series.length,
-        );
-        const assemblyInput = appendMaxDiversificationCashReserve({
-            baseCurrency,
-            cashReserve: researchInput.cashReserve,
-            covariance: researchInput.assemblyCovariance,
-            meanReturns: analysisInputResult.analysisInput.annualizedMeanReturns,
-            prepared: slicedPrepared,
-            volatility: researchInput.assemblyVolatility,
-            weights: riskyWeights,
-        });
-
-        return assemblyInput.weights;
     }
 
     const optimization = await optimize({
@@ -141,7 +79,6 @@ const createConfigurationTargetWeightsResolver = ({
 export const createConfigurationStrategyHandler = (
     mode: AllocationType,
     options: {
-        researchBaseline?: boolean;
         strategy?: AllocationStrategy;
     } = {},
 ): AllocationStrategyHandler => ({
@@ -196,97 +133,11 @@ export const createConfigurationStrategyHandler = (
             ? undefined
             : createConfigurationTargetWeightsResolver({
                 allocationAssetIndexes,
-                baseCurrency,
                 constraints: mergedConstraints,
                 mode,
                 optimize,
                 prepared,
-                researchBaseline: Boolean(options.researchBaseline),
-                strategyMix,
             });
-
-        if (options.researchBaseline) {
-            const researchInput = resolveMaxDiversificationOptimizationInput({
-                allocationAssetIndexes,
-                analysisInput,
-                config: strategyMix?.maxDiversification,
-                constraints: mergedConstraints,
-                prepared,
-            });
-            const optimization = await optimize({
-                annualizedAssetVolatility: researchInput.annualizedAssetVolatility,
-                assetIndexes: researchInput.assetIndexes,
-                constraints: researchInput.constraints,
-                covariance: researchInput.covariance,
-                mode,
-                prepared,
-            });
-
-            if (!optimization.ok) {
-                return {
-                    optimizerPath: optimization.optimizerPath,
-                    result: buildStrategyErrorResult({
-                        baseCurrency,
-                        error: optimization.error,
-                        mode,
-                        prepared,
-                        rebalanceCadence,
-                        strategy,
-                    }),
-                    stage: 'optimization_failed',
-                };
-            }
-
-            const researchConfig = strategyMix?.maxDiversification;
-            const momentumScores = resolveAverageMomentumScores(prepared, researchConfig);
-            const optimizedWeights = typeof researchConfig?.momentumReturnTiltStrength === 'number'
-                && typeof researchConfig?.maxTrackingErrorVolatility === 'number'
-                ? applyMomentumReturnTiltAroundWeights({
-                    covariance: researchInput.covariance,
-                    momentumScores: researchInput.assetIndexes.map((index) => momentumScores[index] ?? 0),
-                    referenceWeights: optimization.weights,
-                    tiltStrength: researchConfig.momentumReturnTiltStrength,
-                    trackingErrorVolatilityLimit: researchConfig.maxTrackingErrorVolatility,
-                })
-                : optimization.weights;
-            const riskyWeights = mapSubsetWeights(
-                optimizedWeights,
-                researchInput.assetIndexes,
-                prepared.series.length,
-            );
-            const assemblyInput = appendMaxDiversificationCashReserve({
-                baseCurrency,
-                cashReserve: researchInput.cashReserve,
-                covariance: researchInput.assemblyCovariance,
-                meanReturns: analysisInput.annualizedMeanReturns,
-                prepared,
-                volatility: researchInput.assemblyVolatility,
-                weights: riskyWeights,
-            });
-
-            return {
-                optimizerPath: optimization.optimizer,
-                result: await assembleAllocationResult({
-                    allocationAssetIds: undefined,
-                    annualizedAssetVolatility: assemblyInput.volatility,
-                    annualizedMeanReturns: assemblyInput.meanReturns,
-                    baseCurrency,
-                    calculationDateRange,
-                    covariance: assemblyInput.covariance,
-                    diversificationRatio: optimization.diversificationRatio,
-                    mode,
-                    optimizer: optimization.optimizer,
-                    optimizerDiagnostics: optimization.diagnostics,
-                    prepared: assemblyInput.prepared,
-                    rebalanceCadence,
-                    resolveTargetWeights,
-                    strategy,
-                    trendFollowing: null,
-                    weights: assemblyInput.weights,
-                }),
-                stage: 'completed',
-            };
-        }
 
         const optimization = await optimize({
             annualizedAssetVolatility: analysisInput.annualizedAssetVolatility,

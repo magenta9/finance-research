@@ -13,7 +13,6 @@ export type AllocationType = 'erc' | 'inverse_volatility' | 'max_diversification
 
 export type AllocationStrategy =
   | AllocationType
-  | 'max_diversification_research_v1'
   | 'ewmac_trend_following'
   | 'active_dual_momentum_gtaa';
 

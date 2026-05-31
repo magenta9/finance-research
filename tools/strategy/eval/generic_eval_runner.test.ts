@@ -23,7 +23,6 @@ describe('strategy eval adapter contract', () => {
     test('resolves canonical strategy handlers from allocation-engine registry', () => {
         expect(resolveStrategyHandler('erc')).toBeTruthy();
         expect(resolveStrategyHandler('active_dual_momentum_gtaa')).toBeTruthy();
-        expect(resolveStrategyHandler('max_diversification_research_v1')).toBeTruthy();
     });
 
     test('prepares aligned price data from quant-data cache', () => {
@@ -102,7 +101,6 @@ describe('strategy eval adapter contract', () => {
     });
 
     test('resolves allocation mode and cadence defaults', () => {
-        expect(resolveAllocationMode('max_diversification_research_v1')).toBe('max_diversification');
         expect(resolveRebalanceCadence({
             basketSize: 2,
             caseId: 'case-1',

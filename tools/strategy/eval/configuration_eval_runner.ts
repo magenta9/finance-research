@@ -9,26 +9,11 @@ import type { StoredAsset } from '../../desktop/quantdesk/packages/shared/src/ty
 import type { PreparedAllocationData } from '../../desktop/quantdesk/packages/main/src/portfolio/preprocessor';
 import { assembleAllocationResult } from '../../desktop/quantdesk/packages/main/src/portfolio/allocation-result-assembler';
 import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/optimizer';
-import { applyMomentumReturnTiltAroundWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-return-tilt';
-import { withResearchClassWeightCaps } from '../../desktop/quantdesk/packages/main/src/portfolio/max-diversification-research';
-import { applyEqualWeightShrinkage } from '../../desktop/quantdesk/packages/main/src/portfolio/equal-weight-shrinkage';
-import { selectFaaMomentumTopIndices } from '../../desktop/quantdesk/packages/main/src/portfolio/faa-momentum-top-selection';
-import { blendMdErcWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/md-erc-blend';
-import { blendMdHrpWeights, computeHrpWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/hrp-weights';
-import { blendMomentumPriorWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/momentum-prior-blend';
-import { applyCorrelationClusterWeightCap } from '../../desktop/quantdesk/packages/main/src/portfolio/correlation-cluster-weight-cap';
-import { applyCorrelationRegimeCashScale } from '../../desktop/quantdesk/packages/main/src/portfolio/correlation-regime-cash';
-import { filterIndicesByDownsideBeta } from '../../desktop/quantdesk/packages/main/src/portfolio/downside-beta-filter';
-import { applyHerfindahlWeightCap } from '../../desktop/quantdesk/packages/main/src/portfolio/herfindahl-weight-cap';
-import { nudgeWeightsTowardDiversificationRatio } from '../../desktop/quantdesk/packages/main/src/portfolio/diversification-ratio-nudge';
-import { applyPortfolioVolatilityCap } from '../../desktop/quantdesk/packages/main/src/portfolio/portfolio-volatility-cap';
-import { denoiseCovarianceMarchenkoPastur } from '../../desktop/quantdesk/packages/main/src/portfolio/rmt-covariance-denoise';
 import {
     annualizedReturns,
     annualizedVolatility,
     computeLogReturns,
     covarianceMatrix,
-    semiCovarianceMatrix,
     shrinkCovarianceMatrix,
 } from '../../desktop/quantdesk/packages/main/src/portfolio/statistics';
 
@@ -56,9 +41,10 @@ interface PriceCacheEntry {
     warnings?: string[];
 }
 
-type EvalStrategyId = AllocationType | 'max_diversification_research_v1';
+type EvalStrategyId = AllocationType;
 
-interface MaxDiversificationResearchConfig {
+interface MaxDiversificationResearchConfig {  // kept for eval config compatibility; fields unused without research strategy
+    _placeholder?: never;
     absoluteMomentumLookbackDays?: number;
     absoluteMomentumLookbackDaysList?: number[];
     absoluteMomentumMinPositiveCount?: number;
@@ -135,68 +121,6 @@ const toStoredAsset = (input: EvalAssetInput): StoredAsset => ({
 
 const priceValue = (row: QuantDataPriceRow) => row.calculationClose ?? row.adjustedClose ?? row.close ?? null;
 
-const cloneMatrix = (matrix: number[][]) => matrix.map((row) => [...row]);
-
-const applyCovarianceShrinkage = (covariance: number[][], shrinkage: number) => {
-    const bounded = Math.min(1, Math.max(0, shrinkage));
-
-    return covariance.map((row, rowIndex) => row.map((value, columnIndex) => (
-        rowIndex === columnIndex ? value : value * (1 - bounded)
-    )));
-};
-
-const applyDiagonalLoad = (covariance: number[][], load: number) => covariance.map((row, rowIndex) => row.map((value, columnIndex) => {
-    if (rowIndex !== columnIndex) {
-        return value;
-    }
-
-    return value + Math.max(value, 1e-12) * Math.max(0, load);
-}));
-
-const applyMinCorrelation = (covariance: number[][], minCorrelation: number) => {
-    const bounded = Math.min(0.95, Math.max(-0.95, minCorrelation));
-    const standardDeviations = covariance.map((row, index) => Math.sqrt(Math.max(row[index] ?? 0, 0)));
-
-    return covariance.map((row, rowIndex) => row.map((value, columnIndex) => {
-        if (rowIndex === columnIndex) {
-            return value;
-        }
-
-        const denominator = standardDeviations[rowIndex] * standardDeviations[columnIndex];
-
-        if (denominator <= 0) {
-            return value;
-        }
-
-        return Math.max(value / denominator, bounded) * denominator;
-    }));
-};
-
-const applyVolatilityPower = (volatilities: number[], power: number) => volatilities.map((volatility) => (
-    Math.pow(Math.max(volatility, 1e-8), power)
-));
-
-const boundedCashReserve = (value: number) => Math.min(0.95, Math.max(0, value));
-
-const applyMomentumBreadthCashScale = ({
-    assetCount,
-    baseCashReserve,
-    eligibleCount,
-    scale,
-}: {
-    assetCount: number;
-    baseCashReserve: number;
-    eligibleCount: number;
-    scale: number;
-}) => {
-    if (assetCount <= 0) {
-        return baseCashReserve;
-    }
-
-    const breadth = eligibleCount / assetCount;
-    return boundedCashReserve(baseCashReserve + (1 - breadth) * Math.max(0, scale));
-};
-
 const subsetArray = <T>(values: T[], indices: number[]) => indices.map((index) => values[index]);
 
 const subsetMatrix = (matrix: number[][], indices: number[]) => indices.map((rowIndex) => (
@@ -222,75 +146,6 @@ const ensureFeasibleConstraints = (constraints: AllocationConstraints, assetCoun
         ...constraints,
         maxSingleWeight: 1 / assetCount,
     };
-};
-
-const resolveAbsoluteMomentumEligibleIndices = (
-    prepared: PreparedAllocationData,
-    config: MaxDiversificationResearchConfig,
-) => {
-    const lookbacks = Array.isArray(config.absoluteMomentumLookbackDaysList)
-        && config.absoluteMomentumLookbackDaysList.length > 0
-        ? config.absoluteMomentumLookbackDaysList.map((value) => Math.max(1, Math.floor(value)))
-        : typeof config.absoluteMomentumLookbackDays === 'number'
-            ? [Math.max(1, Math.floor(config.absoluteMomentumLookbackDays))]
-            : [];
-
-    if (lookbacks.length === 0) {
-        return prepared.series.map((_, index) => index);
-    }
-
-    const threshold = typeof config.absoluteMomentumThreshold === 'number'
-        ? config.absoluteMomentumThreshold
-        : 0;
-    const minPositiveCount = typeof config.absoluteMomentumMinPositiveCount === 'number'
-        ? Math.max(1, Math.floor(config.absoluteMomentumMinPositiveCount))
-        : Math.ceil(lookbacks.length / 2);
-    const momentumScores = prepared.series.map((entry, index) => {
-        const current = entry.prices.at(-1) ?? 0;
-        const momentums = lookbacks.map((lookbackDays) => {
-            const referenceIndex = Math.max(0, entry.prices.length - 1 - lookbackDays);
-            const reference = entry.prices[referenceIndex] ?? 0;
-
-            return current > 0 && reference > 0 ? current / reference - 1 : -Infinity;
-        });
-        const positiveCount = momentums.filter((momentum) => momentum > threshold).length;
-        const momentum = momentums.reduce((sum, value) => sum + value, 0) / momentums.length;
-
-        return { index, momentum, positiveCount };
-    });
-    const eligible = momentumScores
-        .filter((entry) => entry.positiveCount >= minPositiveCount)
-        .map((entry) => entry.index);
-
-    if (eligible.length > 0) {
-        return eligible;
-    }
-
-    return [momentumScores.reduce((best, entry) => (
-        entry.momentum > best.momentum ? entry : best
-    ), momentumScores[0]).index];
-};
-
-const resolveMomentumScores = (
-    prepared: PreparedAllocationData,
-    config: MaxDiversificationResearchConfig,
-) => {
-    const lookbacks = Array.isArray(config.absoluteMomentumLookbackDaysList)
-        && config.absoluteMomentumLookbackDaysList.length > 0
-        ? config.absoluteMomentumLookbackDaysList.map((value) => Math.max(1, Math.floor(value)))
-        : [252];
-
-    return prepared.series.map((entry) => {
-        const current = entry.prices.at(-1) ?? 0;
-        const momentums = lookbacks.map((lookbackDays) => {
-            const referenceIndex = Math.max(0, entry.prices.length - 1 - lookbackDays);
-            const reference = entry.prices[referenceIndex] ?? 0;
-
-            return current > 0 && reference > 0 ? current / reference - 1 : 0;
-        });
-
-        return momentums.reduce((sum, value) => sum + value, 0) / momentums.length;
-    });
 };
 
 const appendCashReserve = ({
@@ -375,69 +230,18 @@ const resolveOptimizationInput = ({
     baseCovariance,
     baseVolatilities,
     strategy,
-    strategyConfigs,
 }: {
     baseConstraints: AllocationConstraints;
     baseCovariance: number[][];
     baseVolatilities: number[];
     strategy: EvalStrategyId;
-    strategyConfigs?: Record<string, MaxDiversificationResearchConfig>;
-}) => {
-    if (strategy !== 'max_diversification_research_v1') {
-        return {
-            cashReserve: 0,
-            constraints: baseConstraints,
-            covariance: baseCovariance,
-            mode: strategy,
-            volatilities: baseVolatilities,
-        };
-    }
-
-    const config = strategyConfigs?.[strategy] ?? {};
-    let covariance = cloneMatrix(baseCovariance);
-    let volatilities = [...baseVolatilities];
-    let constraints = { ...baseConstraints };
-
-    if (typeof config.covarianceShrinkage === 'number') {
-        covariance = applyCovarianceShrinkage(covariance, config.covarianceShrinkage);
-    }
-
-    if (config.covarianceShrinkageBoost === true) {
-        covariance = applyCovarianceShrinkage(covariance, 0.1);
-    }
-
-    if (typeof config.diagonalLoad === 'number') {
-        covariance = applyDiagonalLoad(covariance, config.diagonalLoad);
-    }
-
-    if (typeof config.minCorrelation === 'number') {
-        covariance = applyMinCorrelation(covariance, config.minCorrelation);
-    }
-
-    if (config.optimizationMinCorrelationBoost === true) {
-        covariance = applyMinCorrelation(covariance, 0.12);
-    }
-
-    if (typeof config.volatilityPower === 'number') {
-        volatilities = applyVolatilityPower(volatilities, config.volatilityPower);
-    }
-
-    if (typeof config.maxSingleWeight === 'number') {
-        constraints = { ...constraints, maxSingleWeight: config.maxSingleWeight };
-    }
-
-    constraints = withResearchClassWeightCaps(constraints, config);
-
-    return {
-        cashReserve: typeof config.cashReserve === 'number'
-            ? boundedCashReserve(config.cashReserve)
-            : 0,
-        constraints,
-        covariance,
-        mode: 'max_diversification' as const,
-        volatilities,
-    };
-};
+}) => ({
+    cashReserve: 0,
+    constraints: baseConstraints,
+    covariance: baseCovariance,
+    mode: strategy,
+    volatilities: baseVolatilities,
+});
 
 const prepareEvalData = ({
     assetBySymbol,
@@ -507,28 +311,17 @@ const prepareEvalData = ({
 
 const prepareEvalCase = ({
     assetBySymbol,
-    marchenkoPasturDenoise,
     pricesBySymbol,
-    semiCovarianceForOptimization,
     symbols,
 }: {
     assetBySymbol: Map<string, StoredAsset>;
-    marchenkoPasturDenoise?: boolean;
     pricesBySymbol: Record<string, PriceCacheEntry>;
-    semiCovarianceForOptimization?: boolean;
     symbols: string[];
 }) => {
     const prepared = prepareEvalData({ assetBySymbol, pricesBySymbol, symbols });
     const logReturns = computeLogReturns(prepared.series.map((entry) => entry.prices));
-    const observationCount = logReturns[0]?.length ?? 0;
-    const sampleCovariance = semiCovarianceForOptimization
-        ? semiCovarianceMatrix(logReturns)
-        : covarianceMatrix(logReturns);
-    let covariance = shrinkCovarianceMatrix(sampleCovariance);
-
-    if (marchenkoPasturDenoise) {
-        covariance = denoiseCovarianceMarchenkoPastur(covariance, observationCount);
-    }
+    const sampleCovariance = covarianceMatrix(logReturns);
+    const covariance = shrinkCovarianceMatrix(sampleCovariance);
 
     const meanReturns = annualizedReturns(logReturns);
     const volatility = annualizedVolatility(covariance);
@@ -554,204 +347,49 @@ const runCaseStrategy = async ({
     evalCase,
     preparedCase,
     strategy,
-    strategyConfigs,
 }: {
     baseCurrency: Currency;
     constraints: AllocationConstraints;
     evalCase: EvalCaseInput;
     preparedCase: ReturnType<typeof prepareEvalCase>;
     strategy: EvalStrategyId;
-    strategyConfigs?: Record<string, MaxDiversificationResearchConfig>;
 }) => {
     const assetClasses = preparedCase.prepared.series.map((entry) => entry.asset.assetClass);
-    const researchConfig = strategy === 'max_diversification_research_v1'
-        ? strategyConfigs?.[strategy] ?? {}
-        : {};
-    let eligibleIndices = strategy === 'max_diversification_research_v1'
-        ? resolveAbsoluteMomentumEligibleIndices(preparedCase.prepared, researchConfig)
-        : assetClasses.map((_, index) => index);
-    const momentumScores = strategy === 'max_diversification_research_v1'
-        ? resolveMomentumScores(preparedCase.prepared, researchConfig)
-        : [];
-
-    if (
-        strategy === 'max_diversification_research_v1'
-        && typeof researchConfig.faaMomentumTopN === 'number'
-    ) {
-        eligibleIndices = selectFaaMomentumTopIndices({
-            eligibleIndices,
-            momentumScores,
-            topN: researchConfig.faaMomentumTopN,
-        });
-    }
-
-    if (
-        strategy === 'max_diversification_research_v1'
-        && researchConfig.downsideBetaFilter === true
-    ) {
-        eligibleIndices = filterIndicesByDownsideBeta({
-            covariance: subsetMatrix(preparedCase.covariance, eligibleIndices),
-            indices: eligibleIndices.map((_value, index) => index),
-        }).map((subsetIndex) => eligibleIndices[subsetIndex] ?? subsetIndex);
-    }
+    const eligibleIndices = assetClasses.map((_, index) => index);
 
     const fullOptimizationInput = resolveOptimizationInput({
         baseConstraints: constraints,
         baseCovariance: preparedCase.covariance,
         baseVolatilities: preparedCase.volatility,
         strategy,
-        strategyConfigs,
     });
     const optimizationInput = resolveOptimizationInput({
         baseConstraints: constraints,
         baseCovariance: subsetMatrix(preparedCase.covariance, eligibleIndices),
         baseVolatilities: subsetArray(preparedCase.volatility, eligibleIndices),
         strategy,
-        strategyConfigs,
     });
     const optimizationAssetClasses = subsetArray(assetClasses, eligibleIndices);
     const optimizationConstraints = ensureFeasibleConstraints(
         optimizationInput.constraints,
         optimizationAssetClasses.length,
     );
-    const optimizationMode = typeof researchConfig.useErcWhenEligibleAtLeast === 'number'
-        && eligibleIndices.length >= researchConfig.useErcWhenEligibleAtLeast
-        ? 'erc'
-        : optimizationInput.mode;
     const optimization = optimizeWeights({
         assetClasses: optimizationAssetClasses,
         constraints: optimizationConstraints,
         covariance: optimizationInput.covariance,
-        mode: optimizationMode,
+        mode: optimizationInput.mode,
         volatilities: optimizationInput.volatilities,
     });
-    let subsetOptimizedWeights = optimization.weights;
 
-    if (typeof researchConfig.mdInverseVolBlendWeight === 'number') {
-        const inverseVolOptimization = optimizeWeights({
-            assetClasses: optimizationAssetClasses,
-            constraints: optimizationConstraints,
-            covariance: optimizationInput.covariance,
-            mode: 'inverse_volatility',
-            volatilities: optimizationInput.volatilities,
-        });
-        subsetOptimizedWeights = blendMdErcWeights({
-            blendWeight: researchConfig.mdInverseVolBlendWeight,
-            ercWeights: inverseVolOptimization.weights,
-            mdWeights: subsetOptimizedWeights,
-        });
-    }
-
-    if (typeof researchConfig.mdErcBlendWeight === 'number') {
-        const ercOptimization = optimizeWeights({
-            assetClasses: optimizationAssetClasses,
-            constraints: optimizationConstraints,
-            covariance: optimizationInput.covariance,
-            mode: 'erc',
-            volatilities: optimizationInput.volatilities,
-        });
-        subsetOptimizedWeights = blendMdErcWeights({
-            blendWeight: researchConfig.mdErcBlendWeight,
-            ercWeights: ercOptimization.weights,
-            mdWeights: optimization.weights,
-        });
-    }
-
-    if (typeof researchConfig.mdHrpBlendWeight === 'number') {
-        const hrpWeights = computeHrpWeights(optimizationInput.covariance);
-        subsetOptimizedWeights = blendMdHrpWeights({
-            blendWeight: researchConfig.mdHrpBlendWeight,
-            hrpWeights,
-            mdWeights: subsetOptimizedWeights,
-        });
-    }
-
-    if (typeof researchConfig.momentumPriorBlendWeight === 'number') {
-        subsetOptimizedWeights = blendMomentumPriorWeights({
-            blendWeight: researchConfig.momentumPriorBlendWeight,
-            mdWeights: subsetOptimizedWeights,
-            momentumScores: subsetArray(momentumScores, eligibleIndices),
-        });
-    }
-
-    if (researchConfig.correlationClusterWeightCap === true) {
-        subsetOptimizedWeights = applyCorrelationClusterWeightCap({
-            covariance: optimizationInput.covariance,
-            weights: subsetOptimizedWeights,
-        });
-    }
-
-    if (typeof researchConfig.diversificationRatioNudgeBlendWeight === 'number') {
-        subsetOptimizedWeights = nudgeWeightsTowardDiversificationRatio({
-            blendWeight: researchConfig.diversificationRatioNudgeBlendWeight,
-            covariance: optimizationInput.covariance,
-            volatilities: optimizationInput.volatilities,
-            weights: subsetOptimizedWeights,
-        });
-    }
-
-    const optimizedWeights = typeof researchConfig.momentumReturnTiltStrength === 'number'
-        && typeof researchConfig.maxTrackingErrorVolatility === 'number'
-        ? applyMomentumReturnTiltAroundWeights({
-            covariance: optimizationInput.covariance,
-            momentumScores: subsetArray(momentumScores, eligibleIndices),
-            referenceWeights: subsetOptimizedWeights,
-            tiltStrength: researchConfig.momentumReturnTiltStrength,
-            trackingErrorVolatilityLimit: researchConfig.maxTrackingErrorVolatility,
-        })
-        : subsetOptimizedWeights;
-    let riskyWeights = mapSubsetWeights(
-        optimizedWeights,
-        eligibleIndices,
-        preparedCase.prepared.series.length,
-    );
-
-    if (typeof researchConfig.equalWeightShrinkageIntensity === 'number') {
-        riskyWeights = applyEqualWeightShrinkage({
-            intensity: researchConfig.equalWeightShrinkageIntensity,
-            weights: riskyWeights,
-        });
-    }
-
-    if (researchConfig.herfindahlWeightCap === true) {
-        riskyWeights = applyHerfindahlWeightCap({ weights: riskyWeights });
-    }
-
-    let cashReserve = typeof researchConfig.momentumBreadthCashScale === 'number'
-        ? applyMomentumBreadthCashScale({
-            assetCount: preparedCase.prepared.series.length,
-            baseCashReserve: fullOptimizationInput.cashReserve,
-            eligibleCount: eligibleIndices.length,
-            scale: researchConfig.momentumBreadthCashScale,
-        })
-        : fullOptimizationInput.cashReserve;
-
-    if (typeof researchConfig.correlationRegimeCashScale === 'number') {
-        cashReserve = applyCorrelationRegimeCashScale({
-            baseCashReserve: cashReserve,
-            covariance: fullOptimizationInput.covariance,
-            scale: researchConfig.correlationRegimeCashScale,
-        });
-    }
-
-    if (typeof researchConfig.portfolioVolatilityCapAnnualized === 'number') {
-        const capped = applyPortfolioVolatilityCap({
-            capAnnualized: researchConfig.portfolioVolatilityCapAnnualized,
-            covariance: fullOptimizationInput.covariance,
-            minRiskyScale: researchConfig.portfolioVolatilityCapMinRiskyScale ?? 0.45,
-            weights: riskyWeights,
-        });
-        riskyWeights = capped.weights;
-        cashReserve = Math.min(0.95, cashReserve + capped.cashReserve);
-    }
     const assemblyInput = appendCashReserve({
         baseCurrency,
-        cashReserve,
+        cashReserve: fullOptimizationInput.cashReserve,
         covariance: fullOptimizationInput.covariance,
         meanReturns: preparedCase.meanReturns,
         prepared: preparedCase.prepared,
         volatility: preparedCase.volatility,
-        weights: riskyWeights,
+        weights: mapSubsetWeights(optimization.weights, eligibleIndices, preparedCase.prepared.series.length),
     });
     const result = await assembleAllocationResult({
         annualizedAssetVolatility: assemblyInput.volatility,
@@ -764,7 +402,7 @@ const runCaseStrategy = async ({
         covariance: assemblyInput.covariance,
         diversificationRatio: optimization.diversificationRatio,
         mode: optimizationInput.mode,
-        optimizer: 'js',
+        optimizer: "js",
         optimizerDiagnostics: optimization.diagnostics,
         prepared: assemblyInput.prepared,
         rebalanceCadence: evalCase.rebalanceCadence,
@@ -805,11 +443,7 @@ const main = async () => {
         try {
             const preparedCase = prepareEvalCase({
                 assetBySymbol,
-                marchenkoPasturDenoise: payload.strategyConfigs?.max_diversification_research_v1
-                    ?.marchenkoPasturDenoise,
                 pricesBySymbol: payload.pricesBySymbol,
-                semiCovarianceForOptimization: payload.strategyConfigs?.max_diversification_research_v1
-                    ?.semiCovarianceForOptimization,
                 symbols: evalCase.symbols,
             });
 
@@ -822,7 +456,6 @@ const main = async () => {
                             evalCase,
                             preparedCase,
                             strategy,
-                            strategyConfigs: payload.strategyConfigs,
                         }),
                     );
                 } catch (error) {
