@@ -2,6 +2,9 @@ import type { AllocationResult } from '@quantdesk/shared';
 
 import { getPreparedPriceSeries } from './prepared-allocation-context';
 import type { PreparedAllocationData } from './preprocessor';
+import type { MaxDiversificationStrategyConfig } from '@quantdesk/shared';
+
+import { denoiseCovarianceMarchenkoPastur } from './rmt-covariance-denoise';
 import {
     annualizedReturns,
     annualizedVolatility,
@@ -20,7 +23,10 @@ export type AllocationAnalysisInputResult =
     | { analysisInput: AllocationAnalysisInput; ok: true }
     | { error: NonNullable<AllocationResult['error']>; ok: false };
 
-export const buildAllocationAnalysisInput = (prepared: PreparedAllocationData): AllocationAnalysisInputResult => {
+export const buildAllocationAnalysisInput = (
+    prepared: PreparedAllocationData,
+    maxDiversificationConfig?: MaxDiversificationStrategyConfig,
+): AllocationAnalysisInputResult => {
     const priceSeries = getPreparedPriceSeries(prepared);
     const returns = computeLogReturns(priceSeries);
 
@@ -36,7 +42,11 @@ export const buildAllocationAnalysisInput = (prepared: PreparedAllocationData): 
     }
 
     const sampleCovariance = covarianceMatrix(returns);
-    const shrunkCovariance = shrinkCovarianceMatrix(sampleCovariance);
+    let shrunkCovariance = shrinkCovarianceMatrix(sampleCovariance);
+
+    if (maxDiversificationConfig?.marchenkoPasturDenoise) {
+        shrunkCovariance = denoiseCovarianceMarchenkoPastur(shrunkCovariance, returns[0]?.length ?? 0);
+    }
 
     return {
         analysisInput: {

@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	ablate-cross-sign-offset-cash	75.5619	54.4444	73.3686	97.1187	69.2266	discard	Ablate cross-sign gross offset cashing while keeping the rest of the default stack.	"{""crossSignOffsetCash"": false}"

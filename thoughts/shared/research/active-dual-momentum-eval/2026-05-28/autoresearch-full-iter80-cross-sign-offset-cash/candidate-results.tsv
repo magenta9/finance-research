@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	cross-sign-offset-cash	74.933	55.8955	73.2058	96.5617	69.2218	budget-pass	Compress offsetting long and short gross exposure into cash while keeping the portfolio net direction.	"{""crossSignOffsetCash"": true}"

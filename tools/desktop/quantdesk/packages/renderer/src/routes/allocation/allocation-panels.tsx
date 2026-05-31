@@ -28,6 +28,7 @@ const strategyOptions: Array<{ description: string; label: string; value: Alloca
     { description: '追求风险贡献更均衡', label: '等风险贡献', value: 'erc' },
     { description: '低波动资产权重更高', label: '反波动率加权', value: 'inverse_volatility' },
     { description: '最大化组合分散化效率', label: '最大分散化', value: 'max_diversification' },
+    { description: '研究版 MDP v3：动量筛选、相关性处理和动态现金', label: '最大分散化 MDP v3', value: 'max_diversification_research_v1' },
     { description: '用 EWMAC 长短线规则生成趋势暴露', label: 'EWMAC 趋势跟随', value: 'ewmac_trend_following' },
     { description: '周度双动量 GTAA，支持 ETF 与期货混合池。', label: 'Active Dual Momentum', value: 'active_dual_momentum_gtaa' },
 ];
@@ -506,7 +507,7 @@ export const AllocationControlsPanel = ({
                         <div className="mt-3 space-y-3" data-testid="allocation-adm-topk-control">
                             <div className="flex items-center gap-3">
                                 <span className="text-xs font-semibold text-[var(--color-muted)]">2</span>
-                                <input
+                                <Input
                                     aria-label="动量标的数量"
                                     className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[rgba(156,98,55,0.18)] accent-[var(--color-highlight)]"
                                     data-testid="allocation-adm-topk-slider"

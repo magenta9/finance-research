@@ -23,6 +23,32 @@ export const computeLogReturns = (priceSeries: number[][]) =>
         return returns;
     });
 
+export const semiCovarianceMatrix = (series: number[][]) => {
+    const assetCount = series.length;
+    const sampleLength = series[0]?.length ?? 0;
+    const matrix = Array.from({ length: assetCount }, () => Array(assetCount).fill(0));
+
+    for (let row = 0; row < assetCount; row += 1) {
+        for (let column = row; column < assetCount; column += 1) {
+            let total = 0;
+
+            for (let index = 0; index < sampleLength; index += 1) {
+                const rowReturn = series[row][index];
+                const columnReturn = series[column][index];
+                const downsideRow = rowReturn < 0 ? rowReturn : 0;
+                const downsideColumn = columnReturn < 0 ? columnReturn : 0;
+                total += downsideRow * downsideColumn;
+            }
+
+            const covariance = total / Math.max(1, sampleLength - 1);
+            matrix[row][column] = covariance;
+            matrix[column][row] = covariance;
+        }
+    }
+
+    return matrix;
+};
+
 export const covarianceMatrix = (series: number[][]) => {
     const assetCount = series.length;
     const sampleLength = series[0]?.length ?? 0;

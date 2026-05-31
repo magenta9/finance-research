@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	ablate-risk-trim-redeployment-cooldown	76.3154	55.0343	74.8893	96.997	69.9311	discard	Ablate the latest kept partial-trim redeployment cooldown while keeping the rest of the default stack.	"{""riskTrimRedeploymentCooldown"": false}"

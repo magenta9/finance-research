@@ -297,6 +297,26 @@ describe('PriceSyncService', () => {
         expect(window.isRangeCovered).toBe(true);
     });
 
+    test('treats a newer cache as covering an older requested end date', () => {
+        const getRange = vi.fn(() => [{ date: '2026-04-23', source: 'tushare' }] as never);
+        const prices = {
+            getDateBounds: () => ({ earliestDate: '2022-08-03', latestDate: '2026-05-29' }),
+            getRange,
+        };
+
+        expect(hasPriceCoverageThroughEndDate({
+            asset: { assetClass: 'equity', market: 'A' },
+            assetId: 'asset-159632',
+            endDate: '2026-04-23',
+            prices,
+        })).toBe(true);
+        expect(getRange).toHaveBeenCalledWith({
+            assetId: 'asset-159632',
+            endDate: '2026-04-23',
+            startDate: '2026-04-23',
+        });
+    });
+
     test('allows current-day domestic market lag without relaxing non-domestic price lag', () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-05-05T12:00:00.000Z'));

@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	excess-cash-hurdle-rank	74.3826	50.3066	77.5154	93.2624	67.1598	discard	Rank and long-filter candidates by momentum above the base-currency cash hurdle.	"{""rankMode"": ""excessDownsideRiskAdjusted""}"

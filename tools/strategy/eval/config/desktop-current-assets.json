@@ -1,0 +1,2755 @@
+{
+  "snapshotType": "desktop-current-assets",
+  "source": {
+    "kind": "quantdesk-app-db",
+    "path": "~/Library/Application Support/QuantDesk/quantdesk.db",
+    "table": "assets",
+    "readonly": true
+  },
+  "generatedAt": "2026-05-29T05:57:14.166599Z",
+  "assetCount": 106,
+  "marketCounts": {
+    "A": 20,
+    "BOND": 2,
+    "COMMODITY": 82,
+    "HK": 2
+  },
+  "assets": [
+    {
+      "id": "4ec60dfb-1832-4c0f-b237-debfcc000b64",
+      "symbol": "000369",
+      "name": "广发全球医疗保健指数人民币(QDII)A",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "issueDate": "2013-12-10",
+        "issueDateSource": "akshare-xq",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history",
+        "tsCode": "000369.SZ",
+        "tsCodeAsset": "E"
+      },
+      "createdAt": "2026-04-22 12:33:17",
+      "updatedAt": "2026-05-27 11:45:46"
+    },
+    {
+      "id": "70128fda-b549-4e81-bf3e-20c6f8727640",
+      "symbol": "000922",
+      "name": "中证红利",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "tsCode": "000922.SZ",
+        "tsCodeAsset": "E",
+        "exchange": "CSI",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-04 06:03:25",
+      "updatedAt": "2026-05-28 05:37:47"
+    },
+    {
+      "id": "28ba8b54-0acd-405d-b95b-8a694259e33b",
+      "symbol": "001717",
+      "name": "工银前沿医疗股票A",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "issueDate": "2016-02-03",
+        "issueDateSource": "akshare-xq",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history",
+        "tsCode": "001717.SZ",
+        "tsCodeAsset": "E"
+      },
+      "createdAt": "2026-04-17 06:13:29",
+      "updatedAt": "2026-05-27 11:45:54"
+    },
+    {
+      "id": "d8e0f68d-5257-4fdf-88af-b184a8764bb5",
+      "symbol": "006105",
+      "name": "宏利印度股票(QDII)A",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "issueDate": "2019-01-30",
+        "issueDateSource": "akshare-xq",
+        "tsCode": "006105.SZ",
+        "tsCodeAsset": "E"
+      },
+      "createdAt": "2026-04-22 12:30:56",
+      "updatedAt": "2026-05-17 04:44:47"
+    },
+    {
+      "id": "ffbc5686-c5ac-4d14-9fb6-a05485dbd615",
+      "symbol": "159612",
+      "name": "标普500ETF国泰",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "tsCode": "159612.SZ",
+        "tsCodeAsset": "FD",
+        "exchange": "SZSE",
+        "priceHistoryFloorDate": "2022-05-20",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-04 14:24:55",
+      "updatedAt": "2026-05-27 10:28:30"
+    },
+    {
+      "id": "fa45aea3-5be4-4650-a6ef-ae766310ead6",
+      "symbol": "159632",
+      "name": "纳斯达克ETF华安",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "underlyingMarket": "US",
+        "priceHistoryFloorDate": "2022-08-03",
+        "priceHistoryFloorSource": "observed-history",
+        "tsCode": "159632.SZ",
+        "tsCodeAsset": "FD"
+      },
+      "createdAt": "2026-04-22 14:03:59",
+      "updatedAt": "2026-05-27 11:45:40"
+    },
+    {
+      "id": "ac1a5f2a-36d6-43c2-9cee-1ddd77d86b8d",
+      "symbol": "159798",
+      "name": "消费ETF易方达",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "priceHistoryFloorDate": "2022-05-11",
+        "priceHistoryFloorSource": "observed-history",
+        "tsCode": "159798.SZ",
+        "tsCodeAsset": "FD"
+      },
+      "createdAt": "2026-04-22 12:30:23",
+      "updatedAt": "2026-05-27 11:45:50"
+    },
+    {
+      "id": "seed-a-etf-159915",
+      "symbol": "159915",
+      "name": "创业板ETF",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "a-share-index-etf",
+        "创业板指",
+        "growth",
+        "innovation"
+      ],
+      "metadata": {
+        "benchmark": "创业板指",
+        "exchange": "SZSE",
+        "seedPack": "2026-05-a-share-index-etf-v1",
+        "tsCode": "159915.SZ",
+        "tsCodeAsset": "FD",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-08 07:31:45",
+      "updatedAt": "2026-05-27 11:44:29"
+    },
+    {
+      "id": "seed-a-etf-159928",
+      "symbol": "159928",
+      "name": "消费ETF",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "a-share-index-etf",
+        "中证主要消费",
+        "consumer",
+        "sector"
+      ],
+      "metadata": {
+        "benchmark": "中证主要消费",
+        "exchange": "SZSE",
+        "seedPack": "2026-05-a-share-index-etf-v1",
+        "tsCode": "159928.SZ",
+        "tsCodeAsset": "FD",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-08 07:31:45",
+      "updatedAt": "2026-05-27 11:44:38"
+    },
+    {
+      "id": "0116e848-cea7-4f1a-a7db-eaf1e03afdbe",
+      "symbol": "320016",
+      "name": "诺安多策略混合A",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "issueDate": "2011-08-09",
+        "issueDateSource": "akshare-xq",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history",
+        "tsCode": "320016.SZ",
+        "tsCodeAsset": "E"
+      },
+      "createdAt": "2026-04-22 11:55:21",
+      "updatedAt": "2026-05-27 11:45:52"
+    },
+    {
+      "id": "2c3f9297-d5cf-44e0-b892-b502a3ee0c5d",
+      "symbol": "399997",
+      "name": "中证白酒",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "tsCode": "399997.SZ",
+        "tsCodeAsset": "I",
+        "exchange": "SZSE",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-08 05:27:00",
+      "updatedAt": "2026-05-27 11:44:56"
+    },
+    {
+      "id": "seed-a-etf-510050",
+      "symbol": "510050",
+      "name": "上证50ETF",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "a-share-index-etf",
+        "上证50",
+        "broad-market",
+        "large-cap",
+        "value"
+      ],
+      "metadata": {
+        "benchmark": "上证50",
+        "exchange": "SSE",
+        "seedPack": "2026-05-a-share-index-etf-v1",
+        "tsCode": "510050.SH",
+        "tsCodeAsset": "FD",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-08 07:31:45",
+      "updatedAt": "2026-05-27 11:44:18"
+    },
+    {
+      "id": "seed-a-etf-510300",
+      "symbol": "510300",
+      "name": "沪深300ETF",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "a-share-index-etf",
+        "沪深300",
+        "broad-market",
+        "large-cap"
+      ],
+      "metadata": {
+        "benchmark": "沪深300",
+        "exchange": "SSE",
+        "seedPack": "2026-05-a-share-index-etf-v1",
+        "tsCode": "510300.SH",
+        "tsCodeAsset": "FD",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-08 07:31:45",
+      "updatedAt": "2026-05-27 11:44:36"
+    },
+    {
+      "id": "seed-a-etf-510500",
+      "symbol": "510500",
+      "name": "中证500ETF",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "a-share-index-etf",
+        "中证500",
+        "broad-market",
+        "mid-cap"
+      ],
+      "metadata": {
+        "benchmark": "中证500",
+        "exchange": "SSE",
+        "seedPack": "2026-05-a-share-index-etf-v1",
+        "tsCode": "510500.SH",
+        "tsCodeAsset": "FD",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-08 07:31:45",
+      "updatedAt": "2026-05-27 11:44:24"
+    },
+    {
+      "id": "seed-a-etf-512100",
+      "symbol": "512100",
+      "name": "中证1000ETF",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "a-share-index-etf",
+        "中证1000",
+        "broad-market",
+        "small-cap"
+      ],
+      "metadata": {
+        "benchmark": "中证1000",
+        "exchange": "SSE",
+        "seedPack": "2026-05-a-share-index-etf-v1",
+        "tsCode": "512100.SH",
+        "tsCodeAsset": "FD",
+        "priceHistoryFloorDate": "2016-11-04",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-08 07:31:45",
+      "updatedAt": "2026-05-27 10:28:18"
+    },
+    {
+      "id": "350b6652-61c5-42a0-ad4c-6f68e9c57e87",
+      "symbol": "513060",
+      "name": "恒生医疗ETF博时",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "underlyingMarket": "HK",
+        "priceHistoryFloorDate": "2021-03-29",
+        "priceHistoryFloorSource": "observed-history",
+        "tsCode": "513060.SH",
+        "tsCodeAsset": "FD"
+      },
+      "createdAt": "2026-04-22 13:55:02",
+      "updatedAt": "2026-05-27 11:45:44"
+    },
+    {
+      "id": "seed-a-etf-513180",
+      "symbol": "513180",
+      "name": "恒生科技ETF",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "a-share-index-etf",
+        "恒生科技指数",
+        "hang-seng",
+        "hong-kong",
+        "technology",
+        "sector"
+      ],
+      "metadata": {
+        "benchmark": "恒生科技指数",
+        "exchange": "SSE",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-v4",
+        "underlyingMarket": "HK",
+        "tsCode": "513180.SH",
+        "tsCodeAsset": "FD",
+        "priceHistoryFloorDate": "2021-05-25",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-08 13:35:53",
+      "updatedAt": "2026-05-27 10:28:06"
+    },
+    {
+      "id": "seed-a-etf-513330",
+      "symbol": "513330",
+      "name": "恒生互联网ETF",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "a-share-index-etf",
+        "恒生互联网科技业指数",
+        "hang-seng",
+        "hong-kong",
+        "internet",
+        "technology",
+        "sector"
+      ],
+      "metadata": {
+        "benchmark": "恒生互联网科技业指数",
+        "exchange": "SSE",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-v4",
+        "underlyingMarket": "HK",
+        "tsCode": "513330.SH",
+        "tsCodeAsset": "FD",
+        "priceHistoryFloorDate": "2021-02-08",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-08 13:35:53",
+      "updatedAt": "2026-05-27 10:28:04"
+    },
+    {
+      "id": "seed-a-etf-513970",
+      "symbol": "513970",
+      "name": "恒生消费ETF",
+      "market": "A",
+      "assetClass": "equity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "a-share-index-etf",
+        "恒生消费指数",
+        "hang-seng",
+        "hong-kong",
+        "consumer",
+        "sector"
+      ],
+      "metadata": {
+        "benchmark": "恒生消费指数",
+        "exchange": "SSE",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-v4",
+        "underlyingMarket": "HK",
+        "tsCode": "513970.SH",
+        "tsCodeAsset": "FD",
+        "priceHistoryFloorDate": "2023-04-21",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-08 13:35:53",
+      "updatedAt": "2026-05-27 10:28:05"
+    },
+    {
+      "id": "e9b71ee6-e233-4f06-b0f5-019f1fe5baad",
+      "symbol": "518880",
+      "name": "黄金ETF华安",
+      "market": "A",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "tsCode": "518880.SH",
+        "tsCodeAsset": "FD",
+        "exchange": "SSE",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-04 14:41:32",
+      "updatedAt": "2026-05-27 11:45:26"
+    },
+    {
+      "id": "4f3b59fc-60b7-426d-971c-a9e6fce3d73b",
+      "symbol": "070025",
+      "name": "嘉实信用债券A",
+      "market": "BOND",
+      "assetClass": "fixed_income",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "issueDate": "2011-09-14",
+        "issueDateSource": "akshare-xq",
+        "tsCode": "070025.OF",
+        "tsCodeAsset": "FD"
+      },
+      "createdAt": "2026-05-04 14:36:47",
+      "updatedAt": "2026-05-17 05:10:28"
+    },
+    {
+      "id": "ec54dc5f-cc14-49d0-937c-7c2cc8a1bf97",
+      "symbol": "100050",
+      "name": "富国全球债券(QDII)人民币A",
+      "market": "BOND",
+      "assetClass": "fixed_income",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "issueDate": "2010-10-20",
+        "issueDateSource": "akshare-xq",
+        "priceHistoryFloorDate": "2016-05-09",
+        "priceHistoryFloorSource": "observed-history",
+        "tsCode": "100050.OF",
+        "tsCodeAsset": "FD"
+      },
+      "createdAt": "2026-05-05 12:10:16",
+      "updatedAt": "2026-05-17 05:10:28"
+    },
+    {
+      "id": "seed-cn-futures-main-a",
+      "symbol": "A9999",
+      "name": "黄大豆1号主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "A",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:43:15"
+    },
+    {
+      "id": "seed-cn-futures-main-ad",
+      "symbol": "AD9999",
+      "name": "铸造铝合金主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "AD",
+        "priceHistoryFloorDate": "2025-06-10",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:42:53"
+    },
+    {
+      "id": "seed-cn-futures-main-ag",
+      "symbol": "AG9999",
+      "name": "白银主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "AG",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:43"
+    },
+    {
+      "id": "seed-cn-futures-main-al",
+      "symbol": "AL9999",
+      "name": "铝主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "AL",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:42:50"
+    },
+    {
+      "id": "seed-cn-futures-main-ao",
+      "symbol": "AO9999",
+      "name": "氧化铝主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "AO",
+        "priceHistoryFloorDate": "2023-06-19",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:38:26"
+    },
+    {
+      "id": "seed-cn-futures-main-ap",
+      "symbol": "AP9999",
+      "name": "苹果主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "AP",
+        "priceHistoryFloorDate": "2017-12-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-29 02:12:42"
+    },
+    {
+      "id": "seed-cn-futures-main-au",
+      "symbol": "AU9999",
+      "name": "黄金主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "AU",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:43:28"
+    },
+    {
+      "id": "seed-cn-futures-main-b",
+      "symbol": "B9999",
+      "name": "黄大豆2号主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "B",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:43:23"
+    },
+    {
+      "id": "seed-cn-futures-main-bb",
+      "symbol": "BB9999",
+      "name": "胶合板主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "BB",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:41:06"
+    },
+    {
+      "id": "seed-cn-futures-main-bc",
+      "symbol": "BC9999",
+      "name": "国际铜主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "ine"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "INE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "BC",
+        "priceHistoryFloorDate": "2020-11-19",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:37:49"
+    },
+    {
+      "id": "seed-cn-futures-main-br",
+      "symbol": "BR9999",
+      "name": "合成橡胶主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "BR",
+        "priceHistoryFloorDate": "2023-07-28",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:37:41"
+    },
+    {
+      "id": "seed-cn-futures-main-bu",
+      "symbol": "BU9999",
+      "name": "石油沥青主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "BU",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:57"
+    },
+    {
+      "id": "seed-cn-futures-main-bz",
+      "symbol": "BZ9999",
+      "name": "纯苯主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "BZ",
+        "priceHistoryFloorDate": "2025-07-08",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:40:19"
+    },
+    {
+      "id": "seed-cn-futures-main-c",
+      "symbol": "C9999",
+      "name": "玉米主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "C",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:14"
+    },
+    {
+      "id": "seed-cn-futures-main-cf",
+      "symbol": "CF9999",
+      "name": "棉花主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "CF",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:38:16"
+    },
+    {
+      "id": "seed-cn-futures-main-cj",
+      "symbol": "CJ9999",
+      "name": "红枣主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "CJ",
+        "priceHistoryFloorDate": "2019-04-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-29 02:11:44"
+    },
+    {
+      "id": "seed-cn-futures-main-cs",
+      "symbol": "CS9999",
+      "name": "玉米淀粉主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "CS",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:17"
+    },
+    {
+      "id": "seed-cn-futures-main-cu",
+      "symbol": "CU9999",
+      "name": "铜主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "CU",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:42:37"
+    },
+    {
+      "id": "seed-cn-futures-main-cy",
+      "symbol": "CY9999",
+      "name": "棉纱主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "CY",
+        "priceHistoryFloorDate": "2017-08-18",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:38:12"
+    },
+    {
+      "id": "seed-cn-futures-main-eb",
+      "symbol": "EB9999",
+      "name": "苯乙烯主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "EB",
+        "priceHistoryFloorDate": "2019-09-26",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-29 02:12:36"
+    },
+    {
+      "id": "seed-cn-futures-main-ec",
+      "symbol": "EC9999",
+      "name": "集运指数（欧线）主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "ine"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "INE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "EC",
+        "priceHistoryFloorDate": "2023-08-18",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-29 02:14:24"
+    },
+    {
+      "id": "seed-cn-futures-main-eg",
+      "symbol": "EG9999",
+      "name": "乙二醇主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "EG",
+        "priceHistoryFloorDate": "2018-12-10",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-29 02:08:48"
+    },
+    {
+      "id": "seed-cn-futures-main-fb",
+      "symbol": "FB9999",
+      "name": "纤维板主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "FB",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:40:16"
+    },
+    {
+      "id": "e2268fbf-9e01-4dc5-b4a0-2be814307b87",
+      "symbol": "FG9999",
+      "name": "玻璃2309主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "tsCode": "FG.ZCE",
+        "tsCodeAsset": "FT",
+        "exchange": "CZCE",
+        "contractType": "dominant_continuous",
+        "instrumentType": "futures",
+        "priceSeriesSource": "tushare-futures",
+        "seriesAdjustment": "raw_main_continuous",
+        "underlyingSymbol": "FG",
+        "sourceSymbol": "FG.ZCE",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-07 07:38:43",
+      "updatedAt": "2026-05-27 11:45:05"
+    },
+    {
+      "id": "seed-cn-futures-main-fu",
+      "symbol": "FU9999",
+      "name": "燃料油主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "FU",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:12"
+    },
+    {
+      "id": "seed-cn-futures-main-hc",
+      "symbol": "HC9999",
+      "name": "热轧卷板主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "HC",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:01"
+    },
+    {
+      "id": "seed-cn-futures-main-i",
+      "symbol": "I9999",
+      "name": "铁矿石主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "I",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:42:07"
+    },
+    {
+      "id": "seed-cn-futures-main-ic",
+      "symbol": "IC9999",
+      "name": "中证500股指期货主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "cffex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "CFX",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "IC",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:37:09"
+    },
+    {
+      "id": "seed-cn-futures-main-if",
+      "symbol": "IF9999",
+      "name": "沪深300股指期货主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "cffex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "CFX",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "IF",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:38:38"
+    },
+    {
+      "id": "seed-cn-futures-main-ih",
+      "symbol": "IH9999",
+      "name": "上证50股指期货主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "cffex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "CFX",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "IH",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:36:58"
+    },
+    {
+      "id": "seed-cn-futures-main-im",
+      "symbol": "IM9999",
+      "name": "中证1000股指期货主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "cffex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "CFX",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "IM",
+        "priceHistoryFloorDate": "2022-07-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-29 03:07:58"
+    },
+    {
+      "id": "seed-cn-futures-main-j",
+      "symbol": "J9999",
+      "name": "焦炭主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "J",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:06"
+    },
+    {
+      "id": "seed-cn-futures-main-jd",
+      "symbol": "JD9999",
+      "name": "鸡蛋主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "JD",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:43:12"
+    },
+    {
+      "id": "seed-cn-futures-main-jm",
+      "symbol": "JM9999",
+      "name": "焦煤主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "JM",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:09"
+    },
+    {
+      "id": "seed-cn-futures-main-l",
+      "symbol": "L9999",
+      "name": "聚乙烯主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "L",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:40:52"
+    },
+    {
+      "id": "seed-cn-futures-main-lc",
+      "symbol": "LC9999",
+      "name": "碳酸锂主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "gfex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "GFE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "LC",
+        "priceHistoryFloorDate": "2023-07-21",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:40:07"
+    },
+    {
+      "id": "seed-cn-futures-main-lg",
+      "symbol": "LG9999",
+      "name": "原木主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "LG",
+        "priceHistoryFloorDate": "2024-11-18",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:37:17"
+    },
+    {
+      "id": "seed-cn-futures-main-lh",
+      "symbol": "LH9999",
+      "name": "生猪主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "LH",
+        "priceHistoryFloorDate": "2021-01-08",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:25"
+    },
+    {
+      "id": "seed-cn-futures-main-lu",
+      "symbol": "LU9999",
+      "name": "低硫燃料油主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "ine"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "INE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "LU",
+        "priceHistoryFloorDate": "2020-06-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-29 02:09:00"
+    },
+    {
+      "id": "seed-cn-futures-main-m",
+      "symbol": "M9999",
+      "name": "豆粕主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "M",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:41:57"
+    },
+    {
+      "id": "seed-cn-futures-main-ma",
+      "symbol": "MA9999",
+      "name": "甲醇主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "MA",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:31"
+    },
+    {
+      "id": "seed-cn-futures-main-ni",
+      "symbol": "NI9999",
+      "name": "镍主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "NI",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:43:08"
+    },
+    {
+      "id": "seed-cn-futures-main-nr",
+      "symbol": "NR9999",
+      "name": "20号胶主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "ine"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "INE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "NR",
+        "priceHistoryFloorDate": "2019-08-12",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:36:28"
+    },
+    {
+      "id": "seed-cn-futures-main-oi",
+      "symbol": "OI9999",
+      "name": "菜油主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "OI",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:41:27"
+    },
+    {
+      "id": "seed-cn-futures-main-op",
+      "symbol": "OP9999",
+      "name": "胶版印刷纸主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "OP",
+        "priceHistoryFloorDate": "2025-09-10",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:41:09"
+    },
+    {
+      "id": "seed-cn-futures-main-p",
+      "symbol": "P9999",
+      "name": "棕榈油主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "P",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:38:21"
+    },
+    {
+      "id": "seed-cn-futures-main-pb",
+      "symbol": "PB9999",
+      "name": "铅主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PB",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:42:23"
+    },
+    {
+      "id": "seed-cn-futures-main-pd",
+      "symbol": "PD9999",
+      "name": "钯主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "gfex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "GFE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PD",
+        "priceHistoryFloorDate": "2025-11-27",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:41:59"
+    },
+    {
+      "id": "seed-cn-futures-main-pf",
+      "symbol": "PF9999",
+      "name": "短纤主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PF",
+        "priceHistoryFloorDate": "2020-10-12",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:49"
+    },
+    {
+      "id": "seed-cn-futures-main-pg",
+      "symbol": "PG9999",
+      "name": "液化石油气主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PG",
+        "priceHistoryFloorDate": "2020-03-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:38:46"
+    },
+    {
+      "id": "seed-cn-futures-main-pk",
+      "symbol": "PK9999",
+      "name": "花生主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PK",
+        "priceHistoryFloorDate": "2021-02-01",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:41:14"
+    },
+    {
+      "id": "seed-cn-futures-main-pl",
+      "symbol": "PL9999",
+      "name": "丙烯主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PL",
+        "priceHistoryFloorDate": "2025-07-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:37:04"
+    },
+    {
+      "id": "seed-cn-futures-main-pp",
+      "symbol": "PP9999",
+      "name": "聚丙烯主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PP",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:40:42"
+    },
+    {
+      "id": "seed-cn-futures-main-pr",
+      "symbol": "PR9999",
+      "name": "瓶片主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PR",
+        "priceHistoryFloorDate": "2024-08-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:20"
+    },
+    {
+      "id": "seed-cn-futures-main-ps",
+      "symbol": "PS9999",
+      "name": "多晶硅主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "gfex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "GFE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PS",
+        "priceHistoryFloorDate": "2024-12-26",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:37:52"
+    },
+    {
+      "id": "seed-cn-futures-main-pt",
+      "symbol": "PT9999",
+      "name": "铂主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "gfex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "GFE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PT",
+        "priceHistoryFloorDate": "2025-11-27",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:42:09"
+    },
+    {
+      "id": "seed-cn-futures-main-px",
+      "symbol": "PX9999",
+      "name": "对二甲苯主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "PX",
+        "priceHistoryFloorDate": "2023-09-15",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:37:56"
+    },
+    {
+      "id": "8050ca1c-58e1-48ef-9548-7787e24aa995",
+      "symbol": "RB9999",
+      "name": "螺纹钢2701主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "tsCode": "RB.SHF",
+        "tsCodeAsset": "FT",
+        "exchange": "SHFE",
+        "contractType": "dominant_continuous",
+        "instrumentType": "futures",
+        "priceSeriesSource": "tushare-futures",
+        "seriesAdjustment": "raw_main_continuous",
+        "underlyingSymbol": "RB",
+        "sourceSymbol": "RB.SHF",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-07 07:36:00",
+      "updatedAt": "2026-05-27 11:45:21"
+    },
+    {
+      "id": "seed-cn-futures-main-rm",
+      "symbol": "RM9999",
+      "name": "菜粕主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "RM",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:41:39"
+    },
+    {
+      "id": "seed-cn-futures-main-rr",
+      "symbol": "RR9999",
+      "name": "粳米主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "RR",
+        "priceHistoryFloorDate": "2019-08-16",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-29 02:11:39"
+    },
+    {
+      "id": "seed-cn-futures-main-rs",
+      "symbol": "RS9999",
+      "name": "菜籽主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "RS",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:41:33"
+    },
+    {
+      "id": "e4c07a7c-0b1a-4f51-9ff9-636678e36844",
+      "symbol": "RU9999",
+      "name": "橡胶9804主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "tsCode": "RU.SHF",
+        "tsCodeAsset": "FT",
+        "exchange": "SHFE",
+        "contractType": "dominant_continuous",
+        "instrumentType": "futures",
+        "priceSeriesSource": "tushare-futures",
+        "seriesAdjustment": "raw_main_continuous",
+        "underlyingSymbol": "RU",
+        "sourceSymbol": "RU.SHF",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-07 07:38:19",
+      "updatedAt": "2026-05-27 11:45:17"
+    },
+    {
+      "id": "e44ff5eb-8591-4017-82c6-18fb71a03f04",
+      "symbol": "SA9999",
+      "name": "纯碱2309主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [],
+      "metadata": {
+        "tsCode": "SA.ZCE",
+        "tsCodeAsset": "FT",
+        "exchange": "CZCE",
+        "contractType": "dominant_continuous",
+        "instrumentType": "futures",
+        "priceSeriesSource": "tushare-futures",
+        "seriesAdjustment": "raw_main_continuous",
+        "underlyingSymbol": "SA",
+        "sourceSymbol": "SA.ZCE",
+        "priceHistoryFloorDate": "2019-12-06",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-07 07:38:30",
+      "updatedAt": "2026-05-07 07:38:41"
+    },
+    {
+      "id": "seed-cn-futures-main-sc",
+      "symbol": "SC9999",
+      "name": "原油主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "ine"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "INE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "SC",
+        "priceHistoryFloorDate": "2018-03-26",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:37:30"
+    },
+    {
+      "id": "seed-cn-futures-main-sf",
+      "symbol": "SF9999",
+      "name": "硅铁主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "SF",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:40:04"
+    },
+    {
+      "id": "seed-cn-futures-main-sh",
+      "symbol": "SH9999",
+      "name": "烧碱主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "SH",
+        "priceHistoryFloorDate": "2023-09-15",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:38:56"
+    },
+    {
+      "id": "seed-cn-futures-main-si",
+      "symbol": "SI9999",
+      "name": "工业硅主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "gfex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "GFE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "SI",
+        "priceHistoryFloorDate": "2022-12-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:38:06"
+    },
+    {
+      "id": "seed-cn-futures-main-sm",
+      "symbol": "SM9999",
+      "name": "锰硅主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "SM",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:43:05"
+    },
+    {
+      "id": "seed-cn-futures-main-sn",
+      "symbol": "SN9999",
+      "name": "锡主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "SN",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:43:03"
+    },
+    {
+      "id": "seed-cn-futures-main-sp",
+      "symbol": "SP9999",
+      "name": "纸浆主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "SP",
+        "priceHistoryFloorDate": "2018-11-27",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:40:26"
+    },
+    {
+      "id": "seed-cn-futures-main-sr",
+      "symbol": "SR9999",
+      "name": "白糖主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "SR",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:39:37"
+    },
+    {
+      "id": "seed-cn-futures-main-ss",
+      "symbol": "SS9999",
+      "name": "不锈钢主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "SS",
+        "priceHistoryFloorDate": "2019-09-25",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-29 02:08:07"
+    },
+    {
+      "id": "seed-cn-futures-main-t",
+      "symbol": "T9999",
+      "name": "10年期国债期货主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "cffex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "CFX",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "T",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:36:18"
+    },
+    {
+      "id": "seed-cn-futures-main-ta",
+      "symbol": "TA9999",
+      "name": "PTA主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "TA",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:36:52"
+    },
+    {
+      "id": "seed-cn-futures-main-tf",
+      "symbol": "TF9999",
+      "name": "5年期国债期货主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "cffex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "CFX",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "TF",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:36:47"
+    },
+    {
+      "id": "seed-cn-futures-main-tl",
+      "symbol": "TL9999",
+      "name": "30年期国债期货主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "cffex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "CFX",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "TL",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:36:40"
+    },
+    {
+      "id": "seed-cn-futures-main-ts",
+      "symbol": "TS9999",
+      "name": "2年期国债期货主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "cffex"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "CFX",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "TS",
+        "priceHistoryFloorDate": "2018-08-17",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:36:34"
+    },
+    {
+      "id": "seed-cn-futures-main-ur",
+      "symbol": "UR9999",
+      "name": "尿素主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "czce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "ZCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "UR",
+        "priceHistoryFloorDate": "2019-08-09",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:38:01"
+    },
+    {
+      "id": "seed-cn-futures-main-v",
+      "symbol": "V9999",
+      "name": "聚氯乙烯主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "V",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:40:57"
+    },
+    {
+      "id": "seed-cn-futures-main-wr",
+      "symbol": "WR9999",
+      "name": "线材主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "WR",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:40:34"
+    },
+    {
+      "id": "seed-cn-futures-main-y",
+      "symbol": "Y9999",
+      "name": "豆油主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "dce"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "DCE",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "Y",
+        "priceHistoryFloorDate": "2016-05-30",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:41:45"
+    },
+    {
+      "id": "seed-cn-futures-main-zn",
+      "symbol": "ZN9999",
+      "name": "锌主连",
+      "market": "COMMODITY",
+      "assetClass": "commodity",
+      "currency": "CNY",
+      "tags": [
+        "default-local-universe",
+        "domestic-futures",
+        "futures-main-continuous",
+        "shfe"
+      ],
+      "metadata": {
+        "contractType": "dominant_continuous",
+        "exchange": "SHF",
+        "instrumentType": "futures",
+        "priceProvider": "tushare",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-cn-futures-v5",
+        "tsCodeAsset": "FT",
+        "underlyingSymbol": "ZN",
+        "priceHistoryFloorDate": "2025-04-22",
+        "priceHistoryFloorSource": "observed-history"
+      },
+      "createdAt": "2026-05-17 08:32:04",
+      "updatedAt": "2026-05-27 11:43:00"
+    },
+    {
+      "id": "seed-hk-index-hsi",
+      "symbol": "^HSI",
+      "name": "恒生指数",
+      "market": "HK",
+      "assetClass": "equity",
+      "currency": "HKD",
+      "tags": [
+        "default-local-universe",
+        "hk-index",
+        "恒生指数",
+        "broad-market",
+        "hong-kong"
+      ],
+      "metadata": {
+        "benchmark": "恒生指数",
+        "exchange": "HKEX",
+        "instrumentType": "index",
+        "priceProvider": "yfinance",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-v3",
+        "tsCode": "HSI",
+        "tsCodeAsset": "I"
+      },
+      "createdAt": "2026-05-08 12:03:37",
+      "updatedAt": "2026-05-17 05:10:11"
+    },
+    {
+      "id": "seed-hk-index-hstech",
+      "symbol": "^HSTECH",
+      "name": "恒生科技指数",
+      "market": "HK",
+      "assetClass": "equity",
+      "currency": "HKD",
+      "tags": [
+        "default-local-universe",
+        "hk-index",
+        "恒生科技指数",
+        "technology",
+        "hong-kong"
+      ],
+      "metadata": {
+        "benchmark": "恒生科技指数",
+        "exchange": "HKEX",
+        "instrumentType": "index",
+        "priceProvider": "yfinance",
+        "seedPack": "2026-05-a-share-index-etf-hk-index-v3",
+        "priceHistoryFloorDate": "2025-04-03",
+        "priceHistoryFloorSource": "observed-history",
+        "tsCode": "HKTECH",
+        "tsCodeAsset": "I"
+      },
+      "createdAt": "2026-05-08 12:03:37",
+      "updatedAt": "2026-05-17 05:10:12"
+    }
+  ]
+}

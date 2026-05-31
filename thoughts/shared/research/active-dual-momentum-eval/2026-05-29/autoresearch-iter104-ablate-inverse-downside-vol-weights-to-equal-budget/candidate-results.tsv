@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	ablate-inverse-downside-vol-weights-to-equal	70.1188	42.8297	68.3296	93.8128	61.9321	discard	Ablate inverse downside-volatility sleeve weighting to equal weights while keeping the rest of the default stack.	"{""riskMode"": ""equalWeight""}"

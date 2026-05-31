@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	risk-cooldown-before-cross-sign-offset	76.3337	55.8221	74.2182	97.1191	70.1802	budget-pass	Apply risk-exit and risk-trim cooldown before cross-sign gross offset cashing.	"{""riskCooldownBeforeCrossSignOffset"": true}"

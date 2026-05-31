@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	correlated-cluster-risk-adjusted-representative	72.8972	51.002	73.7747	96.6288	66.3286	discard	Choose the risk-adjusted momentum leader as the representative inside each correlated same-direction cluster.	"{""correlatedClusterRepresentativeMode"": ""riskAdjustedMomentum""}"

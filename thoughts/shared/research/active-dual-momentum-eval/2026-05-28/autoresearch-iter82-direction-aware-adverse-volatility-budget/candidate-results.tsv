@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	direction-aware-adverse-volatility	75.5798	54.8533	77.4175	96.515	69.3619	budget-pass	Use upside volatility as adverse risk for short futures while keeping downside volatility for long risk.	"{""directionAwareAdverseVolatility"": true}"

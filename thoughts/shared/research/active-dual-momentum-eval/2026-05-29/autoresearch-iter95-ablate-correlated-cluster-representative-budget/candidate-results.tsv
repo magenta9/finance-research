@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	ablate-correlated-cluster-representative	75.426	55.0409	75.8632	96.5708	69.3105	discard	Ablate representative-only retention inside correlated same-direction clusters while keeping budget dedup.	"{""correlatedSameDirectionClusterRepresentative"": false}"

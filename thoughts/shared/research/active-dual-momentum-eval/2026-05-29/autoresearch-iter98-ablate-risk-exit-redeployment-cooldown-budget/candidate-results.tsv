@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	ablate-risk-exit-redeployment-cooldown	75.9003	53.3844	76.0452	96.9511	69.1455	discard	Ablate risk-exit redeployment cooldown while keeping the rest of the default stack.	"{""riskExitRedeploymentCooldown"": false}"

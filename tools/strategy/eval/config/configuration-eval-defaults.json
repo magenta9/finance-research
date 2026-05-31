@@ -1,0 +1,50 @@
+{
+    "baseCurrency": "CNY",
+    "basketSizes": [
+        5,
+        10,
+        15,
+        20
+    ],
+    "cadences": [
+        "weekly",
+        "monthly",
+        "quarterly"
+    ],
+    "endDate": "2026-05-27",
+    "markets": [
+        "A",
+        "BOND"
+    ],
+    "samplesPerCell": 20,
+    "seed": 20260528,
+    "strategies": [
+        "erc",
+        "inverse_volatility",
+        "max_diversification"
+    ],
+    "strategy": "configuration_strategy_eval",
+    "constraints": {
+        "allowLeverage": false,
+        "allowShort": false,
+        "maxClassWeight": {},
+        "maxSingleWeight": 0.35
+    },
+    "scoring": {
+        "expectedReturnWeight": 0.4,
+        "sharpeWeight": 0.4,
+        "maxDrawdownWeight": 0.1,
+        "volatilityWeight": 0.1,
+        "expectedReturnFloor": 0,
+        "expectedReturnCeiling": 0.5,
+        "sharpeFloor": -0.5,
+        "sharpeCeiling": 2.0,
+        "maxDrawdownCeiling": 0.35,
+        "volatilityCeiling": 0.35
+    },
+    "windowsYears": [
+        2,
+        3,
+        5
+    ]
+}

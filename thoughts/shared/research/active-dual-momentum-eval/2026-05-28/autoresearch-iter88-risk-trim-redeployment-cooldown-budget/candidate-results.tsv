@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	risk-trim-redeployment-cooldown	76.4591	55.4206	74.0059	97.1192	70.1475	budget-pass	Route risk budget released by partial same-direction trims to cash instead of immediately redeploying it.	"{""riskTrimRedeploymentCooldown"": true}"

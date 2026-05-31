@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	correlation-diversified-replacement	76.3431	52.774	76.9631	96.588	69.2724	discard	Skip highly correlated same-direction sleeve candidates and try lower-ranked replacements before cashing duplicate risk.	"{""correlationDiversifiedReplacement"": true}"

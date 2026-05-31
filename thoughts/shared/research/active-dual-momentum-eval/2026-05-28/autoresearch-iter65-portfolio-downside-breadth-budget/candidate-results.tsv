@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	portfolio-downside-breadth-target	72.2378	43.5691	76.6818	93.2472	63.6372	discard	Add a uniform haircut when portfolio downside losses are concentrated in a small number of positions.	"{""portfolioDownsideBreadthTarget"": true}"

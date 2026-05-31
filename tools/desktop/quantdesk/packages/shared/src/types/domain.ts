@@ -11,7 +11,11 @@ export type AssetClass =
 
 export type AllocationType = 'erc' | 'inverse_volatility' | 'max_diversification';
 
-export type AllocationStrategy = AllocationType | 'ewmac_trend_following' | 'active_dual_momentum_gtaa';
+export type AllocationStrategy =
+  | AllocationType
+  | 'max_diversification_research_v1'
+  | 'ewmac_trend_following'
+  | 'active_dual_momentum_gtaa';
 
 export type RebalanceCadence = 'none' | 'weekly' | 'monthly' | 'quarterly';
 
@@ -33,6 +37,41 @@ export interface ActiveDualMomentumStrategyConfig {
   transactionCostBps?: number;
 }
 
+export interface MaxDiversificationStrategyConfig {
+  absoluteMomentumLookbackDaysList?: number[];
+  absoluteMomentumMinPositiveCount?: number;
+  absoluteMomentumThreshold?: number;
+  cashReserve?: number;
+  diagonalLoad?: number;
+  commodityClassWeightCap?: number;
+  equityClassWeightCap?: number;
+  fixedIncomeClassWeightCap?: number;
+  marchenkoPasturDenoise?: boolean;
+  maxSingleWeight?: number;
+  maxTrackingErrorVolatility?: number;
+  momentumReturnTiltStrength?: number;
+  portfolioVolatilityCapAnnualized?: number;
+  portfolioVolatilityCapMinRiskyScale?: number;
+  equalWeightShrinkageIntensity?: number;
+  semiCovarianceForOptimization?: boolean;
+  mdErcBlendWeight?: number;
+  faaMomentumTopN?: number;
+  mdHrpBlendWeight?: number;
+  momentumPriorBlendWeight?: number;
+  correlationClusterWeightCap?: boolean;
+  mdInverseVolBlendWeight?: number;
+  correlationRegimeCashScale?: number;
+  useErcWhenEligibleAtLeast?: number;
+  downsideBetaFilter?: boolean;
+  herfindahlWeightCap?: boolean;
+  diversificationRatioNudgeBlendWeight?: number;
+  covarianceShrinkageBoost?: boolean;
+  optimizationMinCorrelationBoost?: boolean;
+  minCorrelation?: number;
+  momentumBreadthCashScale?: number;
+  volatilityPower?: number;
+}
+
 export interface TrendFollowingStrategyConfig {
   enabled: boolean;
   sleeveWeight: number;
@@ -51,6 +90,7 @@ export interface AllocationSleeveStrategyConfig {
 export interface AllocationStrategyMix {
   activeDualMomentum?: ActiveDualMomentumStrategyConfig;
   allocation?: AllocationSleeveStrategyConfig;
+  maxDiversification?: MaxDiversificationStrategyConfig;
   trendFollowing?: TrendFollowingStrategyConfig;
 }
 

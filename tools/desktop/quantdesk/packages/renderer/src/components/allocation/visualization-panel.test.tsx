@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 
 import type { AllocationResult } from '@quantdesk/shared';
 
+import { buildAllocationHoldingRowsForDate } from './allocation-visualization-sections';
 import { AllocationVisualizationPanel } from './visualization-panel';
 
 const mockResult: AllocationResult = {
@@ -307,6 +308,81 @@ describe('AllocationVisualizationPanel', () => {
         await user.click(screen.getByTestId('allocation-holding-chip-SPY'));
 
         expect(onOpenAssetDetail).toHaveBeenCalledWith('spy');
+    });
+
+    test('普通配置策略可按回测日期从交易记录还原持仓', () => {
+        const trades = [
+            {
+                action: 'open_long' as const,
+                assetId: 'spy',
+                date: '2025-04-11',
+                fromWeight: 0,
+                name: 'SPDR S&P 500 ETF Trust',
+                reason: '配置建仓',
+                source: 'allocation' as const,
+                symbol: 'SPY',
+                toWeight: 0.42,
+                weightChange: 0.42,
+            },
+            {
+                action: 'open_long' as const,
+                assetId: 'agg',
+                date: '2025-04-11',
+                fromWeight: 0,
+                name: 'iShares Core U.S. Aggregate Bond ETF',
+                reason: '配置建仓',
+                source: 'allocation' as const,
+                symbol: 'AGG',
+                toWeight: 0.33,
+                weightChange: 0.33,
+            },
+            {
+                action: 'open_long' as const,
+                assetId: 'gld',
+                date: '2025-04-11',
+                fromWeight: 0,
+                name: 'SPDR Gold Shares',
+                reason: '配置建仓',
+                source: 'allocation' as const,
+                symbol: 'GLD',
+                toWeight: 0.25,
+                weightChange: 0.25,
+            },
+            {
+                action: 'close_long' as const,
+                assetId: 'agg',
+                date: '2025-04-14',
+                fromWeight: 0.33,
+                name: 'iShares Core U.S. Aggregate Bond ETF',
+                reason: '配置调仓',
+                source: 'allocation' as const,
+                symbol: 'AGG',
+                toWeight: 0,
+                weightChange: -0.33,
+            },
+            {
+                action: 'open_long' as const,
+                assetId: 'spy',
+                date: '2025-04-14',
+                fromWeight: 0.42,
+                name: 'SPDR S&P 500 ETF Trust',
+                reason: '配置调仓',
+                source: 'allocation' as const,
+                symbol: 'SPY',
+                toWeight: 0.7,
+                weightChange: 0.28,
+            },
+        ];
+
+        expect(buildAllocationHoldingRowsForDate(trades, mockResult.allocations, '2025-04-13')).toEqual([
+            expect.objectContaining({ symbol: 'SPY', weight: 0.42 }),
+            expect.objectContaining({ symbol: 'AGG', weight: 0.33 }),
+            expect.objectContaining({ symbol: 'GLD', weight: 0.25 }),
+        ]);
+        expect(buildAllocationHoldingRowsForDate(trades, mockResult.allocations, '2025-04-14')).toEqual([
+            expect.objectContaining({ symbol: 'SPY', weight: 0.7 }),
+            expect.objectContaining({ symbol: 'GLD', weight: 0.25 }),
+        ]);
     });
 
     test('相关性矩阵缺失时显示空状态而不是误导性的热力图', () => {

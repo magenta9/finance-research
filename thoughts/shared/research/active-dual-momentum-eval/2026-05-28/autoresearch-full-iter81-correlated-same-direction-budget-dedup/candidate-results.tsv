@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	correlated-same-direction-budget-dedup	75.6414	58.162	73.7084	96.9836	70.3976	budget-pass	Compress highly correlated same-direction selected positions into cash instead of treating them as independent risk budgets.	"{""correlatedSameDirectionBudgetDedup"": true}"

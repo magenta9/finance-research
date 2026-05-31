@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	portfolio-downside-vol-target	73.459	45.7774	74.6109	89.7022	65.1545	budget-pass	Scale total exposure down only when the merged signed portfolio has high downside volatility.	"{""portfolioDownsideVolTarget"": true}"

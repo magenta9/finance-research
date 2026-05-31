@@ -7,6 +7,7 @@ import {
     computeLogReturns,
     correlationMatrix,
     covarianceMatrix,
+    semiCovarianceMatrix,
     shrinkCovarianceMatrix,
 } from './statistics';
 
@@ -32,6 +33,18 @@ describe('portfolio statistics', () => {
         expect(meanReturns[0]).toBeGreaterThan(meanReturns[1]);
         expect(volatility[0]).toBeGreaterThan(0);
         expect(volatility[1]).toBeGreaterThan(0);
+    });
+
+    test('semi-covariance only accumulates downside return co-moves', () => {
+        const returns = [
+            [0.02, -0.01, 0.03],
+            [-0.02, -0.03, 0.01],
+        ];
+        const semi = semiCovarianceMatrix(returns);
+        const full = covarianceMatrix(returns);
+
+        expect(semi[0][0]).toBeLessThan(full[0][0]);
+        expect(semi[0][1]).toBeLessThan(full[0][1]);
     });
 
     test('shrinks a near-singular covariance matrix into a positive definite matrix', () => {

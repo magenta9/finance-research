@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	correlated-cluster-incumbent-representative	71.9775	51.0758	69.7243	94.8012	65.707	discard	Keep the previous same-direction representative inside highly correlated clusters when it remains eligible.	"{""correlatedSameDirectionIncumbentRepresentative"": true}"

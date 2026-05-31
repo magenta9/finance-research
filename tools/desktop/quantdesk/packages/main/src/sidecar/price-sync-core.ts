@@ -258,10 +258,11 @@ export const hasPriceCoverageThroughEndDate = ({
         return false;
     }
 
+    const rangeStartDate = bounds.latestDate > endDate ? endDate : bounds.latestDate;
     const rows = prices.getRange({
         assetId,
         endDate,
-        startDate: bounds.latestDate,
+        startDate: rangeStartDate,
     });
 
     if (rows.length === 0) {

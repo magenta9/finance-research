@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	downside-vol-headroom-cash-release	74.6685	53.6808	71.9996	96.4657	68.3722	discard	Release part of the fixed cash buffer when portfolio downside volatility is below the existing target.	"{""downsideVolHeadroomCashRelease"": true}"

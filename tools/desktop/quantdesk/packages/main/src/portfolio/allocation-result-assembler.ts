@@ -12,7 +12,7 @@ import { buildAllocationDiagnostics } from './allocation-diagnostics';
 import { buildAllocationRecords } from './allocation-records';
 import { buildAllocationRiskMetrics } from './allocation-risk-metrics';
 import { composeAllocationStrategyMix } from './allocation-strategy-mix-composer';
-import { simulatePortfolioPath } from './path-simulator';
+import { simulatePortfolioPath, type PathSimulationTargetWeightsResolver } from './path-simulator';
 import { getPreparedAssetMetadata, getPreparedPriceSeries } from './prepared-allocation-context';
 import { buildScenarioAnalysis } from './scenarios';
 import type {
@@ -32,12 +32,13 @@ export interface AssembleAllocationResultInput {
     optimizerDiagnostics: Partial<AllocationDiagnostics>;
     prepared: PreparedAllocationData;
     rebalanceCadence: RebalanceCadence;
+    resolveTargetWeights?: PathSimulationTargetWeightsResolver;
     strategy: AllocationStrategy;
     trendFollowing?: TrendFollowingSimulationResult | null;
     weights: number[];
 }
 
-export const assembleAllocationResult = ({
+export const assembleAllocationResult = async ({
     allocationAssetIds,
     annualizedAssetVolatility,
     annualizedMeanReturns,
@@ -50,16 +51,18 @@ export const assembleAllocationResult = ({
     optimizerDiagnostics,
     prepared,
     rebalanceCadence,
+    resolveTargetWeights,
     strategy,
     trendFollowing,
     weights,
-}: AssembleAllocationResultInput): AllocationResult => {
+}: AssembleAllocationResultInput): Promise<AllocationResult> => {
     const priceSeries = getPreparedPriceSeries(prepared);
-    const pathSimulation = simulatePortfolioPath({
+    const pathSimulation = await simulatePortfolioPath({
         alignedDates: prepared.alignedDates,
         assetMetadata: getPreparedAssetMetadata(prepared),
         priceSeries,
         rebalanceCadence,
+        resolveTargetWeights,
         targetWeights: weights,
     });
     const strategyMixComposition = composeAllocationStrategyMix({

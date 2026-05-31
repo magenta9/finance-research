@@ -1,2 +1,0 @@
-iteration	name	meanScore	p10Score	p50Score	p90Score	combinedScore	decision	thesis	profile
-11	portfolio-correlation-stress-gate	72.2384	45.1597	76.3379	93.7888	64.1148	discard	Apply a mild uniform exposure haircut when signed position correlations rise and recent signed portfolio return is negative.	"{""portfolioCorrelationStressGate"": true}"
