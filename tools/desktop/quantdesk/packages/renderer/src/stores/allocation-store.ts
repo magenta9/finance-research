@@ -107,10 +107,6 @@ const isConfigurationStrategy = (strategy: AllocationStrategy): strategy is Allo
     strategy === 'erc' || strategy === 'inverse_volatility' || strategy === 'max_diversification';
 
 const getModeForStrategy = (strategy: AllocationStrategy): AllocationType => {
-    if (strategy === 'max_diversification_research_v1') {
-        return 'max_diversification';
-    }
-
     return isConfigurationStrategy(strategy) ? strategy : 'inverse_volatility';
 };
 

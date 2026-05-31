@@ -6,7 +6,6 @@ export const CANONICAL_STRATEGY_IDS = [
     'ewmac_trend_following',
     'inverse_volatility',
     'max_diversification',
-    'max_diversification_research_v1',
 ] as const satisfies readonly AllocationStrategy[];
 
 export const resolveAllocationMode = (strategyId: AllocationStrategy): AllocationType => {
@@ -18,7 +17,7 @@ export const resolveAllocationMode = (strategyId: AllocationStrategy): Allocatio
         return 'inverse_volatility';
     }
 
-    if (strategyId === 'max_diversification' || strategyId === 'max_diversification_research_v1') {
+    if (strategyId === 'max_diversification') {
         return 'max_diversification';
     }
 

@@ -116,7 +116,6 @@ describe('portfolio allocation pipeline', () => {
             'ewmac_trend_following',
             'inverse_volatility',
             'max_diversification',
-            'max_diversification_research_v1',
         ]);
     });
 
@@ -219,51 +218,6 @@ describe('portfolio allocation pipeline', () => {
         expect(outcome.result.mode).toBe('max_diversification');
         expect(outcome.result.strategy).toBe('max_diversification');
         expect(outcome.result.diagnostics.strategy).toBe('max_diversification');
-    });
-
-    test('applies max diversification v3 baseline before sidecar optimization', async () => {
-        const length = 260;
-        const assets = Array.from({ length: 30 }, (_value, index) =>
-            buildAsset(`asset-${index}`, `A${index}`, index % 3 === 0 ? 'fixed_income' : 'equity'));
-        const priceSeries = assets.map((_asset, index) => {
-            const drift = index < 25 ? 0.0015 : -0.0015;
-            return buildTrendSeries(100 + index, drift, length);
-        });
-        const sidecarResponse = {
-            diagnostics: { warnings: [] },
-            diversificationRatio: 1.4,
-            version: 2,
-            weights: Array.from({ length: 25 }, () => 1 / 25),
-        };
-        const { pipeline, sidecarManager } = createPipeline({
-            preparationResult: buildPreparedSuccess({ assets, length, priceSeries }),
-            sidecarResponse,
-        });
-
-        const outcome = await pipeline.allocate({
-            assetIds: assets.map((asset) => asset.id),
-            baseCurrency: 'USD',
-            constraints: baseConstraints,
-            mode: 'max_diversification',
-            strategy: 'max_diversification_research_v1',
-        });
-
-        expect(outcome.meta.stage).toBe('completed');
-        expect(outcome.meta.optimizerPath).toBe('python');
-        expect(outcome.result.mode).toBe('max_diversification');
-        expect(outcome.result.strategy).toBe('max_diversification_research_v1');
-        expect(sidecarManager.call).toHaveBeenCalledWith('run_optimization', expect.objectContaining({
-            constraints: expect.objectContaining({ maxSingleWeight: 0.6 }),
-            cov_matrix: expect.arrayContaining([expect.any(Array)]),
-            mode: 'max_diversification',
-            volatilities: Array.from({ length: 25 }, () => 1),
-        }));
-        const request = vi.mocked(sidecarManager.call).mock.calls[0]?.[1] as { cov_matrix: number[][] };
-        expect(request.cov_matrix).toHaveLength(25);
-        expect(request.cov_matrix[0]).toHaveLength(25);
-        expect(outcome.result.allocations.find((allocation) => allocation.symbol === 'CASH_RESERVE')).toEqual(
-            expect.objectContaining({ assetClass: 'cash', weight: expect.any(Number) }),
-        );
     });
 
     test('runs EWMAC as a top-level full trend-following strategy', async () => {
