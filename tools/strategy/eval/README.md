@@ -1,6 +1,6 @@
 # Strategy Eval Framework
 
-Unified offline evaluation for QuantDesk allocation strategies. Strategy execution is injected through QuantDesk `defaultAllocationStrategyRegistry`; the eval harness only orchestrates cases, price loading, scoring, and reporting.
+Unified offline evaluation for allocation strategies. Strategy execution is injected through `tools/strategy/allocation-engine` `defaultAllocationStrategyRegistry`; the eval harness only orchestrates cases, price loading, scoring, and reporting.
 
 ## Entry point
 
@@ -23,7 +23,7 @@ python3 tools/strategy/eval/run_strategy_eval.py --config tools/strategy/eval/co
 ## Architecture
 
 - Python: [run_strategy_eval.py](run_strategy_eval.py) builds `EvalRunRequest`, loads `quant-data` prices, scores rows, writes artifacts.
-- TypeScript: [generic_eval_runner.ts](generic_eval_runner.ts) dispatches each case/strategy pair through QuantDesk `AllocationStrategyHandler`.
+- TypeScript: [generic_eval_runner.ts](generic_eval_runner.ts) dispatches each case/strategy pair through allocation-engine `AllocationStrategyHandler`.
 - Contracts: [eval_runner_contract.ts](eval_runner_contract.ts), [eval_core/contract.py](../eval_core/contract.py).
 - Shared modules: [eval_core/](../eval_core/).
 

@@ -1,14 +1,13 @@
 import type {
     AllocationConstraints,
-    AllocationStrategy,
-} from '../../desktop/quantdesk/packages/shared/src/types/domain';
-import { optimizeWeights } from '../../desktop/quantdesk/packages/main/src/portfolio/optimizer';
+} from '@quantdesk/shared';
 import {
-    defaultAllocationStrategyRegistry,
+    optimizeWeights,
+    resolveStrategyHandler,
     type StrategyExecutionContext,
     type StrategyOptimizationRequest,
     type StrategyOptimizationResult,
-} from '../../desktop/quantdesk/packages/main/src/portfolio/strategy-registry';
+} from '@finance-research/allocation-engine';
 
 import { buildAssetMap, prepareEvalBundle, type PreparedEvalBundle } from './eval_preparation';
 import {
@@ -23,6 +22,8 @@ import type {
     StrategyRunInput,
 } from './eval_runner_contract';
 import { resolveAllocationMode, resolveRebalanceCadence } from './eval_runner_contract';
+
+export { resolveStrategyHandler };
 
 const mergeConstraints = (
     defaults: AllocationConstraints,
@@ -73,9 +74,6 @@ const createJsOptimizer = (): StrategyExecutionContext['optimize'] => async (
         };
     }
 };
-
-export const resolveStrategyHandler = (strategyId: AllocationStrategy) => (
-    defaultAllocationStrategyRegistry as Partial<typeof defaultAllocationStrategyRegistry>)[strategyId] ?? null;
 
 export const executeEvalStrategy = async ({
     bundle,

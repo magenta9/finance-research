@@ -20,7 +20,7 @@ const rows = (length: number, start: number) => ({
 });
 
 describe('strategy eval adapter contract', () => {
-    test('resolves canonical strategy handlers from QuantDesk registry', () => {
+    test('resolves canonical strategy handlers from allocation-engine registry', () => {
         expect(resolveStrategyHandler('erc')).toBeTruthy();
         expect(resolveStrategyHandler('active_dual_momentum_gtaa')).toBeTruthy();
         expect(resolveStrategyHandler('max_diversification_research_v1')).toBeTruthy();

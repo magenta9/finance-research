@@ -1,1 +1,1 @@
-export const minimumPortfolioTradeWeight = 0.0001;
+export * from '../../../../../../strategy/allocation-engine/src/portfolio-constants';

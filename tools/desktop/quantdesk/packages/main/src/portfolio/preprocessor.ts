@@ -3,20 +3,10 @@ import type { AssetDateCoverage, Currency, StoredAsset } from '@quantdesk/shared
 import { AllocationPreparationError } from './preparation-errors';
 import type { AllocationPreparationReader } from './preparation-repository-adapter';
 
-export interface PreparedAssetSeries {
-    asset: StoredAsset;
-    prices: number[];
-    annualizedReturn: number;
-    annualizedVolatility: number;
-}
-
-export interface PreparedAllocationData {
-    alignedDates: string[];
-    assetDateCoverage: AssetDateCoverage[];
-    excludedAssets: string[];
-    series: PreparedAssetSeries[];
-    warnings: string[];
-}
+export type {
+    PreparedAllocationData,
+    PreparedAssetSeries,
+} from '../../../../../../strategy/allocation-engine/src/preprocessor';
 
 const MIN_REQUIRED_TRADING_DAYS = 61;
 
@@ -59,7 +49,7 @@ export const prepareAllocationData = ({
     reader: AllocationPreparationReader;
     startDate?: string;
     endDate?: string;
-}): PreparedAllocationData => {
+}) => {
     const insufficientCoverageMessage = `已选标的在当前窗口内的共同覆盖不足 ${MIN_REQUIRED_TRADING_DAYS} 个交易日。`;
     const warnings: string[] = [];
     const excludedAssets: string[] = [];

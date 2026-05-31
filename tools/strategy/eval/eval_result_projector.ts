@@ -1,10 +1,37 @@
-import type { ActiveDualMomentumDiagnostics, AllocationResult } from '../../desktop/quantdesk/packages/shared/src/types/domain';
+import type { ActiveDualMomentumDiagnostics, AllocationResult } from '@quantdesk/shared';
 
-import type { EvalCaseInput, EvalResultRow, StrategyRunInput } from './eval_runner_contract';
+import type {
+    EvalCaseInput,
+    EvalResultRow,
+    StrategyRunInput,
+} from './eval_runner_contract';
+
+const pickMetadata = (
+    result: AllocationResult,
+    extraResultFields?: string[],
+): Record<string, unknown> | undefined => {
+    if (!extraResultFields?.length) {
+        return undefined;
+    }
+
+    const metadata: Record<string, unknown> = {};
+
+    for (const field of extraResultFields) {
+        if (field === 'activeDualMomentumDiagnostics') {
+            const diagnostics = result.diagnostics.activeDualMomentum as ActiveDualMomentumDiagnostics | undefined;
+
+            if (diagnostics) {
+                metadata.activeDualMomentumDiagnostics = diagnostics;
+            }
+        }
+    }
+
+    return Object.keys(metadata).length > 0 ? metadata : undefined;
+};
 
 export const projectAllocationResult = ({
     evalCase,
-    extraResultFields = [],
+    extraResultFields,
     result,
     strategyRun,
 }: {
@@ -13,26 +40,12 @@ export const projectAllocationResult = ({
     result: AllocationResult;
     strategyRun: StrategyRunInput;
 }): EvalResultRow => {
-    const diagnostics = result.diagnostics;
-    const admDiagnostics = (diagnostics as { activeDualMomentum?: ActiveDualMomentumDiagnostics }).activeDualMomentum;
-    const metadata: Record<string, unknown> = {};
-
-    if (extraResultFields.includes('calmarRatio')) {
-        metadata.calmarRatio = admDiagnostics?.calmarRatio ?? null;
-    }
-
-    if (extraResultFields.includes('winRate')) {
-        metadata.winRate = admDiagnostics?.winRate ?? null;
-    }
-
     if (result.error) {
         return {
             basketSize: evalCase.basketSize,
             caseId: evalCase.caseId,
             endDate: evalCase.endDate,
             error: result.error.message,
-            metadata,
-            rebalanceCadence: evalCase.rebalanceCadence,
             sampleIndex: evalCase.sampleIndex,
             startDate: evalCase.startDate,
             status: 'error',
@@ -46,11 +59,10 @@ export const projectAllocationResult = ({
         basketSize: evalCase.basketSize,
         caseId: evalCase.caseId,
         endDate: evalCase.endDate,
-        error: null,
-        metadata,
+        metadata: pickMetadata(result, extraResultFields),
         metrics: result.portfolioMetrics,
-        rebalanceCadence: evalCase.rebalanceCadence,
-        rebalanceEventCount: diagnostics.rebalanceEventCount ?? null,
+        rebalanceCadence: result.diagnostics.rebalanceCadence,
+        rebalanceEventCount: result.diagnostics.rebalanceEventCount,
         sampleIndex: evalCase.sampleIndex,
         startDate: evalCase.startDate,
         status: 'ok',
@@ -73,7 +85,6 @@ export const projectErrorRow = ({
     caseId: evalCase.caseId,
     endDate: evalCase.endDate,
     error: error instanceof Error ? error.message : String(error),
-    rebalanceCadence: evalCase.rebalanceCadence,
     sampleIndex: evalCase.sampleIndex,
     startDate: evalCase.startDate,
     status: 'error',
@@ -95,7 +106,6 @@ export const projectSkippedRow = ({
     caseId: evalCase.caseId,
     endDate: evalCase.endDate,
     error: reason,
-    rebalanceCadence: evalCase.rebalanceCadence,
     sampleIndex: evalCase.sampleIndex,
     startDate: evalCase.startDate,
     status: 'skipped',

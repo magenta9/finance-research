@@ -2,21 +2,18 @@ import type {
     AllocationConstraints,
     AllocationStrategy,
     AllocationStrategyMix,
-    AllocationType,
     Currency,
     PortfolioMetrics,
     RebalanceCadence,
-} from '../../desktop/quantdesk/packages/shared/src/types/domain';
-import type { StoredAsset } from '../../desktop/quantdesk/packages/shared/src/types/persistence';
+} from '@quantdesk/shared';
+import type { StoredAsset } from '@quantdesk/shared';
+import {
+    CANONICAL_STRATEGY_IDS,
+    resolveAllocationMode,
+    resolveDefaultRebalanceCadence,
+} from '@finance-research/allocation-engine';
 
-export const CANONICAL_STRATEGY_IDS = [
-    'active_dual_momentum_gtaa',
-    'erc',
-    'ewmac_trend_following',
-    'inverse_volatility',
-    'max_diversification',
-    'max_diversification_research_v1',
-] as const satisfies readonly AllocationStrategy[];
+export { CANONICAL_STRATEGY_IDS, resolveAllocationMode };
 
 export interface EvalAssetInput {
     assetClass: StoredAsset['assetClass'];
@@ -95,33 +92,7 @@ export interface EvalRunnerOutput {
     rows: EvalResultRow[];
 }
 
-export const resolveAllocationMode = (strategyId: AllocationStrategy): AllocationType => {
-    if (strategyId === 'erc') {
-        return 'erc';
-    }
-
-    if (strategyId === 'inverse_volatility') {
-        return 'inverse_volatility';
-    }
-
-    if (strategyId === 'max_diversification' || strategyId === 'max_diversification_research_v1') {
-        return 'max_diversification';
-    }
-
-    return 'inverse_volatility';
-};
-
 export const resolveRebalanceCadence = (
     evalCase: EvalCaseInput,
     strategyId: AllocationStrategy,
-): RebalanceCadence => {
-    if (evalCase.rebalanceCadence) {
-        return evalCase.rebalanceCadence;
-    }
-
-    if (strategyId === 'active_dual_momentum_gtaa') {
-        return 'weekly';
-    }
-
-    return 'monthly';
-};
+): RebalanceCadence => resolveDefaultRebalanceCadence(strategyId, evalCase.rebalanceCadence);

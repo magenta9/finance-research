@@ -13,6 +13,15 @@
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
     "paths": {
+      "@finance-research/allocation-engine": [
+        "../../strategy/allocation-engine/src/index.ts"
+      ],
+      "@finance-research/allocation-engine/*": [
+        "../../strategy/allocation-engine/src/*"
+      ],
+      "ml-matrix": [
+        "node_modules/ml-matrix/matrix.d.ts"
+      ],
       "@quantdesk/shared": [
         "packages/shared/src/index.ts"
       ],

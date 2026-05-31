@@ -1,8 +1,10 @@
-import type { Currency, MaxDiversificationStrategyConfig } from '../../desktop/quantdesk/packages/shared/src/types/domain';
-import type { StoredAsset } from '../../desktop/quantdesk/packages/shared/src/types/persistence';
-import type { PreparedAllocationData } from '../../desktop/quantdesk/packages/main/src/portfolio/preprocessor';
-import { buildAllocationAnalysisInput } from '../../desktop/quantdesk/packages/main/src/portfolio/allocation-analysis-input';
-import type { AllocationAnalysisInput } from '../../desktop/quantdesk/packages/main/src/portfolio/allocation-analysis-input';
+import type { Currency, MaxDiversificationStrategyConfig } from '@quantdesk/shared';
+import type { StoredAsset } from '@quantdesk/shared';
+import {
+    buildAllocationAnalysisInput,
+    type AllocationAnalysisInput,
+    type PreparedAllocationData,
+} from '@finance-research/allocation-engine';
 
 import type { EvalAssetInput, EvalPriceCacheEntry, QuantDataPriceRow } from './eval_runner_contract';
 
